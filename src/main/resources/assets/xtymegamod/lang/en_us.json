@@ -4,5 +4,21 @@
   "block.xtymegamod.gold_spawnpoint_block" : "重生点金块",
   "block.xtymegamod.gold_spawnpoint_block.lore" : "设置站在方块上的玩家的重生点",
 
-  "creative_mode_tab.main.name" : "Xty造图"
+  "item.xtymegamod.fill_function_creator" : "Fill函数创建工具",
+  "item.xtymegamod.fill_function_creator.lore.selected_start" : "已选择起始方块: %s",
+  "item.xtymegamod.fill_function_creator.lore.selected_end" : "已选择终点方块: %s",
+  "item.xtymegamod.fill_function_creator.lore.use" : "将方块右键此物品设置填充方块",
+
+  "creative_mode_tab.main.name" : "Mega地图制作",
+
+  "key.categories.xtymegamod" : "Mega地图制作",
+  "key.xtymegamod.debug_item_gui" : "打开调试物品界面",
+
+  "ui.xtymegamod.debug.undo" : "撤回 §7Ctrl + Z",
+  "ui.xtymegamod.debug.redo" : "重做 §7Ctrl + Y",
+  "ui.xtymegamod.debug.selected_first" : "选择起点 §7鼠标左键",
+  "ui.xtymegamod.debug.selected_second" : "选择终点 §7鼠标右键",
+  "ui.xtymegamod.debug.line" : "添加命令 §7Ctrl + 鼠标中建",
+  "ui.xtymegamod.debug.save" : "保存函数 §7Ctrl + S",
+  "ui.xtymegamod.debug.save.success" : "§7函数生成完毕, 已保存在 %s"
 }

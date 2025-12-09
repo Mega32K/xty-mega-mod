@@ -1,4 +1,4 @@
-package com.mega.xty.common.proxy;
+package com.mega.xty.proxy;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;

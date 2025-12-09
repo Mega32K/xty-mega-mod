@@ -1,19 +1,22 @@
-package com.mega.xty.common.proxy;
+package com.mega.xty.proxy;
 
+import com.mega.endinglib.api.data.TagEnum;
+import com.mega.endinglib.api.item.component.ComponentTypeBuilder;
+import com.mega.endinglib.api.item.component.DataComponents;
+import com.mega.endinglib.api.item.component.ItemComponentType;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.init.BlockInit;
 import com.mega.xty.common.init.ItemInit;
-import net.minecraft.core.registries.BuiltInRegistries;
+import com.mega.xty.common.item.component.FillCreatorComponent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public class CommonProxy implements ModProxy {
@@ -31,6 +34,17 @@ public class CommonProxy implements ModProxy {
                     })
                     .build()
     );
+    public static final ResourceLocation COM_FILL_CREATOR = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "debug/fill_creator");
+    public static final ItemComponentType<FillCreatorComponent> FILL_CREATOR = DataComponents.register(
+            COM_FILL_CREATOR,
+            ComponentTypeBuilder.create(builder -> builder
+                    .registryName(COM_FILL_CREATOR)
+                    .codec(FillCreatorComponent.CODEC)
+                    .rootTagType(TagEnum.LIST)
+                    .build()
+            )
+    );
+
     public CommonProxy() {
         IEventBus modBus = this.getModBus();
         BlockInit.BLOCKS.register(modBus);

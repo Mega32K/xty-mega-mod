@@ -1,4 +1,4 @@
-package com.mega.xty.common.proxy;
+package com.mega.xty.proxy;
 
 public class ServerProxy implements ModProxy {
 }
