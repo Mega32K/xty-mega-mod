@@ -1,18 +1,16 @@
 package com.mega.xty.client;
 
-import com.mega.endinglib.api.client.cmc.LoreHelper;
+import com.mega.endinglib.api.client.LambdaClientTaskInstance;
 import com.mega.xty.common.item.FillFunctionCreatorItem;
-import com.mojang.blaze3d.Blaze3D;
+import com.mega.xty.proxy.ClientProxy;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -20,11 +18,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 //@Mod.EventBusSubscriber(Dist.CLIENT)
 public class ClientEventHandler {
@@ -89,5 +86,17 @@ public class ClientEventHandler {
                 }
             }
         }
+    }
+    @SubscribeEvent
+    public static void onDisconnected(ClientPlayerNetworkEvent.LoggingOut event) {
+        new LambdaClientTaskInstance(20, (level -> {}), (renderTickEvent -> {}), ()-> {
+            ClientProxy.isUpdatingNoCullingInfo = true;
+            try {
+                ClientProxy.chunksNoCullingBlocks.clear();
+                ClientProxy.chunksNoCullingBlocks2.clear();
+            } finally {
+                ClientProxy.isUpdatingNoCullingInfo = false;
+            }
+        }).onAddedToWorld();
     }
 }

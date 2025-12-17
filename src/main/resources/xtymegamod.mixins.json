@@ -5,9 +5,15 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "xtymegamod.refmap.json",
   "mixins": [
+    "client.cap.limbs.LivingEntityMixin",
+    "client.oculus.RenderSectionManagerMixin",
+    "client.oculus.SodiumWorldRendererAccessor"
   ],
   "client": [
-    "client.MinecraftMixin"
+    "client.ClientLevelMixin",
+    "client.LevelRendererMixin",
+    "client.MinecraftMixin",
+    "client.cap.limbs.PlayerRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
