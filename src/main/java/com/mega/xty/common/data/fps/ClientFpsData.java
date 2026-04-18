@@ -20,7 +20,7 @@ public class ClientFpsData {
     public static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).kills).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).assists).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).deaths);
     public static boolean enabled;
     public static final Map<UUID, SynchedKADData> kadData = new Object2ObjectOpenHashMap<>();
-    public static final Map<UUID, Component> playerDisplayNames = new Object2ObjectOpenHashMap<>();
+    public static final Map<UUID, TabData> playerDisplayNames = new Object2ObjectOpenHashMap<>();
     public static SynchedKADData getPlayerKAD(Player player) {
         if (!enabled) return SynchedKADData.EMPTY_KAD;
         return kadData.getOrDefault(player.getUUID(), SynchedKADData.EMPTY_KAD);
@@ -30,7 +30,10 @@ public class ClientFpsData {
         return kadData.getOrDefault(playerInfo.getProfile().getId(), SynchedKADData.EMPTY_KAD);
     }
     public static Component getPlayerName(PlayerInfo playerInfo) {
-        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), getNameForDisplay(playerInfo));
+        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, getNameForDisplay(playerInfo))).component;
+    }
+    public static boolean getPlayerTabDead(PlayerInfo playerInfo) {
+        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, Component.literal(""))).isDead;
     }
     public static Component getNameForDisplay(PlayerInfo p_94550_) {
         return p_94550_.getTabListDisplayName() != null ? decorateName(p_94550_, p_94550_.getTabListDisplayName().copy()) : decorateName(p_94550_, PlayerTeam.formatNameForTeam(p_94550_.getTeam(), Component.literal(p_94550_.getProfile().getName())));

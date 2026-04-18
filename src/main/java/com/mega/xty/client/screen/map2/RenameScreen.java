@@ -1,8 +1,6 @@
 package com.mega.xty.client.screen.map2;
 
-import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
-import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.overlay.map2.HealthOverlay;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.network.NetworkHandler;
@@ -14,22 +12,14 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.brigadier.StringReader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.StringUtil;
-import net.minecraft.world.entity.player.Player;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RenameScreen extends Screen {
     Minecraft mc = Minecraft.getInstance();

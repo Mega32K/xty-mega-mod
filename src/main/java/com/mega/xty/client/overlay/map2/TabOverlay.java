@@ -100,9 +100,9 @@ public class TabOverlay implements IGuiOverlay {
         int barCount = 10;
         //1~20人大小框
         float realHudHeight = top + (lineHeight + periodOfLine) * barCount + periodOfLine;
-        graphics.fill(left, top - periodOfLine, left + halfLongestWidth - 4, realHudHeight, 0xD8303030);
-        graphics.fill(left + halfLongestWidth - 2, top - periodOfLine, left + longestWidth, realHudHeight, 0xD8303030);
-        graphics.fill(left + halfLongestWidth - 4, top - periodOfLine, left + halfLongestWidth - 2, realHudHeight, BACKGROUND_DEFAULT_I_COLOR);
+        graphics.fill(left, top - periodOfLine, left + halfLongestWidth - 1, realHudHeight, 0xD8303030);
+        graphics.fill(left + halfLongestWidth + 1, top - periodOfLine, left + longestWidth, realHudHeight, 0xD8303030);
+        graphics.fill(left + halfLongestWidth - 1, top - periodOfLine, left + halfLongestWidth + 1, realHudHeight, BACKGROUND_DEFAULT_I_COLOR);
 
         //渲染每条的背景
         for (int i=0;i<barCount;i++) {
@@ -132,7 +132,7 @@ public class TabOverlay implements IGuiOverlay {
             for (int index = 0;index<playerInfos.size();index++) {
                 PlayerInfo playerInfo = playerInfos.get(index);
                 float offset = (index + 1) % 2 == 0 ? halfLongestWidth : 0;
-                renderSinglePlayerInfo(graphics, font, left + offset, top + yOffset, offset, playerInfo);
+                renderSinglePlayerInfo(graphics, font, left + offset, top + yOffset, halfLongestWidth, playerInfo);
                 if (offset > 0)
                     yOffset += lineHeight + periodOfLine;
             }
@@ -178,8 +178,14 @@ public class TabOverlay implements IGuiOverlay {
             graphics.drawCenteredString(font, Component.literal(latencyS).withStyle(ChatFormatting.DARK_RED), (int) (x), (int) y, 0xFFFFFFFF);
         }
         //渲染名字
-        PlayerFaceRenderer.draw(graphics, playerInfo.getSkinLocation(), (int) (x + 20), (int) y, font.lineHeight);
-        drawPlayerInfoName(graphics, font, ClientFpsData.getPlayerName(playerInfo), (int) (x + 20 + font.lineHeight + 1), (int) y, (int) (width - textUnitWidth * 5 - 20 - 24 - font.width(latencyS) - font.lineHeight), 0xFFFFFFFF);
+        boolean isDead = ClientFpsData.getPlayerTabDead(playerInfo);
+        float headScale = font.lineHeight * 1.1F;
+        SelectPlayerOverlay.renderProfileIcon(playerInfo.getSkinLocation(), graphics, x + 19 + headScale/2F, y - 1 + headScale/2F, headScale, isDead);
+        drawPlayerInfoName(
+                graphics, font,
+                isDead ? Component.literal("").append(ClientFpsData.getPlayerName(playerInfo)).withStyle(ChatFormatting.STRIKETHROUGH) : ClientFpsData.getPlayerName(playerInfo),
+                (int) (x + 20 + font.lineHeight + 1), (int) y, (int) (width - textUnitWidth * 5 - 20 - 24 - font.width(latencyS) - font.lineHeight), 0xFFFFFFFF
+        );
         //渲染KAD
         float deathsX = rawX + width - textUnitWidth;
         KAD kad = ClientFpsData.getPlayerKAD(playerInfo).getOrDefaultKAD(KAD.KAD_GENERAL);

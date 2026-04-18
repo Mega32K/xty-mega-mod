@@ -69,7 +69,7 @@ public abstract class ServerExpandedContextMixin implements SavedDataGetter {
             if (fpsSavedData.isEnableKAD() && fpsSavedData.isKadDirty())
                 NetworkHandler.sendToAll(new S2CPlayerKADPacket(false, fpsSavedData.packDirtyKAD()));
             if (fpsSavedData.isPlayerNamesDirty())
-                NetworkHandler.sendToAll(new S2CPlayerNamePacket(false, fpsSavedData.getPlayerNames()));
+                NetworkHandler.sendToAll(new S2CPlayerNamePacket(false, fpsSavedData.packDirtyTabs()));
         }
     }
 }

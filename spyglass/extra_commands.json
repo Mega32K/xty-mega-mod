@@ -515,6 +515,18 @@
           "type": "literal",
           "children": {
 
+            "setTextTip": {
+              "type":"literal",
+              "children": {
+
+                "value": {
+                  "type":"argument",
+                  "parser":"minecraft:component",
+                  "executable":true
+                }
+              }
+            },
+
             "xaero": {
               "type" : "literal",
               "children": {
@@ -718,6 +730,50 @@
                           "type":"literal",
                           "children": {
                             
+                            "value": {
+                              "type":"argument",
+                              "parser":"brigadier:integer",
+                              "executable":true
+                            }
+                          }
+                        }
+                      }
+                    },
+
+                    "setRedWins": {
+                      "type": "literal",
+                      "children": {
+
+                        "setFromResult": {
+                          "type":"literal"
+                        },
+
+                        "set": {
+                          "type":"literal",
+                          "children": {
+
+                            "value": {
+                              "type":"argument",
+                              "parser":"brigadier:integer",
+                              "executable":true
+                            }
+                          }
+                        }
+                      }
+                    },
+
+                    "setBlueWins": {
+                      "type": "literal",
+                      "children": {
+
+                        "setFromResult": {
+                          "type":"literal"
+                        },
+
+                        "set": {
+                          "type":"literal",
+                          "children": {
+
                             "value": {
                               "type":"argument",
                               "parser":"brigadier:integer",

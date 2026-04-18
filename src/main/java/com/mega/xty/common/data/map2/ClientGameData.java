@@ -11,6 +11,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,8 @@ public class ClientGameData {
     public static int blueTeamScore;
     public static boolean teamScoreVisible = false;
     public static int CFHealthTickCount = 0;
+    @Nullable
+    public static Component rightTopTextTip = null;
     @Nullable
     public static BlockPos pointA;
     public static BlockPos pointB;

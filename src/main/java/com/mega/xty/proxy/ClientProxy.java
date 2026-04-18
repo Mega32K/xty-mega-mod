@@ -146,8 +146,9 @@ public class ClientProxy implements ModProxy {
         );
         event.registerAboveAll("map2/ghost_circle", new GhostCircleOverlay());
         event.registerAboveAll("map2/points", new PointsOverlay());
-        event.registerAboveAll("map2/select_player", new SelectPlayerOverlay());
-        event.registerAboveAll("map2/tab", new TabOverlay());
+        event.registerAboveAll("fps/select_player", new SelectPlayerOverlay());
+        event.registerAboveAll("fps/tab", new TabOverlay());
+        event.registerAboveAll("map2/text_tip", new TextTipOverlay());
     }
     public static void setObj(ShadowPlayerEntity entity, Player player) {
         if (player instanceof AbstractClientPlayer clientPlayer) {

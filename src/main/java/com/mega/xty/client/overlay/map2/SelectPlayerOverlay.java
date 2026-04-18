@@ -470,6 +470,19 @@ public class SelectPlayerOverlay implements IGuiOverlay {
             graphics.blit(skin, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F), -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F), size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F);
         }
     }
+    public static void renderProfileIcon(ResourceLocation texture, MegaGuiGraphics graphics, float x, float y, float size, boolean gray) {
+        size /= HEAD_LAYER_SCALE;
+        size /= 2F;
+        if (Minecraft.getInstance().getConnection() == null) return;
+
+        if (gray) {
+            graphics.blit(texture, -size + x, -size + y, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
+            graphics.blit(texture, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + x, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + y, size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
+        } else {
+            graphics.blit(texture, -size + x, -size + y, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F);
+            graphics.blit(texture, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + x, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + y, size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F);
+        }
+    }
     private float getPlayerInfoHeight(int screenWidth) {
         return (int) (Math.max(screenWidth * 0.22F, 45) * 0.18F);
     }

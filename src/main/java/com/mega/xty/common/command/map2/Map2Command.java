@@ -17,6 +17,7 @@ import net.minecraft.commands.CommandFunction;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.ComponentArgument;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.item.FunctionArgument;
@@ -115,6 +116,26 @@ public class Map2Command {
                                         .then(Commands.literal("set")
                                                 .then(Commands.argument("value", IntegerArgumentType.integer())
                                                         .executes(context -> setBlueScore(context.getSource(), IntegerArgumentType.getInteger(context, "value")))
+                                                )
+                                        )
+                                )
+                                .then(Commands.literal("setRedWins")
+                                        .then(Commands.literal("setFromResult")
+                                                .redirect(dispatcher.getRoot(), context -> storeRedWinsFrom(context.getSource()))
+                                        )
+                                        .then(Commands.literal("set")
+                                                .then(Commands.argument("value", IntegerArgumentType.integer())
+                                                        .executes(context -> setRedWins(context.getSource(), IntegerArgumentType.getInteger(context, "value")))
+                                                )
+                                        )
+                                )
+                                .then(Commands.literal("setBlueWins")
+                                        .then(Commands.literal("setFromResult")
+                                                .redirect(dispatcher.getRoot(), context -> storeBlueWinsFrom(context.getSource()))
+                                        )
+                                        .then(Commands.literal("set")
+                                                .then(Commands.argument("value", IntegerArgumentType.integer())
+                                                        .executes(context -> setBlueWins(context.getSource(), IntegerArgumentType.getInteger(context, "value")))
                                                 )
                                         )
                                 )
@@ -229,6 +250,11 @@ public class Map2Command {
                                                 .executes(context -> setXaeroDead(EntityArgument.getPlayer(context, "player"), BoolArgumentType.getBool(context, "value")))
                                         )
                                 )
+                        )
+                )
+                .then(Commands.literal("setTextTip")
+                        .then(Commands.argument("value", ComponentArgument.textComponent())
+                                .executes(context -> setTextTip(context.getSource(), ComponentArgument.getComponent(context, "value")))
                         )
                 );
     }
@@ -372,6 +398,28 @@ public class Map2Command {
         savedData.setBlueScore(value);
         return value;
     }
+    private static CommandSourceStack storeRedWinsFrom(CommandSourceStack sourceStack) {
+        return sourceStack.withCallback((s, success, rV) -> {
+            Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
+            savedData.setRedWins(rV);
+        });
+    }
+    private static int setRedWins(CommandSourceStack sourceStack, int value) {
+        Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
+        savedData.setRedWins(value);
+        return value;
+    }
+    private static CommandSourceStack storeBlueWinsFrom(CommandSourceStack sourceStack) {
+        return sourceStack.withCallback((s, success, rV) -> {
+            Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
+            savedData.setBlueWins(rV);
+        });
+    }
+    private static int setBlueWins(CommandSourceStack sourceStack, int value) {
+        Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
+        savedData.setBlueWins(value);
+        return value;
+    }
     private static int setTeamScoreVisible(CommandSourceStack sourceStack, boolean visible) {
         Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
         savedData.setTeamScoreVisible(visible);
@@ -403,5 +451,12 @@ public class Map2Command {
         Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
         savedData.setScoreOverlayVisible(visible);
         return visible ? 1 : 0;
+    }
+    private static int setTextTip(CommandSourceStack sourceStack, Component component) {
+        Map2SavedData savedData = Map2SavedData.getInstance(sourceStack.getServer());
+        if (component.getString().isEmpty())
+            savedData.setRightTopText(null);
+        else savedData.setRightTopText(component);
+        return 0;
     }
 }

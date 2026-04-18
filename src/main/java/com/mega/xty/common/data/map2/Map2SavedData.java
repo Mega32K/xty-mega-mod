@@ -7,6 +7,7 @@ import com.mega.xty.common.network.s2c.map2.*;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -26,9 +27,13 @@ public class Map2SavedData extends SavedData {
     private boolean scoreOverlayVisible = false;
     private boolean isStopped = true;
     @Nullable
+    private Component rightTopText;
+    @Nullable
     private BlockPos pointA;
     @Nullable
     private BlockPos pointB;
+    private int redWins;
+    private int blueWins;
     private Map2Functions map2Functions = new Map2Functions(this);
     public static Map2SavedData readOrCreate(MinecraftServer server) {
         Map2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Map2SavedData::new, "xty_map2");
@@ -54,6 +59,10 @@ public class Map2SavedData extends SavedData {
             data.redScore = tag.getInt("redScore");
         if (CompoundTagUtils.containsInt(tag, "blueScore"))
             data.redScore = tag.getInt("blueScore");
+        if (CompoundTagUtils.containsInt(tag, "redWins"))
+            data.redWins = tag.getInt("redWins");
+        if (CompoundTagUtils.containsInt(tag, "blueWins"))
+            data.blueWins = tag.getInt("blueWins");
         data.teamScoreVisible = tag.getBoolean("teamScoreVisible");
         data.isTeamMode = tag.getBoolean("isTeamMode");
         if (CompoundTagUtils.containsIntArray(tag, "pointA"))  {
@@ -68,6 +77,8 @@ public class Map2SavedData extends SavedData {
                 data.pointB = new BlockPos(i[0], i[1], i[2]);
             else data.pointB = null;
         } else data.pointB = null;
+        if (CompoundTagUtils.containsString(tag, "RightTopText"))
+            data.rightTopText = Component.Serializer.fromJson(tag.getString("RightTopText"));
         return data;
     }
     @Override
@@ -81,12 +92,16 @@ public class Map2SavedData extends SavedData {
         tag.putInt("countdown", this.countdown);
         tag.putInt("redScore", this.redScore);
         tag.putInt("blueScore", this.blueScore);
+        tag.putInt("redWins", this.redWins);
+        tag.putInt("blueWins", this.blueWins);
         tag.putBoolean("teamScoreVisible", this.teamScoreVisible);
         tag.putBoolean("scoreOverlayVisible", this.scoreOverlayVisible);
         if (this.pointA != null)
             tag.putIntArray("pointA", new int[] {this.pointA.getX(), this.pointA.getY(), this.pointA.getZ()});
         if (this.pointB != null)
             tag.putIntArray("pointB", new int[] {this.pointB.getX(), this.pointB.getY(), this.pointB.getZ()});
+        if (this.rightTopText != null)
+            tag.putString("RightTopText", Component.Serializer.toJson(this.rightTopText));
         return tag;
     }
 
@@ -169,8 +184,6 @@ public class Map2SavedData extends SavedData {
     public boolean isTeamScoreVisible() {
         return teamScoreVisible;
     }
-
-
     public int getRedScore() {
         return redScore;
     }
@@ -192,6 +205,27 @@ public class Map2SavedData extends SavedData {
         for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
             NetworkHandler.sendToPlayer(new S2CSyncTeamScorePacket(this.redScore, blueScore), serverPlayer);
     }
+    public int getRedWins() {
+        return redWins;
+    }
+
+    public void setRedWins(int redWins) {
+        this.redWins = redWins;
+        this.setDirty();
+        for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
+            NetworkHandler.sendToPlayer(new S2CSyncTeamWinsPacket(redWins, this.blueWins), serverPlayer);
+    }
+
+    public int getBlueWins() {
+        return blueWins;
+    }
+
+    public void setBlueWins(int blueWins) {
+        this.blueWins = blueWins;
+        this.setDirty();
+        for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
+            NetworkHandler.sendToPlayer(new S2CSyncTeamWinsPacket(this.redWins, blueWins), serverPlayer);
+    }
     public int getPlayerCountNeed() {
         return playerCountNeed;
     }
@@ -200,5 +234,18 @@ public class Map2SavedData extends SavedData {
         this.setDirty();
         for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
             NetworkHandler.sendToPlayer(new S2CPlayerCountNeedPacket(this.playerCountNeed), serverPlayer);
+    }
+
+    @Nullable
+    public Component getRightTopText() {
+        return rightTopText;
+    }
+    public void setRightTopText(@Nullable Component rightTopText) {
+        if (!Objects.equals(rightTopText, this.rightTopText)) {
+            this.rightTopText = rightTopText;
+            this.setDirty();
+            for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
+                NetworkHandler.sendToPlayer(new S2CMap2TextTipPacket(rightTopText != null, rightTopText), serverPlayer);
+        }
     }
 }

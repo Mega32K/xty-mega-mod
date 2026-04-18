@@ -14,7 +14,6 @@ public class KAD {
     public int kills;
     public int assists;
     public int deaths;
-
     KAD(int kills, int assists, int deaths) {
         this.kills = kills;
         this.assists = assists;

@@ -115,7 +115,7 @@ public class FpsCapability extends EntitySyncCapabilityBase {
             }
             if (player instanceof ServerPlayer sp && sp.tickCount % 20 == 0) {
                 FpsSavedData fpsSavedData = FpsSavedData.getInstance(sp.server);
-                fpsSavedData.setPlayerName(sp);
+                fpsSavedData.setPlayerTab(sp);
             }
         }
     }

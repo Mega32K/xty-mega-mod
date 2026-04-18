@@ -31,6 +31,7 @@ public class GameCommonEvents {
             NetworkHandler.sendToPlayer(new S2CMap2TeamScoreVisiblePacket(data.isTeamScoreVisible()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CMap2ScoreOverlayVisiblePacket(data.isScoreOverlayVisible()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CSyncPointsPacket(data.getPointA(), data.getPointB()), serverPlayer);
+            NetworkHandler.sendToPlayer(new S2CMap2TextTipPacket(data.getRightTopText() != null, data.getRightTopText()), serverPlayer);
         }
     }
     @SubscribeEvent
