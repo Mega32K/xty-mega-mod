@@ -1,18 +1,21 @@
 {
   "mega.xty.spawnpoint_set" : "已设置重生点",
 
-  "entity.xtymegamod.binding" : "绑定实体",
+  "entity.xtymegamod.wine" : "空酒瓶",
 
   "block.xtymegamod.gold_spawnpoint_block" : "重生点金块",
   "block.xtymegamod.gold_spawnpoint_block.lore" : "设置站在方块上的玩家的重生点",
   "block.xtymegamod.chunk_no_culling_block" : "区块免剔除方块",
   "block.xtymegamod.chunk_no_culling_block.lore" : "将所处的区块(16x64x16)设为无法剔除",
+  "block.xtymegamod.bounty_board" : "悬赏板",
 
   "item.xtymegamod.fill_function_creator" : "Fill函数创建工具",
   "item.xtymegamod.fill_function_creator.lore.selected_start" : "已选择起始方块: %s",
   "item.xtymegamod.fill_function_creator.lore.selected_end" : "已选择终点方块: %s",
   "item.xtymegamod.fill_function_creator.lore.use" : "将方块右键此物品设置填充方块",
   "item.xtymegamod.wine_bottle_hat" : "空酒瓶",
+  "item.xtymegamod.bounty_board" : "悬赏板",
+  "item.xtymegamod.optical_nanosuit" : "光学纳米服",
 
   "creative_mode_tab.main.name" : "Mega地图制作",
 
@@ -25,5 +28,52 @@
   "ui.xtymegamod.debug.selected_second" : "选择终点 §7鼠标右键",
   "ui.xtymegamod.debug.line" : "添加命令 §7Ctrl + 鼠标中建",
   "ui.xtymegamod.debug.save" : "保存函数 §7Ctrl + S",
-  "ui.xtymegamod.debug.save.success" : "§7函数生成完毕, 已保存在 %s"
+  "ui.xtymegamod.debug.save.success" : "§7函数生成完毕, 已保存在 %s",
+  "ui.xtymegamod.map2.ace" : "\ue023",
+
+  "commands.xtymegamod.message.game_invul.set.single": "§7实体%s§7的属性 §f无视非游戏类型伤害§7 已设为%s",
+  "commands.xtymegamod.message.game_invul.set.multiple": "%s个§7实体的属性 §f无视非游戏类型伤害§7 已设为%s",
+  "commands.xtymegamod.message.game_invul.get": "实体%s§7的属性 §f无视非游戏类型伤害§7 %s",
+  "commands.xtymegamod.message.map1.game2.health.set_objective": "§7已将游戏二的血量计分板设为 %s",
+  "commands.xtymegamod.message.map1.game2.health.get_objective": "§7游戏二的血量计分板为 %s",
+  "commands.xtymegamod.message.map1.game2.health.max.set_objective": "§7已将游戏二的最大血量计分板设为 %s",
+  "commands.xtymegamod.message.map1.game2.health.max.get_objective": "§7游戏二的最大血量计分板为 %s",
+  "commands.xtymegamod.message.map1.game2.function.error": "不存在函数",
+  "commands.xtymegamod.message.map1.game2.function.on_player_death.set": "§7已将游戏二的\"玩家死亡函数\"设为 %s",
+  "commands.xtymegamod.message.map1.game2.function.on_player_death.get": "§7游戏二的\"玩家死亡函数\"为 %s",
+  "commands.xtymegamod.message.map1.game2.function.start.set": "§7已将游戏二的\"开始调用函数\"设为 %s",
+  "commands.xtymegamod.message.map1.game2.function.start.get": "§7游戏二的\"开始调用函数\"为 %s",
+  "commands.xtymegamod.message.map1.game2.function.stop.set": "§7已将游戏二的\"结束调用函数\"设为 %s",
+  "commands.xtymegamod.message.map1.game2.function.stop.get": "§7游戏二的\"结束调用函数\"为 %s",
+  "commands.xtymegamod.message.map1.game2.function.hurt_by_entity.set": "§7已将游戏二的\"玩家受伤(实体源)函数\"设为 %s",
+  "commands.xtymegamod.message.map1.game2.function.hurt_by_entity.get": "§7游戏二的\"玩家受伤(实体源)函数\"为 %s",
+
+  "commands.xtymegamod.message.map2.game1.function.on_player_death.set": "§7已将游戏一的\"玩家死亡函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game1.function.on_player_death.get": "§7游戏一的\"玩家死亡函数\"为 %s",
+  "commands.xtymegamod.message.map2.game1.function.start.set": "§7已将游戏一的\"开始调用函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game1.function.start.get": "§7游戏一的\"开始调用函数\"为 %s",
+  "commands.xtymegamod.message.map2.game1.function.stop.set": "§7已将游戏一的\"结束调用函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game1.function.stop.get": "§7游戏一的\"结束调用函数\"为 %s",
+
+  "commands.xtymegamod.message.map2.game2.function.on_player_death.set": "§7已将游戏二的\"玩家死亡函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game2.function.on_player_death.get": "§7游戏二的\"玩家死亡函数\"为 %s",
+  "commands.xtymegamod.message.map2.game2.function.start.set": "§7已将游戏二的\"开始调用函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game2.function.start.get": "§7游戏二的\"开始调用函数\"为 %s",
+  "commands.xtymegamod.message.map2.game2.function.stop.set": "§7已将游戏二的\"结束调用函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game2.function.stop.get": "§7游戏二的\"结束调用函数\"为 %s",
+
+  "commands.xtymegamod.message.map2.function.start.set": "§7已将\"开始调用函数\"设为 %s",
+  "commands.xtymegamod.message.map2.function.start.get": "§7\"开始调用函数\"为 %s",
+  "commands.xtymegamod.message.map2.function.stop.set": "§7已将\"结束调用函数\"设为 %s",
+  "commands.xtymegamod.message.map2.function.stop.get": "§7\"结束调用函数\"为 %s",
+  "commands.xtymegamod.message.map2.function.countdown_stop.set": "§7已将\"倒计时结束函数\"设为 %s",
+  "commands.xtymegamod.message.map2.function.countdown_stop.get": "§7\"倒计时结束函数\"为 %s",
+  "commands.xtymegamod.message.map2.countdown.get": "§7剩余时间为 %s",
+
+  "fps.death_type.default": "[Default]",
+  "fps.death_type.headshot": "[HeadShot]",
+  "fps.death_type.burn": "[Burn]",
+  "fps.death_type.blast": "[Blast]",
+  "fps.death_type.slash": "[Slash]",
+  "fps.death_type.shock": "[Shock]"
 }

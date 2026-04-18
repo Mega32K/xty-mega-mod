@@ -93,11 +93,29 @@ minecraft {
             }
         }
 
+
         client {
-            jvmArg "-XX:+AllowEnhancedClassRedefinition"
-            args '--username', 'Mega32K'
+            jvmArgs "-XX:+AllowEnhancedClassRedefinition", "${memory_args}"
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        client0 {
+            parent minecraft.runs.client
+            workingDirectory project.file('run')
+            args '--username', 'Player0'
+        }
+
+        client1 {
+            parent minecraft.runs.client
+            workingDirectory project.file('run-client1')
+            args '--username', 'Player1'
+        }
+
+        client2 {
+            parent minecraft.runs.client
+            workingDirectory project.file('run-client2')
+            args '--username', 'Player2'
         }
 
         server {
@@ -175,9 +193,11 @@ dependencies {
     implementation fileTree(".libs")
     implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
     implementation("io.github.llamalad7:mixinextras-forge:0.4.1")
-    implementation fg.deobf("blank:EndingLibrary-1.20.1:2.1-all");
+    implementation fg.deobf("blank:bettercombat-1.20.1:1.0");
+    implementation fg.deobf("blank:EndingLibrary-1.20.1:${endinglib_version}-all");
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
+    implementation fg.deobf("curse.maven:TacZ-1028108:7401617")
     implementation fg.deobf("curse.maven:MouseTweaks-60089:5338457")
     implementation fg.deobf("curse.maven:IMBlocker-483760:4656554")
     implementation fg.deobf("curse.maven:Oculus-581495:5299671")
@@ -190,6 +210,8 @@ dependencies {
     implementation fg.deobf("curse.maven:ClothConfig-348521:5729105")
     implementation fg.deobf("curse.maven:Jade-324717:6271475")
     implementation fg.deobf("curse.maven:appleskin-248787:4770828")
+    implementation fg.deobf("curse.maven:killicon-1413584:7379800")
+    implementation fg.deobf("curse.maven:XaeroMinimap-263420:7598586")
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")

@@ -2,9 +2,11 @@ package com.mega.xty.mixin.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mega.endinglib.util.annotation.DeprecatedMixin;
 import com.mega.xty.proxy.ClientProxy;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.phys.AABB;
@@ -13,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(LevelRenderer.class)
+@DeprecatedMixin
 public abstract class LevelRendererMixin {
     @WrapOperation(method = "applyFrustum", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;getBoundingBox()Lnet/minecraft/world/phys/AABB;"))
     private AABB chunkNoCullingCheck(ChunkRenderDispatcher.RenderChunk instance, Operation<AABB> original) {
@@ -25,5 +28,5 @@ public abstract class LevelRendererMixin {
             }
         }
         return aabb;
-    }
+    } 
 }

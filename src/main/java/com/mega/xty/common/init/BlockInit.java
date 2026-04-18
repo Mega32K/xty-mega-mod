@@ -1,8 +1,10 @@
 package com.mega.xty.common.init;
 
 import com.mega.xty.XtyMegaMod;
+import com.mega.xty.common.block.BountyBoardBlock;
 import com.mega.xty.common.block.GoldSpawnpointBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -24,6 +26,16 @@ public class BlockInit {
                     .requiresCorrectToolForDrops()
                     .strength(3.0F, 6.0F)
                     .sound(SoundType.METAL)
+            )
+    );
+    public static final RegistryObject<Block> BOUNTY_BOARD = BLOCKS.register(
+            "bounty_board",
+            ()-> new BountyBoardBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.PODZOL)
+                    .instrument(NoteBlockInstrument.BASS)
+                    .strength(2)
+                    .sound(SoundType.WOOD)
+                    .ignitedByLava()
             )
     );
     /*public static RegistryObject<Block> CHUNK_NO_CULLING_BLOCK;

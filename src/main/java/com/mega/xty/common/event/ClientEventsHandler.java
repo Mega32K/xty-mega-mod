@@ -1,0 +1,86 @@
+package com.mega.xty.common.event;
+
+import com.mega.endinglib.api.event.client.RenderShadowEvent;
+import com.mega.endinglib.client.ClientWrapped;
+import com.mega.endinglib.mixin.accessor.AccessorEntity;
+import com.mega.endinglib.util.time.TimeContext;
+import com.mega.xty.common.data.map2.ClientGameData;
+import com.mega.xty.common.data.map2.DeathData;
+import com.mega.xty.common.init.ItemInit;
+import com.mega.xty.proxy.CommonProxy;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+@Mod.EventBusSubscriber(Dist.CLIENT)
+public class ClientEventsHandler {
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            Minecraft mc = Minecraft.getInstance();
+            ClientLevel clientLevel = mc.level;
+            if (clientLevel != null) {
+                if (!ClientGameData.map2Playing()) {
+                    if (!ClientGameData.toAddDeathData.isEmpty()) ClientGameData.toAddDeathData.clear();
+                    if (!ClientGameData.toRemoveDeathData.isEmpty()) ClientGameData.toRemoveDeathData.clear();
+                    if (!ClientGameData.deathDataList.isEmpty()) ClientGameData.deathDataList.clear();
+                } else {
+                    DeathData data;
+                    while ((data = ClientGameData.toAddDeathData.poll()) != null) {
+                        ClientGameData.deathDataList.add(data);
+                    }
+                    while ((data = ClientGameData.toRemoveDeathData.poll()) != null) {
+                        ClientGameData.deathDataList.remove(data);
+                    }
+                    ClientGameData.deathDataList.forEach(DeathData::tick);
+                }
+            }
+        }
+    }
+    @SubscribeEvent
+    public static void onPlayerRender(RenderPlayerEvent.Pre event) {
+        float partialTicks = event.getPartialTick();
+        CommonProxy.getXtyCap(event.getEntity()).ifPresent(capability -> {
+            if (capability.canUsePartialTeleportAnim) {
+                Player player = event.getEntity();
+                PoseStack poseStack = event.getPoseStack();
+                double d0 = Mth.lerp(partialTicks, player.xOld, player.getX());
+                double d1 = Mth.lerp(partialTicks, player.yOld, player.getY());
+                double d2 = Mth.lerp(partialTicks, player.zOld, player.getZ());
+                poseStack.translate(-d0, -d1, -d2);
+                d0 = Mth.lerp(capability.calculateInterpolationProgress(TimeContext.Client.alwaysPartial()), capability.smoothStartPos.x, capability.smoothTeleportTarget.x);
+                d1 = Mth.lerp(capability.calculateInterpolationProgress(TimeContext.Client.alwaysPartial()), capability.smoothStartPos.y, capability.smoothTeleportTarget.y);
+                d2 = Mth.lerp(capability.calculateInterpolationProgress(TimeContext.Client.alwaysPartial()), capability.smoothStartPos.z, capability.smoothTeleportTarget.z);
+                ((AccessorEntity) player).setPositionField(new Vec3(d0, d1, d2));
+                poseStack.translate(d0, d1, d2);
+            }
+        });
+    }
+    @SubscribeEvent
+    public static void renderShadowEvent(RenderShadowEvent event) {
+        if (event.getEntity() instanceof AbstractClientPlayer cp) {
+            if (cp.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
+                CommonProxy.getMap2Cap(cp).ifPresent(cap -> {
+                    Player localPlayer = ClientWrapped.clientPlayer();
+                    if (localPlayer != cp) {
+                        if (localPlayer != null) {
+                            if ((!localPlayer.isAlliedTo(cp) && !localPlayer.isSpectator())) {
+                                event.setCanceled(true);
+                            }
+                        }
+                    } else event.setCanceled(true);
+                });
+            }
+        }
+    }
+}
