@@ -21,7 +21,6 @@ import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -81,7 +80,6 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     protected @NotNull Predicate<Entity> canAttach() {
         return entity -> entity instanceof Player;
     }
-
     @Override
     public void onSyncedDataUpdated(CapabilityEntityData<?> data) {
         if (this.NEED_START.equals(data)) {
@@ -98,7 +96,6 @@ public class Map2Capability extends EntitySyncCapabilityBase {
             }
         } else if (this.XAERO_DEAD.equals(data)) {
             if (this.getEntity() == ClientWrapped.clientPlayer()) {
-                System.out.println(this.isXaeroDead());
                 if (!this.isXaeroDead()) {
                     Player player = ClientWrapped.clientPlayer();
                     player.setPos(player.position().add(0, -32F, 0F));
@@ -123,7 +120,6 @@ public class Map2Capability extends EntitySyncCapabilityBase {
 
     @Override
     public void customSerializeNBT(CompoundTag compoundTag) {
-
     }
 
     @Override
@@ -131,7 +127,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
         if (this.getEntity() instanceof ServerPlayer serverPlayer) {
             Map2SavedData data = Map2SavedData.getInstance(serverPlayer.server);
             if (!data.isStopped()) {
-                this.setXaeroDead(this.isXaeroDead());
+                this.updateXaeroDead(this.isXaeroDead(), serverPlayer, EndingLibrarySavedData.getInstance(serverPlayer.server));
             }
         }
     }
@@ -221,53 +217,66 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     }
     public void setXaeroDead(boolean value) {
         this.dataManager.setValue(XAERO_DEAD, value);
-        if (this.getEntity() instanceof ServerPlayer player) {
-            EndingLibrarySavedData savedData = EndingLibrarySavedData.readOrCreate(player.server);
-            if (value) {
-                CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
-                    setLastDeathPos(player.position().toVector3f().add(0, 32, 0));
-                    cap.setCustomSkin(DEATH_PLAYER_SKIN.toString());
-                    savedData.addDisabledPermission(player, InputOperations.MOVEMENT);
-                    savedData.addDisabledPermission(player, InputOperations.SNEAK);
-
-                    savedData.addDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
-                    savedData.addDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
-                    savedData.addDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
-                    savedData.addDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
-                    savedData.addDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
-                    player.serverLevel().levelEvent(player, 110120, BlockPos.ZERO, MapLevelEvents.FPS_SPECTATE);
-                });
-                CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {
-                    cap.setRenderScale(new Vector3f(0F, 0F, 0F));
-                    cap.setRenderScaleInterpolationDuration(1);
-                });
-            } else {
-                CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
-                    this.getLastDeathPos().ifPresent(pos -> {
-                        setLastDeathPos(null);
-                    });
-                    player.fallDistance = 0F;
-                    cap.setCustomSkin("");
-                    savedData.removeDisabledPermission(player, InputOperations.MOVEMENT);
-                    savedData.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
-                    savedData.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
-                    savedData.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
-                    savedData.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
-                    savedData.removeDisabledPermission(player, InputOperations.SNEAK);
-
-                    savedData.removeDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
-                    savedData.removeDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
-                    savedData.removeDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
-                    savedData.removeDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
-                    savedData.removeDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
-                });
-                CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {
-                    cap.setRenderScale(new Vector3f(1F, 1F,1F));
-                    cap.setRenderScaleEasing(Easing.IN_OUT_CUBIC);
-                    cap.setRenderScaleInterpolationDuration(15);
-                });
-
+        if (this.XAERO_DEAD.isDirty()) {
+            if (this.getEntity() instanceof ServerPlayer player) {
+                EndingLibrarySavedData elSavedData = EndingLibrarySavedData.readOrCreate(player.server);
+                Map2SavedData map2SavedData = Map2SavedData.getInstance(player.server);
+                Inventory inventory = player.getInventory();
+                if (value) {
+                    map2SavedData.storeDeadPlayerInventory(player);
+                    inventory.clearContent();
+                } else {
+                    var inv = map2SavedData.pickUpDeadSavedInv(player);
+                    if (inv != null) inv.overridePlayerInv(player);
+                }
+                updateXaeroDead(value, player, elSavedData);
             }
+        }
+    }
+
+    public void updateXaeroDead(boolean value, ServerPlayer player, EndingLibrarySavedData savedData) {
+        if (value) {CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
+            setLastDeathPos(player.position().toVector3f().add(0, 32, 0));
+            cap.setCustomSkin(DEATH_PLAYER_SKIN.toString());
+            savedData.addDisabledPermission(player, InputOperations.MOVEMENT);
+            savedData.addDisabledPermission(player, InputOperations.SNEAK);
+
+            savedData.addDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
+            savedData.addDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
+            savedData.addDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
+            savedData.addDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
+            savedData.addDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
+            player.serverLevel().levelEvent(player, 110120, BlockPos.ZERO, MapLevelEvents.FPS_SPECTATE);
+        });
+            CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {
+                cap.setRenderScale(new Vector3f(0F, 0F, 0F));
+                cap.setRenderScaleInterpolationDuration(1);
+            });
+        } else {
+            CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
+                this.getLastDeathPos().ifPresent(pos -> {
+                    setLastDeathPos(null);
+                });
+                player.fallDistance = 0F;
+                cap.setCustomSkin("");
+                savedData.removeDisabledPermission(player, InputOperations.MOVEMENT);
+                savedData.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
+                savedData.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
+                savedData.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
+                savedData.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
+                savedData.removeDisabledPermission(player, InputOperations.SNEAK);
+
+                savedData.removeDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
+                savedData.removeDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
+                savedData.removeDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
+                savedData.removeDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
+                savedData.removeDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
+            });
+            CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {
+                cap.setRenderScale(new Vector3f(1F, 1F,1F));
+                cap.setRenderScaleEasing(Easing.IN_OUT_CUBIC);
+                cap.setRenderScaleInterpolationDuration(15);
+            });
         }
     }
     public boolean isXaeroDead() {

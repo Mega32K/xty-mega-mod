@@ -67,7 +67,7 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CUsingKADPacket.class, S2CUsingKADPacket::encode, S2CUsingKADPacket::decode, S2CUsingKADPacket::handle);
         INSTANCE.registerMessage(id(), S2CPlayerNamePacket.class, S2CPlayerNamePacket::encode, S2CPlayerNamePacket::decode, S2CPlayerNamePacket::handle);
         INSTANCE.registerMessage(id(), S2CMap2TextTipPacket.class, S2CMap2TextTipPacket::encode, S2CMap2TextTipPacket::decode, S2CMap2TextTipPacket::handle);
-        INSTANCE.registerMessage(id(), S2CSyncTeamScorePacket.class, S2CSyncTeamScorePacket::encode, S2CSyncTeamScorePacket::decode, S2CSyncTeamScorePacket::handle);
+        INSTANCE.registerMessage(id(), S2CSyncTeamWinsPacket.class, S2CSyncTeamWinsPacket::encode, S2CSyncTeamWinsPacket::decode, S2CSyncTeamWinsPacket::handle);
     }
     public static <MSG> void sendToAll(MSG msg) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), msg);

@@ -102,7 +102,7 @@ public class CommonEventsHandler {
             CommonProxy.getFPSCap(deathP).ifPresent(cap -> {
                 if (cap.getAssisterDamage() >= 41F) {
                     Player assister = cap.checkAndGetAssister(deathP.level());
-                    if (assister != null)
+                    if (assister != null && !assister.getUUID().equals(killer.getUUID()))
                         message.append(" + ").append(assister.getDisplayName());
                 }
             });

@@ -34,11 +34,17 @@ public class FpsCapability extends EntitySyncCapabilityBase {
     public static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "fps");
     @Nullable
     private UUID assisterID;
+    /**
+     * 助攻最高
+     */
     @Nullable
     private Player assister;
     private float assisterDamage;
     @Nullable
     private UUID assisterID2;
+    /**
+     * 助攻第二高
+     */
     @Nullable
     private Player assister2;
     private float assisterDamage2;
@@ -190,6 +196,8 @@ public class FpsCapability extends EntitySyncCapabilityBase {
         }
         public void makeDeathType(Collection<DeathSourceType> types) {
             this.killedMessageTypes.addAll(types);
+            if (this.killedMessageTypes.contains(DeathSourceType.DEFAULT) || this.killedMessageTypes.contains(DeathSourceType.HEADSHOT))
+                this.killedMessageTypes.remove(DeathSourceType.SLASH);
         }
         public MutableComponent makeDeathTypeComponent() {
             MutableComponent baseMessage = Component.literal("");

@@ -43,29 +43,42 @@ public class FpsCommonEventsHandler {
                 CommonProxy.getFPSCap(player).ifPresent(cap -> {
                     float currentDamage = event.getAmount();
                     Player assister = cap.checkAndGetAssister(level);
+                    boolean isNewAssister = true;
+                    //如果当前造成伤害玩家为助攻最高玩家
                     if (assister != null && assister.getUUID().equals(sourceP.getUUID())) {
                         cap.setAssisterDamage(cap.getAssisterDamage() + currentDamage);
-                    } else {
-                        assister = cap.checkAndGetAssister2(level);
-                        if (assister != null && assister.getUUID().equals(sourceP.getUUID())) {
-                            cap.setAssisterDamage2(cap.getAssisterDamage2() + currentDamage);
-                        } else {
-                            if (currentDamage > cap.getAssisterDamage()) {
-                                cap.setAssister2(cap.checkAndGetAssister2(level));
-                                cap.setAssisterDamage2(cap.getAssisterDamage());
-                                cap.setAssisterDamage(currentDamage);
-                                cap.setAssister(sourceP);
-                            } else if (currentDamage > cap.getAssisterDamage2()) {
-                                cap.setAssisterDamage2(currentDamage);
-                                cap.setAssister2(sourceP);
-                            }
+                        isNewAssister = false;
+                    }
+                    //如果当前造成伤害玩家为助攻第二高玩家
+                    assister = cap.checkAndGetAssister2(level);
+                    if (assister != null && assister.getUUID().equals(sourceP.getUUID())) {
+                        cap.setAssisterDamage2(cap.getAssisterDamage2() + currentDamage);
+                        isNewAssister = false;
+                    }
+                    //如果都不是
+                    if (isNewAssister) {
+                        //若新助攻玩家伤害damage: damage > 最高助攻
+                        if (currentDamage > cap.getAssisterDamage()) {
+                            //第二变原第一
+                            cap.setAssister2(cap.checkAndGetAssister(level));
+                            cap.setAssisterDamage2(cap.getAssisterDamage());
+                            //第一变新助攻玩家
+                            cap.setAssisterDamage(currentDamage);
+                            cap.setAssister(sourceP);
+                            //若新助攻玩家伤害damage: 最高助攻 >= damage > 第二助攻
+                        } else if (currentDamage > cap.getAssisterDamage2()) {
+                            //第二变新助攻玩家
+                            cap.setAssisterDamage2(currentDamage);
+                            cap.setAssister2(sourceP);
                         }
                     }
-                    //再次检查伤害大小
+                    //再次检查伤害大小, 进行排序
                     if (cap.getAssisterDamage2() > cap.getAssisterDamage()) {
+                        //玩家互换
                         Player assister1 = cap.checkAndGetAssister(level);
                         cap.setAssister(cap.checkAndGetAssister2(level));
                         cap.setAssister2(assister1);
+                        //伤害互换
                         float assisterDamage1 = cap.getAssisterDamage();
                         cap.setAssisterDamage(cap.getAssisterDamage2());
                         cap.setAssisterDamage2(assisterDamage1);
@@ -96,12 +109,15 @@ public class FpsCommonEventsHandler {
                     //获取真正的助攻者
                     MutableObject<Player> assisterMO = new MutableObject<>(null);
                     CommonProxy.getFPSCap(killed).ifPresent(cap -> {
-                        Player assister = cap.checkAndGetAssister(level);
+                        Player assister = cap.checkAndGetAssister2(level);
                         //如果击杀玩家是造成伤害最多的助攻, 选择另一个玩家
-                        if (assister != null && assister.getUUID().equals(killer.getUUID())) {
-                            assisterMO.setValue(cap.checkAndGetAssister2(level));
+                        //如果另一个玩家也是击杀玩家, 不进行操作
+                        if (assister != null && !assister.getUUID().equals(killer.getUUID())) {
+                            assisterMO.setValue(assister);
                         } else {
-                            assisterMO.setValue(cap.checkAndGetAssister(level));
+                            assister = cap.checkAndGetAssister(level);
+                            if (assister != null && !assister.getUUID().equals(killer.getUUID()))
+                                assisterMO.setValue(assister);
                         }
                     });
                     Player assister = assisterMO.getValue();

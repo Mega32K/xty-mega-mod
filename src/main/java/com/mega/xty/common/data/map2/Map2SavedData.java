@@ -1,20 +1,28 @@
 package com.mega.xty.common.data.map2;
 
+import com.mega.endinglib.api.data.CompoundTagReader;
 import com.mega.endinglib.api.data.CompoundTagUtils;
+import com.mega.endinglib.api.data.CompoundTagWriter;
 import com.mega.endinglib.util.mixin.level.ServerEC;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.*;
 import com.mega.xty.util.data_expand.SavedDataGetter;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.*;
 
 public class Map2SavedData extends SavedData {
     public MinecraftServer server;
@@ -34,6 +42,7 @@ public class Map2SavedData extends SavedData {
     private BlockPos pointB;
     private int redWins;
     private int blueWins;
+    private final Map<UUID, Inventory> deadSavedInventory = new Object2ObjectOpenHashMap<>();
     private Map2Functions map2Functions = new Map2Functions(this);
     public static Map2SavedData readOrCreate(MinecraftServer server) {
         Map2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Map2SavedData::new, "xty_map2");
@@ -79,6 +88,10 @@ public class Map2SavedData extends SavedData {
         } else data.pointB = null;
         if (CompoundTagUtils.containsString(tag, "RightTopText"))
             data.rightTopText = Component.Serializer.fromJson(tag.getString("RightTopText"));
+        if (CompoundTagUtils.containsMap(tag, "DeadSavedInventories")) {
+            data.deadSavedInventory.clear();
+            data.deadSavedInventory.putAll(CompoundTagUtils.getMap(tag, "DeadSavedInventories", CompoundTag::getUUID, Inventory.NBT_READER));
+        }
         return data;
     }
     @Override
@@ -102,6 +115,8 @@ public class Map2SavedData extends SavedData {
             tag.putIntArray("pointB", new int[] {this.pointB.getX(), this.pointB.getY(), this.pointB.getZ()});
         if (this.rightTopText != null)
             tag.putString("RightTopText", Component.Serializer.toJson(this.rightTopText));
+        if (!this.deadSavedInventory.isEmpty())
+            CompoundTagUtils.putMap(tag, "DeadSavedInventories", this.deadSavedInventory, CompoundTag::putUUID, Inventory.NBT_WRITER);
         return tag;
     }
 
@@ -246,6 +261,101 @@ public class Map2SavedData extends SavedData {
             this.setDirty();
             for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
                 NetworkHandler.sendToPlayer(new S2CMap2TextTipPacket(rightTopText != null, rightTopText), serverPlayer);
+        }
+    }
+
+    public Map<UUID, Inventory> getDeadSavedInventory() {
+        return Collections.unmodifiableMap(deadSavedInventory);
+    }
+    public void storeDeadPlayerInventory(Player player) {
+        deadSavedInventory.put(player.getUUID(), Inventory.createFromInventory(player.getInventory()));
+        this.setDirty();
+    }
+    @Nullable
+    public Inventory pickUpDeadSavedInv(Player player) {
+        return deadSavedInventory.remove(player.getUUID());
+    }
+
+    public static class Inventory {
+        public static final CompoundTagWriter<Inventory> NBT_WRITER = ((compoundTag, s, inventory) -> compoundTag.put(s, inventory.saveInventory(new ListTag())));
+        public static final CompoundTagReader<Inventory> NBT_READER = ((compoundTag, s) -> {
+            Inventory inventory = new Inventory();
+            inventory.loadInventory(compoundTag.getList(s, Tag.TAG_COMPOUND));
+            return inventory;
+        });
+        public final NonNullList<ItemStack> items = NonNullList.withSize(36, ItemStack.EMPTY);
+        public final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
+        public final NonNullList<ItemStack> offhand = NonNullList.withSize(1, ItemStack.EMPTY);
+        public ListTag saveInventory(ListTag listTag) {
+            for(int i = 0; i < this.items.size(); ++i) {
+                if (!this.items.get(i).isEmpty()) {
+                    CompoundTag compoundtag = new CompoundTag();
+                    compoundtag.putByte("Slot", (byte)i);
+                    this.items.get(i).save(compoundtag);
+                    listTag.add(compoundtag);
+                }
+            }
+
+            for(int j = 0; j < this.armor.size(); ++j) {
+                if (!this.armor.get(j).isEmpty()) {
+                    CompoundTag compoundtag1 = new CompoundTag();
+                    compoundtag1.putByte("Slot", (byte)(j + 100));
+                    this.armor.get(j).save(compoundtag1);
+                    listTag.add(compoundtag1);
+                }
+            }
+
+            for(int k = 0; k < this.offhand.size(); ++k) {
+                if (!this.offhand.get(k).isEmpty()) {
+                    CompoundTag compoundtag2 = new CompoundTag();
+                    compoundtag2.putByte("Slot", (byte)(k + 150));
+                    this.offhand.get(k).save(compoundtag2);
+                    listTag.add(compoundtag2);
+                }
+            }
+
+            return listTag;
+        }
+
+        public void loadInventory(ListTag listTag) {
+            this.items.clear();
+            this.armor.clear();
+            this.offhand.clear();
+
+            for(int i = 0; i < listTag.size(); ++i) {
+                CompoundTag compoundtag = listTag.getCompound(i);
+                int j = compoundtag.getByte("Slot") & 255;
+                ItemStack itemstack = ItemStack.of(compoundtag);
+                if (!itemstack.isEmpty()) {
+                    if (j >= 0 && j < this.items.size()) {
+                        this.items.set(j, itemstack);
+                    } else if (j >= 100 && j < this.armor.size() + 100) {
+                        this.armor.set(j - 100, itemstack);
+                    } else if (j >= 150 && j < this.offhand.size() + 150) {
+                        this.offhand.set(j - 150, itemstack);
+                    }
+                }
+            }
+
+        }
+        public static Inventory createFromInventory(net.minecraft.world.entity.player.Inventory pInventory) {
+            Inventory inventory = new Inventory();
+            for (int i=0;i<inventory.items.size();i++)
+                inventory.items.set(i, pInventory.items.get(i));
+            for (int i=0;i<inventory.armor.size();i++)
+                inventory.armor.set(i, pInventory.armor.get(i));
+            for (int i=0;i<inventory.offhand.size();i++)
+                inventory.offhand.set(i, pInventory.offhand.get(i));
+            return inventory;
+        }
+        public void overridePlayerInv(Player player) {
+            net.minecraft.world.entity.player.Inventory pInv = player.getInventory();
+            for (int i=0;i<this.items.size();i++)
+                pInv.items.set(i, this.items.get(i));
+            for (int i=0;i<this.armor.size();i++)
+                pInv.armor.set(i, this.armor.get(i));
+            for (int i=0;i<this.offhand.size();i++)
+                pInv.offhand.set(i, this.offhand.get(i));
         }
     }
 }

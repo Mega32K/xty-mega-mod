@@ -140,7 +140,7 @@ public class SelectPlayerOverlay implements IGuiOverlay {
         float profileSize = rawSize * (1F / HEAD_LAYER_SCALE);
         float width2 = 144F;
         float x = (screenWidth - width2) / 2F + profileSize;
-        float y = Math.min(screenHeight * 0.825F, screenHeight - profileSize - 48F);
+        float y = Math.min(screenHeight * 0.82F, screenHeight - profileSize - 52F);
         String playerNameText = player.getDisplayName().getString();
         float width1 = -profileSize * HEAD_LAYER_SCALE + 144F - rawSize * HEAD_LAYER_SCALE;
         float height12 = 12F;

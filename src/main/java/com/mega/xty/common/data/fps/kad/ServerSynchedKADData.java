@@ -61,6 +61,8 @@ public class ServerSynchedKADData extends SynchedKADData {
     @Override
     public void modifyKAD(String key, Consumer<KAD> modifier) {
         KAD lastKAD = this.getKAD(key);
+        if  (lastKAD != null)
+            lastKAD = new KAD(lastKAD.kills, lastKAD.assists, lastKAD.deaths);
         super.modifyKAD(key, modifier);
         if (!Objects.equals(lastKAD, this.getKAD(key))) {
             savedData.setDirty();
