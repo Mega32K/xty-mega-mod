@@ -44,6 +44,7 @@ public class GameStartScreen extends Screen {
             0, 0,
             2708, 2708
     );
+    final int randomTime = (int) (Math.random() * 65535);
     public int startInterpolationTick;
     public int tickCount;
     public int waitingForClosing = Integer.MAX_VALUE;
@@ -103,7 +104,7 @@ public class GameStartScreen extends Screen {
                         ? 1F
                         : 1F - (amagariTick - amagariInOutDuration - amagariNormalDuration + partialTicks) / amagariInOutDuration
                     );
-            renderAmagari(guiGraphics, poseStack, guiWidth / 2, guiHeight / 2, amagariAlpha);
+            renderAmagari(guiGraphics, poseStack, guiWidth / 2, guiHeight / 2, amagariAlpha, (amagariTick + partialTicks) / 20F + randomTime);
 
             poseStack.pushPose();
             float scale = 0.75F;
@@ -187,19 +188,21 @@ public class GameStartScreen extends Screen {
         }
         RenderSystem.disableBlend();
     }
-    private void renderAmagari(MegaGuiGraphics graphics, PoseStack poseStack, int x, int y, float alpha) {
+    private void renderAmagari(MegaGuiGraphics graphics, PoseStack poseStack, int x, int y, float alpha, float time) {
         float defaultScale = Math.max(graphics.guiWidth(), graphics.guiHeight()) * 0.02F;
         float iconSize = defaultScale * 24F;
         graphics.setColor(1F, 1F, 1F, alpha);
         //渲染icon
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        ModShaders.logoGlitch(time, 1.0F);
         graphics.blit(AMAGARI.texture(),
                 x - iconSize / 2F, y - iconSize / 2F,
                 iconSize, iconSize,
                 AMAGARI.startX(), AMAGARI.startY(),
                 AMAGARI.endX(), AMAGARI.endY(),
-                AMAGARI.width(), AMAGARI.height()
+                AMAGARI.width(), AMAGARI.height(),
+                ModShaders::getLogoGlitch
         );
         graphics.setColor(1F, 1F, 1F, 1F);
         RenderSystem.disableBlend();

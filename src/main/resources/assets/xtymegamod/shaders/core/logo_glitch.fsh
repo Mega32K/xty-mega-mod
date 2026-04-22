@@ -14,21 +14,29 @@ float hash(float value) {
 }
 
 float bandNoise(float y, float time) {
-    return hash(floor(y * 32.0) + floor(time * 18.0) * 7.0);
+    return hash(floor(y * 32.0) + floor(time * 10.0) * 7.0);
 }
 
 void main() {
     float strength = max(GlitchStrength, 0.0);
     float time = _ProgramTime;
     float band = bandNoise(texCoord0.y, time);
-    float pulse = step(0.78, band) * sin(time * 28.0 + texCoord0.y * 80.0);
+    float pulse = step(0.78, band) * sin(time * 16.0 + texCoord0.y * 80.0);
     float jitter = pulse * 0.008 * strength;
-    float scan = step(0.985, fract(texCoord0.y * 48.0 + time * 8.0)) * 0.35 * strength;
+    float scan = step(0.985, fract(texCoord0.y * 48.0 + time * 5.0)) * 0.35 * strength;
 
     vec2 baseUv = clamp(texCoord0 + vec2(jitter, 0.0), vec2(0.0), vec2(1.0));
     vec4 base = texture(Sampler0, baseUv);
-    vec4 redShift = texture(Sampler0, clamp(baseUv + vec2(0.004 * strength, 0.0), vec2(0.0), vec2(1.0)));
-    vec4 blueShift = texture(Sampler0, clamp(baseUv - vec2(0.004 * strength, 0.0), vec2(0.0), vec2(1.0)));
+    float chromaSlot = floor(time * 1.25);
+    float chromaProgress = fract(time * 1.25);
+    float chromaActive = step(0.58, hash(chromaSlot + 3.0)) * (1.0 - step(0.18 + hash(chromaSlot + 5.0) * 0.18, chromaProgress));
+    float chromaCenter = hash(chromaSlot + 11.0);
+    float chromaHalfHeight = 0.10 + hash(chromaSlot + 17.0) * 0.16;
+    float chromaMask = chromaActive * (1.0 - smoothstep(chromaHalfHeight, chromaHalfHeight + 0.06, abs(texCoord0.y - chromaCenter)));
+    float chromaDirection = mix(-1.0, 1.0, step(0.5, hash(chromaSlot + 23.0)));
+    float chromaOffset = 0.012 * strength * chromaMask * chromaDirection;
+    vec4 redShift = texture(Sampler0, clamp(baseUv + vec2(chromaOffset, 0.0), vec2(0.0), vec2(1.0)));
+    vec4 blueShift = texture(Sampler0, clamp(baseUv - vec2(chromaOffset, 0.0), vec2(0.0), vec2(1.0)));
     vec3 color = vec3(redShift.r, base.g, blueShift.b);
 
     color += scan * base.a;
