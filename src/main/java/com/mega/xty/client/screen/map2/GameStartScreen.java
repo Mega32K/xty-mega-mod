@@ -3,14 +3,11 @@ package com.mega.xty.client.screen.map2;
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.api.client.screen.BlitInfo;
 import com.mega.endinglib.client.ClientWrapped;
-import com.mega.endinglib.mixin.accessor.AccessorGuiGraphics;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.endinglib.util.time.TimeContext;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.map2.ClientGameData;
-import com.mega.xty.proxy.CommonProxy;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -24,13 +21,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Math;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GameStartScreen extends Screen {
     public static final ResourceLocation TITLE = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/gun_mini_game.png");
@@ -46,6 +39,11 @@ public class GameStartScreen extends Screen {
             ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/xiaowu.png"),
             0, 0, 155, 155
     );
+    public static final BlitInfo AMAGARI = new BlitInfo(
+            ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/amagari.png"),
+            0, 0,
+            2708, 2708
+    );
     public int startInterpolationTick;
     public int tickCount;
     public int waitingForClosing = Integer.MAX_VALUE;
@@ -55,6 +53,10 @@ public class GameStartScreen extends Screen {
     final int creatorIconStop = 120;
     final int creatorIconInOutDuration = 15;
     final int creatorIconNormalDuration = creatorIconStop - creatorIconStart - creatorIconInOutDuration * 2;
+    final int amagariStart = 120;
+    final int amagariStop = 220;
+    final int amagariInOutDuration = 15;
+    final int amagariNormalDuration = amagariStop - amagariStart - amagariInOutDuration * 2;
     public GameStartScreen(Component title) {
         super(title);
     }
@@ -74,8 +76,16 @@ public class GameStartScreen extends Screen {
             graphics.fill(-1, -1, guiWidth + 1, guiHeight + 1, 0xFF676767);
             graphics.setColor(1F, 1F, 1F, 1F);
         }
+        int amagariTick = this.tickCount - amagariStart;
+        {
+            float backgroundAlpha = Math.min(1.0F, (amagariTick + partialTicks) / amagariInOutDuration);
+            if (backgroundAlpha > 0F) {
+                graphics.setColor(1F, 1F, 1F, backgroundAlpha);
+                graphics.fill(-1, -1, guiWidth + 1, guiHeight + 1, 0xFF1b1414);
+            }
+        }
         if (this.tickCount < creatorIconStop) {
-            if (this.tickCount > creatorIconStart) {
+            if (this.tickCount >= creatorIconStart) {
                 int creatorTick = this.tickCount - creatorIconStart;
                 float creatorIconsAlpha =  creatorTick < creatorIconInOutDuration
                         ? (creatorTick + partialTicks) / creatorIconInOutDuration
@@ -86,16 +96,35 @@ public class GameStartScreen extends Screen {
                 creatorIconsAlpha = Easing.IN_OUT_CUBIC.calculate(creatorIconsAlpha);
                 renderCreators(guiGraphics, poseStack, guiWidth / 2, guiHeight / 2, creatorIconsAlpha);
             }
+        } else if (this.tickCount < amagariStop) {
+            float amagariAlpha =  amagariTick < amagariInOutDuration
+                    ? (amagariTick + partialTicks) / amagariInOutDuration
+                    :  (amagariTick < amagariInOutDuration + amagariNormalDuration
+                        ? 1F
+                        : 1F - (amagariTick - amagariInOutDuration - amagariNormalDuration + partialTicks) / amagariInOutDuration
+                    );
+            renderAmagari(guiGraphics, poseStack, guiWidth / 2, guiHeight / 2, amagariAlpha);
+
+            poseStack.pushPose();
+            float scale = 0.75F;
+            float lineHeight = font.lineHeight * scale;
+            poseStack.translate(guiWidth / 2F, guiHeight - 3 - lineHeight, 0);
+            poseStack.scale(scale, scale, scale);
+            graphics.drawCenteredString(font, "© 2026 雨霁Amagari Studio 保留所有权利", 0, 0, Mth.clamp((int) (amagariAlpha * 255), 1, 255) << 24 | 0x00A10000 | 0x0000A100 | 0x000000A1);
+            poseStack.popPose();
         } else {
-            this.tickCount -= creatorIconStop;
-            float backgroundAlpha = Math.min(1.0F, (this.tickCount + partialTicks) / 20F);
-            //[-∞, 2F]
-            float progress = 2F - (this.tickCount + partialTicks) / 40F;
+            this.tickCount -= amagariStop;
+            float seconds = (this.tickCount + partialTicks) / 20F;
+            float backgroundAlpha = Math.min(1.0F, seconds);
+            //[-2,] 初始-2, 4秒后 > 0
+            float progress = seconds / 2F - 2F;
+            //[, 2] 初始2, 4秒后 < 0 (从完全残缺到无损)
+            float dissolve = 2f - seconds / 2F;
             graphics.setColor(1F, 1F, 1F, backgroundAlpha);
             graphics.fill(-1, -1, guiWidth + 1, guiHeight + 1, 0xFF1b2238);
             float width = guiWidth / 4F;
             float ratio = TITLE_BLIT.height() / (float) TITLE_BLIT.width();
-            ModShaders.dissolve2d(progress);
+            ModShaders.dissolve2d(dissolve);
             guiGraphics.blit(TITLE,
                     guiWidth / 2F - width / 2F, guiHeight / 2F - 40,
                     width, width * ratio,
@@ -106,12 +135,12 @@ public class GameStartScreen extends Screen {
             //进度条
             {
                 //标题已开始渲染
-                canUpdateProgressBar = progress < 1F;
+                canUpdateProgressBar = progress > 0F;
                 float barAlpha;
                 if (!canUpdateProgressBar) {
                     barAlpha = 0F;
-                } else if (waitingForClosing > 10000) {
-                    barAlpha = Math.min(1.0F, progress * -1F + 1F);
+                } else if (waitingForClosing > 100000) {
+                    barAlpha = Math.min(1.0F, progress);
                     if (barAlpha >= 1.0F) {
                         if (currentPlayerCount >= ClientGameData.playerCountNeed) {
                             waitingForClosing = 160;
@@ -151,12 +180,30 @@ public class GameStartScreen extends Screen {
             float lineHeight = font.lineHeight * scale;
             poseStack.translate(guiWidth / 2F, guiHeight - 3 - lineHeight, 0);
             poseStack.scale(scale, scale, scale);
-            graphics.drawCenteredString(font, "Powered by Mega, XiaoWu", 0, 0, 0xFFa1a1a1);
+            graphics.drawCenteredString(font, "Powered by Mega, XiaoWu, JustFaust", 0, 0, 0xFFa1a1a1);
             poseStack.popPose();
             graphics.setColor(1F, 1F, 1F, 1F);
-            this.tickCount += creatorIconStop;
+            this.tickCount += amagariStop;
         }
         RenderSystem.disableBlend();
+    }
+    private void renderAmagari(MegaGuiGraphics graphics, PoseStack poseStack, int x, int y, float alpha) {
+        float defaultScale = Math.max(graphics.guiWidth(), graphics.guiHeight()) * 0.02F;
+        float iconSize = defaultScale * 24F;
+        graphics.setColor(1F, 1F, 1F, alpha);
+        //渲染icon
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        graphics.blit(AMAGARI.texture(),
+                x - iconSize / 2F, y - iconSize / 2F,
+                iconSize, iconSize,
+                AMAGARI.startX(), AMAGARI.startY(),
+                AMAGARI.endX(), AMAGARI.endY(),
+                AMAGARI.width(), AMAGARI.height()
+        );
+        graphics.setColor(1F, 1F, 1F, 1F);
+        RenderSystem.disableBlend();
+        RenderSystem.disableDepthTest();
     }
     private void renderCreators(MegaGuiGraphics graphics, PoseStack poseStack, int x, int y, float alpha) {
         float defaultScale = Math.max(graphics.guiWidth(), graphics.guiHeight()) * 0.02F;
@@ -267,7 +314,7 @@ public class GameStartScreen extends Screen {
                 int lastCount = currentPlayerCount;
                 currentPlayerCount = mc.level.players().size();
                 if (currentPlayerCount != lastCount) {
-                    this.startInterpolationTick = tickCount - creatorIconStop;
+                    this.startInterpolationTick = tickCount - amagariStop;
                 }
             }
         }

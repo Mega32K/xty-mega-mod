@@ -119,6 +119,9 @@ public class FpsCommonEventsHandler {
                             if (assister != null && !assister.getUUID().equals(killer.getUUID()))
                                 assisterMO.setValue(assister);
                         }
+                        //清空助攻信息
+                        cap.setAssister(null);
+                        cap.setAssister2(null);
                     });
                     Player assister = assisterMO.getValue();
                     if (assister != null) {

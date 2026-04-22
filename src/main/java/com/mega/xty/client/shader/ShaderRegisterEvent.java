@@ -24,5 +24,7 @@ public class ShaderRegisterEvent {
         event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "alpha_filter"), DefaultVertexFormat.POSITION_TEX), ModShaders::setAlphaFilter);
         event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "x_reverse"), DefaultVertexFormat.POSITION_TEX), ModShaders::setXReverse);
         event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "grayscale_position_tex"), DefaultVertexFormat.POSITION_TEX), ModShaders::setGray);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "gui_blur_rect"), DefaultVertexFormat.POSITION_TEX), ModShaders::setGuiBlurRect);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "logo_glitch"), DefaultVertexFormat.POSITION_TEX), ModShaders::setLogoGlitch);
     }
 }

@@ -2,11 +2,17 @@ package com.mega.xty.client.shader;
 
 import com.mega.xty.XtyMegaMod;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Vector4f;
 
-public class ModShaders {
+public class ModShaders extends RenderType {
     public static final ResourceLocation NOISE = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/noise.png");
     private static ShaderInstance MAP_POSITION_TEX;
     private static ShaderInstance MAP_HEALTH_BACKGROUND;
@@ -14,6 +20,14 @@ public class ModShaders {
     private static ShaderInstance DISSOLVE_2D;
     private static ShaderInstance RGB_OUTLINE;
     private static ShaderInstance VORONOI_FLOW_BACKGROUND;
+    private static ShaderInstance GUI_BLUR_RECT;
+    private static ShaderInstance LOGO_GLITCH;
+
+    public ModShaders(String p_173178_, VertexFormat p_173179_, VertexFormat.Mode p_173180_, int p_173181_, boolean p_173182_, boolean p_173183_, Runnable p_173184_, Runnable p_173185_) {
+        super(p_173178_, p_173179_, p_173180_, p_173181_, p_173182_, p_173183_, p_173184_, p_173185_);
+    } 
+
+    private static ShaderInstance MODERN_GAUSSIAN_BLUR;
 
     public static ShaderInstance getGray() {
         return GRAY;
@@ -83,6 +97,18 @@ public class ModShaders {
     public static void setMapPositionTex(ShaderInstance mapPositionTex) {
         MAP_POSITION_TEX = mapPositionTex;
     }
+    public static ShaderInstance getGuiBlurRect() {
+        return GUI_BLUR_RECT;
+    }
+    public static void setGuiBlurRect(ShaderInstance guiBlurRect) {
+        GUI_BLUR_RECT = guiBlurRect;
+    }
+    public static ShaderInstance getLogoGlitch() {
+        return LOGO_GLITCH;
+    }
+    public static void setLogoGlitch(ShaderInstance logoGlitch) {
+        LOGO_GLITCH = logoGlitch;
+    }
     public static ShaderInstance getVoronoiFlowBackground() {
         return VORONOI_FLOW_BACKGROUND;
     }
@@ -122,5 +148,13 @@ public class ModShaders {
     public static void alphaFilterGray(float g) {
         ShaderInstance shaderInstance = getAlphaFilter();
         shaderInstance.safeGetUniform("Gray").set(g);
+    }
+    public static void logoGlitch(float time, float glitchStrength) {
+        ShaderInstance shaderInstance = getLogoGlitch();
+        if (shaderInstance == null) {
+            return;
+        }
+        shaderInstance.safeGetUniform("_ProgramTime").set(time);
+        shaderInstance.safeGetUniform("GlitchStrength").set(glitchStrength);
     }
 }

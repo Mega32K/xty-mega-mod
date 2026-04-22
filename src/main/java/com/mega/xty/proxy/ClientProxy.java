@@ -2,6 +2,7 @@ package com.mega.xty.proxy;
 
 import com.google.gson.JsonSyntaxException;
 import com.mega.endinglib.api.client.levelevent.LevelEventManager;
+import com.mega.endinglib.api.client.shader.post.PostEffectHandler;
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.MapLevelEvents;
@@ -16,6 +17,7 @@ import com.mega.xty.client.renderer.entity.WrappedPlayerRenderer;
 import com.mega.xty.client.screen.map2.GameStartScreen;
 import com.mega.xty.client.screen.map2.RenameScreen;
 import com.mega.xty.client.shader.ModShaders;
+import com.mega.xty.client.shader.post.GuiRectBlurPostEffect;
 import com.mega.xty.client.text.ClientItemDisplayTooltip;
 import com.mega.xty.client.text.ItemDisplayTooltip;
 import com.mega.xty.common.data.map2.ClientGameData;
@@ -65,6 +67,7 @@ import java.util.UUID;
 public class ClientProxy implements ModProxy {
     public static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/icons.png");
     public static final ResourceLocation DEATH_PLAYER_SKIN = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/entity/death.png");
+    public static final ResourceLocation FPS_UI_ICONS_LOCATION = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/icons.png");
     public static volatile boolean isUpdatingNoCullingInfo;
     public static List<BlockPos> chunksNoCullingBlocks = new ObjectArrayList<>();
     public static Set<BlockPos> chunksNoCullingBlocks2 = new ObjectOpenHashSet<>();
@@ -114,6 +117,7 @@ public class ClientProxy implements ModProxy {
                     }
                 }
             });
+            PostEffectHandler.registerEffect(GuiRectBlurPostEffect::new);
         });
     }
     private void onKeyRegister(RegisterKeyMappingsEvent event) {
@@ -149,6 +153,7 @@ public class ClientProxy implements ModProxy {
         event.registerAboveAll("fps/select_player", new SelectPlayerOverlay());
         event.registerAboveAll("fps/tab", new TabOverlay());
         event.registerAboveAll("map2/text_tip", new TextTipOverlay());
+        event.registerAboveAll("fps/c4", new C4Overlay());
     }
     public static void setObj(ShadowPlayerEntity entity, Player player) {
         if (player instanceof AbstractClientPlayer clientPlayer) {

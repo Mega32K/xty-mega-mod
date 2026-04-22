@@ -273,6 +273,8 @@ public class Map2SavedData extends SavedData {
     }
     @Nullable
     public Inventory pickUpDeadSavedInv(Player player) {
+        if (deadSavedInventory.containsKey(player.getUUID()))
+            this.setDirty();
         return deadSavedInventory.remove(player.getUUID());
     }
 

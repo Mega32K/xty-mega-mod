@@ -21,6 +21,9 @@ public class ClientFpsData {
     public static boolean enabled;
     public static final Map<UUID, SynchedKADData> kadData = new Object2ObjectOpenHashMap<>();
     public static final Map<UUID, TabData> playerDisplayNames = new Object2ObjectOpenHashMap<>();
+    public static int bombPlantedTickCount;
+    public static boolean bombExist;
+    public static String bombPosition;
     public static SynchedKADData getPlayerKAD(Player player) {
         if (!enabled) return SynchedKADData.EMPTY_KAD;
         return kadData.getOrDefault(player.getUUID(), SynchedKADData.EMPTY_KAD);
@@ -41,5 +44,8 @@ public class ClientFpsData {
 
     private static Component decorateName(PlayerInfo p_94552_, MutableComponent p_94553_) {
         return p_94552_.getGameMode() == GameType.SPECTATOR ? p_94553_.withStyle(ChatFormatting.ITALIC) : p_94553_;
+    }
+    public static float getBombTime(float partialTicks) {
+        return bombPlantedTickCount + partialTicks;
     }
 }

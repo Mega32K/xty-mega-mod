@@ -4,11 +4,11 @@ import com.mega.endinglib.api.client.cmc.LoreHelper;
 import com.mega.endinglib.api.client.screen.BlitInfo;
 import com.mega.endinglib.mixin.accessor.AccessorGuiGraphics;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
-import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.map2.ClientGameData;
+import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -42,14 +42,13 @@ public class SelectPlayerOverlay implements IGuiOverlay {
     public static final int FPS_UI_RX = 512;
     public static final int FPS_UI_RY = 384;
     public static final float HEAD_LAYER_SCALE = 1.0625F;
-    protected static final ResourceLocation FPS_UI_ICONS_LOCATION = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/icons.png");
     public static final BlitInfo ARMOR = new BlitInfo(
-            FPS_UI_ICONS_LOCATION,
+            ClientProxy.FPS_UI_ICONS_LOCATION,
             0, 0,
             128, 128
     );
     public static final BlitInfo HEART = new BlitInfo(
-            FPS_UI_ICONS_LOCATION,
+            ClientProxy.FPS_UI_ICONS_LOCATION,
             0, 128,
             128, 128
     );
