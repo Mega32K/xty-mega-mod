@@ -1,5 +1,6 @@
 package com.mega.xty.common.data.fps;
 
+import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.common.data.fps.kad.KAD;
@@ -12,13 +13,15 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -122,6 +125,23 @@ public class ClientFpsData {
         if (mc.level == null || player == null) {
             return;
         }
-        ClientProxy.playSoundNoDelayed(player.getX(), player.getY(), player.getZ(), SoundsInit.C4_BEEP2.get(), SoundSource.PLAYERS, 0.9F, 1.0F, true, player.level().random.nextLong());
+        Vec3 bombPos = getBombSoundPos(player);
+        if (bombPos == null) {
+            return;
+        }
+        ClientProxy.playSoundNoDelayed(bombPos.x, bombPos.y, bombPos.z, SoundsInit.C4_BEEP2.get(), SoundSource.PLAYERS, 2F, 1.0F, true, player.level().random.nextLong());
+    }
+    private static Vec3 getBombSoundPos(LocalPlayer player) {
+        List<C4Entity> c4Entities = player.level().getEntitiesOfClass(C4Entity.class, new AABB(player.blockPosition()).inflate(64.0D));
+        C4Entity nearest = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (C4Entity c4Entity : c4Entities) {
+            double distance = c4Entity.distanceToSqr(player);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                nearest = c4Entity;
+            }
+        }
+        return nearest == null ? null : nearest.position();
     }
 }

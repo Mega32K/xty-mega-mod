@@ -507,6 +507,82 @@
                   }
                 }
               }
+            },
+
+            "bomb": {
+              "type":"literal",
+              "children": {
+
+                "set": {
+                  "type":"literal",
+                  "children": {
+
+                    "exist": {
+                      "type":"literal",
+                      "children": {
+
+                        "value": {
+                          "type":"argument",
+                          "parser":"brigadier:bool",
+                          "executable":true
+                        }
+                      }
+                    },
+
+                    "position": {
+                      "type":"literal",
+                      "children": {
+
+                        "value": {
+                          "type":"argument",
+                          "parser":"brigadier:integer",
+                          "properties": {
+                            "min": 0,
+                            "max": 2
+                          },
+                          "executable":true
+                        }
+                      }
+                    },
+
+                    "countdown": {
+                      "type":"literal",
+                      "children": {
+
+                        "value": {
+                          "type":"argument",
+                          "parser":"brigadier:integer",
+                          "properties": {
+                            "min": 0
+                          },
+                          "executable":true
+                        }
+                      }
+                    }
+                  }
+                },
+
+                "get": {
+                  "type":"literal",
+                  "children": {
+
+                    "exist": {
+                      "type":"literal",
+                      "executable":true
+                    },
+
+                    "position": {
+                      "type":"literal",
+                      "executable":true
+                    },
+
+                    "countdown": {
+                      "type":"literal",
+                      "executable":true
+                    }
+                  }
+                }
+              }
             }
           }
         },

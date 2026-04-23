@@ -3,6 +3,7 @@ package com.mega.xty.common.command;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -14,6 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collection;
@@ -107,6 +109,36 @@ public class FpsCommand {
                                         )
                                 )
                         )
+                )
+                .then(Commands.literal("bomb")
+                        .then(Commands.literal("set")
+                                .then(Commands.literal("exist")
+                                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                                .executes(context -> setBombExist(context.getSource(), BoolArgumentType.getBool(context, "value")))
+                                        )
+                                )
+                                .then(Commands.literal("position")
+                                        .then(Commands.argument("value", IntegerArgumentType.integer(0, 2))
+                                                .executes(context -> setBombPosition(context.getSource(), IntegerArgumentType.getInteger(context, "value")))
+                                        )
+                                )
+                                .then(Commands.literal("countdown")
+                                        .then(Commands.argument("value", IntegerArgumentType.integer(0))
+                                                .executes(context -> setBombCountdown(context.getSource(), IntegerArgumentType.getInteger(context, "value")))
+                                        )
+                                )
+                        )
+                        .then(Commands.literal("get")
+                                .then(Commands.literal("exist")
+                                        .executes(context -> getBombExist(context.getSource()))
+                                )
+                                .then(Commands.literal("position")
+                                        .executes(context -> getBombPosition(context.getSource()))
+                                )
+                                .then(Commands.literal("countdown")
+                                        .executes(context -> getBombCountdown(context.getSource()))
+                                )
+                        )
                 );
     }
     private static int start(CommandSourceStack sourceStack) {
@@ -171,5 +203,40 @@ public class FpsCommand {
     private static int getPlayerDeaths(CommandSourceStack sourceStack, ServerPlayer serverPlayer, String key) {
         FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
         return savedData.getKadData().getOrDefault(serverPlayer.getUUID(), SynchedKADData.EMPTY_KAD).getOrDefaultKAD(key).deaths;
+    }
+    private static int setBombExist(CommandSourceStack sourceStack, boolean value) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        savedData.setBombExist(value);
+        savedData.setBombCountdownTicks(savedData.getBombCountdownTicks());
+        sourceStack.sendSuccess(() -> Component.literal("bombExist = " + value), false);
+        return value ? 1 : 0;
+    }
+    private static int setBombPosition(CommandSourceStack sourceStack, int value) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        savedData.setBombPosition((byte) value);
+        savedData.setBombCountdownTicks(savedData.getBombCountdownTicks());
+        sourceStack.sendSuccess(() -> Component.literal("bombPosition = " + value), false);
+        return value;
+    }
+    private static int setBombCountdown(CommandSourceStack sourceStack, int value) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        savedData.setBombCountdownTicks(value * 20);
+        sourceStack.sendSuccess(() -> Component.literal("bombCountdownSeconds = " + value), false);
+        return value;
+    }
+    private static int getBombExist(CommandSourceStack sourceStack) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.bomb.exist.get", savedData.isBombExist()), false);
+        return savedData.isBombExist() ? 1 : 0;
+    }
+    private static int getBombPosition(CommandSourceStack sourceStack) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.bomb.position.get", savedData.getBombPosition()), false);
+        return savedData.getBombPosition();
+    }
+    private static int getBombCountdown(CommandSourceStack sourceStack) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.bomb.countdown.get", savedData.getBombCountdownTicks()), false);
+        return savedData.getBombCountdownTicks();
     }
 }
