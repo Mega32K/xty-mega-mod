@@ -80,7 +80,7 @@ public class ClientFpsData {
             return;
         }
         if (shouldPlayBombBeep(bombCountdownTicks)) {
-            playBombBeep(bombCountdownTicks);
+            playBombBeep();
         }
         bombCountdownTicks--;
         bombPlantedTickCount++;
@@ -116,7 +116,7 @@ public class ClientFpsData {
         }
         return 5;
     }
-    private static void playBombBeep(int remainingTicks) {
+    private static void playBombBeep() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (mc.level == null || player == null) {

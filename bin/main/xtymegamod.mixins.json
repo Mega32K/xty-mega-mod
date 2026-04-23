@@ -1,0 +1,52 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.mega.xty.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "xtymegamod.refmap.json",
+  "mixins": [
+    "AccessorAbstractArrow",
+    "bettercombat.ClientNetworkMixin",
+    "client.oculus.RenderSectionManagerMixin",
+    "client.oculus.SodiumWorldRendererAccessor",
+    "endinglib.ClientUtilsMixin",
+    "endinglib.ExtraEntityDataMixin",
+    "endinglib.ServerExpandedContextMixin",
+    "gd656killicon.Gd656killiconMixin",
+    "limbs.LivingEntityMixin",
+    "map1.game_2.EntityMixin",
+    "map1.game_2.Spider1Mixin",
+    "map2.game2.EntityMixin",
+    "map2.game2.LivingEntityMixin",
+    "map2.game2.PlayerMixin",
+    "tacz.LivingEntityShootMixin",
+    "tacz.LocalPlayerShootMixin",
+    "xaero.PlayerTrackerIconRendererMixin",
+    "xaero.PlayerTrackerMinimapElementRendererMixin"
+  ],
+  "client": [
+    "AccessorPlayerTabOverlay",
+    "client.ClientLevelMixin",
+    "client.LevelRendererMixin",
+    "client.LoadingOverlayAccessor",
+    "client.MinecraftMixin",
+    "client.loading.LoadingOverlayMixin",
+    "limbs.PlayerRendererMixin",
+    "map1.game_2.LocalPlayerMixin",
+    "map1.game_2.PlayerModelMixin",
+    "map1.game_2.PlayerRendererMixin",
+    "map1.game_2.scene_changing.ParticleEngeneMixin",
+    "map2.ChatComponentMixin",
+    "map2.PlayerRendererMixin",
+    "map2.PlayerTabOverlayMixin",
+    "map2.game2.EntityRenderDispatcherMixin",
+    "map2.game2.GameRendererMixin",
+    "map2.game2.ItemInHandRendererMixin",
+    "map2.game2.LivingEntityRendererMixin",
+    "map2.game2.PlayerItemInHandLayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "plugin": "com.mega.xty.CustomMixinPlugin"
+}
