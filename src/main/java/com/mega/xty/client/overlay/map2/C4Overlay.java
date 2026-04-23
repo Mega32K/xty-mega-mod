@@ -43,7 +43,7 @@ public class C4Overlay implements IGuiOverlay {
             //若已安放炸弹
             if (ClientFpsData.bombExist) {
                 if (ClientFpsData.shouldRenderBombCountdown()) {
-                    renderBombCountdown(mc.player, gui, MegaGuiGraphics.of(guiGraphics), ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight);
+                    renderBombCountdown(mc.player, gui, MegaGuiGraphics.of(guiGraphics), ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight, partialTick);
                 }
                 //若正在拆包
                 float progress = BDKItem.getShearingProgress(mc.player, partialTick);
@@ -59,7 +59,7 @@ public class C4Overlay implements IGuiOverlay {
             }
         }
     }
-    public void renderBombCountdown(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, int countdownTicks, int screenWidth, int screenHeight) {
+    public void renderBombCountdown(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, int countdownTicks, int screenWidth, int screenHeight, float partialTicks) {
         float alpha = Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer, 10) / 10.0F);
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
@@ -67,17 +67,20 @@ public class C4Overlay implements IGuiOverlay {
         String text1 = "炸弹已被安放";
         String text2 = "离被引爆还剩" + ClientFpsData.getDisplayBombSeconds(countdownTicks) + "秒";
         float width = Math.max(font.width(text1), font.width(text2)) + 24F;
+        float realWidth = Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10F)) * width;
         float height = font.lineHeight * 2F + 10F;
-        float x = (screenWidth - width) / 2F;
+        float x = screenWidth / 2F;
         float y = screenHeight * 0.62F;
         int textColor = ((int) (alpha * 255) << 24) | 0x00D0D0D0;
         int borderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), textColor);
         graphics.flush();
-        BlurRectRenderer.render(graphics, x, y, width, height, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
-        graphics.fill(x - 2, y, x, y + height, borderColor);
-        graphics.fill(x + width, y, x + width + 2, y + height, borderColor);
-        graphics.drawCenteredString(font, text1, (int) (x + width / 2F), (int) (y + 3F), textColor);
-        graphics.drawCenteredString(font, text2, (int) (x + width / 2F), (int) (y + 5F + font.lineHeight), textColor);
+        BlurRectRenderer.render(graphics, x - realWidth / 2F, y, realWidth, height, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
+        graphics.fill(x - 2 - realWidth / 2F, y, x- realWidth / 2F, y + height, borderColor);
+        graphics.fill(x + realWidth / 2F, y, x + realWidth / 2F + 2, y + height, borderColor);
+        graphics.enableScissor((int) (x - realWidth / 2F), (int) y, (int) (x + realWidth / 2F), (int) (y + height));
+        graphics.drawCenteredString(font, text1, (int) x, (int) (y + 4F), textColor);
+        graphics.drawCenteredString(font, text2, (int) x, (int) (y + 6F + font.lineHeight), textColor);
+        graphics.disableScissor();
         poseStack.popPose();
     }
     public void renderBombSettingAnimation(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, float progress, int screenWidth, int screenHeight) {
@@ -137,7 +140,7 @@ public class C4Overlay implements IGuiOverlay {
         graphics.fill(x - 2, y, x, y + barHeight, teamColor);
         graphics.fill(x + barWidth, y, x + barWidth + 2, y + barHeight, teamColor);
         String percentText = Math.round(renderProgress * 100F) + "%";
-        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1F, progressBarY + (progressBarHeight - font.lineHeight) / 2F, percentColor, false);
+        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1F, progressBarY + (progressBarHeight - font.lineHeight) / 2F, percentColor, true);
         poseStack.popPose();
     }
     public void renderShearingAnimation(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, float progress, int screenWidth, int screenHeight) {
