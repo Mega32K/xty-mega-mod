@@ -1,14 +1,19 @@
 package com.mega.xty.common.item.fps;
 
+import com.mega.endinglib.common.network.PacketHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.ItemInit;
+import com.mega.xty.common.init.SoundsInit;
+import com.mega.xty.common.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -52,6 +57,9 @@ public class C4BombItem extends Item {
                 canStart = canSetC4(map2SavedData.getPointA(), player.position()) || canSetC4(map2SavedData.getPointB(), player.position());
         }
         if (canStart) player.startUsingItem(interactionHand);
+        if (canStart && !level.isClientSide) {
+            playC4Sound(player, SoundsInit.C4_CLICK.get(), 0.65F, 1.0F);
+        }
         return InteractionResultHolder.consume(itemstack);
     }
 
@@ -62,6 +70,8 @@ public class C4BombItem extends Item {
                 Map2SavedData savedData = Map2SavedData.getInstance(player.server);
                 if (!canSetC4(savedData.getPointA(), player.position()) && !canSetC4(savedData.getPointB(), player.position()))
                     player.stopUsingItem();
+                else
+                    playPlantingKeySound(player, getUseDuration(itemStack) - leftTicks);
             }
         }
     }
@@ -84,6 +94,9 @@ public class C4BombItem extends Item {
                     }
                 }
             }
+            savedData.setBombCountdownTicks(FpsSavedData.BOMB_COUNTDOWN_TOTAL_TICKS);
+            playC4Sound(player, SoundsInit.C4_PLANT.get(), 1.0F, 1.0F);
+            playC4Sound(player, SoundsInit.C4_INITIATE.get(), 0.8F, 1.0F);
         }
         return super.finishUsingItem(itemStack, level, entity);
     }
@@ -94,5 +107,44 @@ public class C4BombItem extends Item {
     public static boolean canSetC4(@Nullable BlockPos point, Vec3 playerPos) {
         if (point == null) return false;
         return playerPos.distanceTo(point.getCenter()) < C4_SET_DISTANCE;
+    }
+
+    @Override
+    public void onInventoryTick(ItemStack stack, Level level, Player player, int slotIndex, int selectedIndex) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (selectedIndex == slotIndex) {
+                boolean played = stack.getOrCreateTag().getBoolean("played");
+                if (!played) {
+                    int index = player.getRandom().nextInt(0, 8);
+                    switch (index) {
+                        case 0 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW.get(), 1F, 1F);
+                        case 1 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_01.get(), 1F, 1F);
+                        case 2 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_02.get(), 1F, 1F);
+                        case 3 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_03.get(), 1F, 1F);
+                        case 4 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_04.get(), 1F, 1F);
+                        case 5 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_05.get(), 1F, 1F);
+                        case 6 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_06.get(), 1F, 1F);
+                        case 7 -> PacketHandler.playSound(serverPlayer, SoundsInit.C4_DRAW_07.get(), 1F, 1F);
+                    }
+                    stack.getOrCreateTag().putBoolean("played", true);
+                }
+            } else stack.getOrCreateTag().putBoolean("played", false);
+        }
+        super.onInventoryTick(stack, level, player, slotIndex, selectedIndex);
+    }
+
+    private static void playPlantingKeySound(ServerPlayer player, int usedTicks) {
+        switch (usedTicks) {
+            case 8 -> playC4Sound(player, SoundsInit.KEY_PRESS1.get(), 0.75F, 1.0F);
+            case 16 -> playC4Sound(player, SoundsInit.KEY_PRESS2.get(), 0.75F, 1.0F);
+            case 25 -> playC4Sound(player, SoundsInit.KEY_PRESS3.get(), 0.75F, 1.0F);
+            case 34 -> playC4Sound(player, SoundsInit.KEY_PRESS4.get(), 0.75F, 1.0F);
+            case 44 -> playC4Sound(player, SoundsInit.KEY_PRESS5.get(), 0.75F, 1.0F);
+            case 55 -> playC4Sound(player, SoundsInit.KEY_PRESS6.get(), 0.75F, 1.0F);
+            case 66 -> playC4Sound(player, SoundsInit.KEY_PRESS7.get(), 0.75F, 1.0F);
+        }
+    }
+    private static void playC4Sound(LivingEntity entity, SoundEvent soundEvent, float volume, float pitch) {
+        entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), soundEvent, SoundSource.PLAYERS, volume, pitch);
     }
 }

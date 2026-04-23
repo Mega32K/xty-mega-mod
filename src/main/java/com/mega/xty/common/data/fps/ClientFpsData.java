@@ -1,13 +1,19 @@
 package com.mega.xty.common.data.fps;
 
+import com.mega.xty.common.init.SoundsInit;
+import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Optionull;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.scores.PlayerTeam;
@@ -17,6 +23,9 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ClientFpsData {
+    public static final int BOMB_COUNTDOWN_TOTAL_TICKS = 40 * 20;
+    public static final int BOMB_COUNTDOWN_REQUEST_INTERVAL = 15 * 20;
+    public static final int BOMB_COUNTDOWN_PROMPT_DURATION = 60;
     public static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).kills).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).assists).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).deaths);
     public static boolean enabled;
     public static final Map<UUID, SynchedKADData> kadData = new Object2ObjectOpenHashMap<>();
@@ -24,6 +33,9 @@ public class ClientFpsData {
     public static int bombPlantedTickCount;
     public static boolean bombExist;
     public static String bombPosition;
+    public static int bombCountdownTicks;
+    public static int bombCountdownRenderTicks;
+    public static int bombCountdownRenderTimer;
     public static SynchedKADData getPlayerKAD(Player player) {
         if (!enabled) return SynchedKADData.EMPTY_KAD;
         return kadData.getOrDefault(player.getUUID(), SynchedKADData.EMPTY_KAD);
@@ -47,5 +59,69 @@ public class ClientFpsData {
     }
     public static float getBombTime(float partialTicks) {
         return bombPlantedTickCount + partialTicks;
+    }
+    public static void setBombData(boolean bombExist, byte bombPos, int bombCountdownTicks) {
+        ClientFpsData.bombExist = bombExist;
+        ClientFpsData.bombPosition = bombPos <= 0 ? "" : bombPos == 1 ? "A点" : "B点";
+        ClientFpsData.bombCountdownTicks = Math.max(0, bombCountdownTicks);
+        bombPlantedTickCount = Math.max(0, BOMB_COUNTDOWN_TOTAL_TICKS - ClientFpsData.bombCountdownTicks);
+        if (bombExist && ClientFpsData.bombCountdownTicks > 0) {
+            requestBombCountdownRender(ClientFpsData.bombCountdownTicks);
+        } else {
+            bombCountdownRenderTicks = 0;
+            bombCountdownRenderTimer = 0;
+        }
+    }
+    public static void tick() {
+        if (bombCountdownRenderTimer > 0) {
+            bombCountdownRenderTimer--;
+        }
+        if (!bombExist || bombCountdownTicks <= 0) {
+            return;
+        }
+        if (shouldPlayBombBeep(bombCountdownTicks)) {
+            playBombBeep(bombCountdownTicks);
+        }
+        bombCountdownTicks--;
+        bombPlantedTickCount++;
+        if (bombCountdownTicks <= 0) {
+            bombCountdownTicks = 0;
+            onBombCountdownFinished();
+        }
+        if (bombCountdownTicks > 0 && bombPlantedTickCount % BOMB_COUNTDOWN_REQUEST_INTERVAL == 0) {
+            requestBombCountdownRender(bombCountdownTicks);
+        }
+    }
+    public static boolean shouldRenderBombCountdown() {
+        return bombExist && bombCountdownRenderTimer > 0;
+    }
+    public static void requestBombCountdownRender(int countdownTicks) {
+        bombCountdownRenderTicks = Math.max(0, countdownTicks);
+        bombCountdownRenderTimer = BOMB_COUNTDOWN_PROMPT_DURATION;
+    }
+    public static int getDisplayBombSeconds(int countdownTicks) {
+        return Math.max(0, (countdownTicks + 19) / 20);
+    }
+    public static void onBombCountdownFinished() {
+    }
+    private static boolean shouldPlayBombBeep(int remainingTicks) {
+        return remainingTicks > 0 && remainingTicks % getBombBeepIntervalTicks(remainingTicks) == 0;
+    }
+    private static int getBombBeepIntervalTicks(int remainingTicks) {
+        if (remainingTicks > 25 * 20) {
+            return 20;
+        }
+        if (remainingTicks > 10 * 20) {
+            return 10;
+        }
+        return 5;
+    }
+    private static void playBombBeep(int remainingTicks) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (mc.level == null || player == null) {
+            return;
+        }
+        ClientProxy.playSoundNoDelayed(player.getX(), player.getY(), player.getZ(), SoundsInit.C4_BEEP2.get(), SoundSource.PLAYERS, 0.9F, 1.0F, true, player.level().random.nextLong());
     }
 }

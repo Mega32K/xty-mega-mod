@@ -37,11 +37,8 @@ public class PointsOverlay implements IGuiOverlay {
             PoseStack poseStack = guiGraphics.pose();
             PA : {
                 if (pa != null) {
-                    Vector4f pos = matrix4f.transform(new Vector4f(pa.getCenter().add(pPos.scale(-1F)).toVector3f(), 0F));
-                    pos = new Vector4f((pos.x/pos.z+1)/2f, (pos.y/pos.z+1)/2f, pos.z, 1);
-                    if (pos.z < 0F)
-                        break PA;
-                    Vec2 screenPos = new Vec2(Mth.clamp(screenWidth * pos.x, 8, screenWidth - 8), Mth.clamp(screenHeight - screenHeight * pos.y, 8, screenHeight - 8));
+                    Vec2 screenPos = projectToScreen(matrix4f, pa.getCenter(), screenWidth, screenHeight);
+                    screenPos = new Vec2(screenPos.x, Math.min(screenPos.y, screenHeight - font.lineHeight * 2));
                     String text1 = Math.round((float) pPos.distanceTo(pa.getCenter())) + "m";
                     String text2 = "A";
                     poseStack.pushPose();
@@ -56,11 +53,8 @@ public class PointsOverlay implements IGuiOverlay {
             }
             PB : {
                 if (pb != null) {
-                    Vector4f pos = matrix4f.transform(new Vector4f(pb.getCenter().add(pPos.scale(-1F)).toVector3f(), 0F));
-                    pos = new Vector4f((pos.x/pos.z+1)/2f, (pos.y/pos.z+1)/2f, pos.z, 1);
-                    if (pos.z < 0F)
-                        break PB;
-                    Vec2 screenPos = new Vec2(Mth.clamp(screenWidth * pos.x, 8, screenWidth - 8), Mth.clamp(screenHeight - screenHeight * pos.y, 8, screenHeight - 8));
+                    Vec2 screenPos = projectToScreen(matrix4f, pb.getCenter(), screenWidth, screenHeight);
+                    screenPos = new Vec2(screenPos.x, Math.min(screenPos.y, screenHeight - font.lineHeight * 2));
                     String text1 = Math.round((float) pPos.distanceTo(pb.getCenter())) + "m";
                     String text2 = "B";
                     poseStack.pushPose();
@@ -75,5 +69,35 @@ public class PointsOverlay implements IGuiOverlay {
             }
             RenderSystem.disableBlend();
         }
+    }
+
+    /**
+     * 将世界坐标中的点通过关卡渲染使用的投影矩阵与模型视图矩阵转换为屏幕坐标。
+     *
+     * @param matrix {@code projection * modelView} 的组合矩阵
+     * @param worldPos 世界坐标中的位置点
+     * @param screenWidth 当前 GUI 层使用的屏幕宽度
+     * @param screenHeight 当前 GUI 层使用的屏幕高度
+     * @return 转换后的屏幕坐标；若点位于相机后方或超出屏幕范围，则会按方向投影到屏幕边框上
+     */
+    private static Vec2 projectToScreen(Matrix4f matrix, Vec3 worldPos, int screenWidth, int screenHeight) {
+        Vector4f clipPos = matrix.transform(new Vector4f(worldPos.toVector3f(), 1.0F));
+        float w = Math.max(Math.abs(clipPos.w), 0.00001F);
+        float ndcX = clipPos.x / w;
+        float ndcY = clipPos.y / w;
+        boolean forceBorder = clipPos.w <= 0.0F || Math.abs(ndcX) > 1.0F || Math.abs(ndcY) > 1.0F;
+        if (forceBorder) {
+            float scale = Math.max(Math.abs(ndcX), Math.abs(ndcY));
+            if (scale <= 0.00001F) {
+                ndcX = 0.0F;
+                ndcY = 1.0F;
+            } else {
+                ndcX /= scale;
+                ndcY /= scale;
+            }
+        }
+        float screenX = Mth.clamp(screenWidth * ((ndcX + 1.0F) * 0.5F), 8.0F, screenWidth - 8.0F);
+        float screenY = Mth.clamp(screenHeight * (1.0F - (ndcY + 1.0F) * 0.5F), 8.0F, screenHeight - 8.0F);
+        return new Vec2(screenX, screenY);
     }
 }

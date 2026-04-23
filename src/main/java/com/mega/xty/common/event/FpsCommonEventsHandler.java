@@ -14,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -32,8 +33,14 @@ public class FpsCommonEventsHandler {
             if (data.isEnableKAD()) {
                 NetworkHandler.sendToPlayer(new S2CPlayerKADPacket(true, data.getKadData()), serverPlayer);
             }
-            NetworkHandler.sendToPlayer(new S2CBombDataPacket(data.isBombExist(), data.getBombPosition()), serverPlayer);
+            NetworkHandler.sendToPlayer(new S2CBombDataPacket(data.isBombExist(), data.getBombPosition(), data.getBombCountdownTicks()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CPlayerNamePacket(true, data.getPlayerTabData()), serverPlayer);
+        }
+    }
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            FpsSavedData.getInstance(event.getServer()).tickBombCountdown();
         }
     }
     @SubscribeEvent

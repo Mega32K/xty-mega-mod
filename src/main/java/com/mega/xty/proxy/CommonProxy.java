@@ -77,6 +77,7 @@ public class CommonProxy implements ModProxy {
         EntityInit.ENTITIES.register(modBus);
         ItemInit.ITEMS.register(modBus);
         ParticleInit.PARTICLE_TYPES.register(modBus);
+        SoundsInit.SOUNDS.register(modBus);
         ComponentInit.init();
         ModCommandArgumentTypes.init(modBus);
         CT.register(modBus);

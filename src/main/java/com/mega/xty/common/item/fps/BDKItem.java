@@ -3,8 +3,12 @@ package com.mega.xty.common.item.fps;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.ItemInit;
+import com.mega.xty.common.init.SoundsInit;
+import net.minecraft.network.protocol.game.ClientboundStopSoundPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -44,6 +48,9 @@ public class BDKItem extends Item {
             }
         }
         if (canStart) player.startUsingItem(interactionHand);
+        if (canStart && !level.isClientSide) {
+            playBDKSound(player, SoundsInit.C4_DISARMSTART.get(), 1.0F, 1.0F);
+        }
         return InteractionResultHolder.consume(itemstack);
     }
 
@@ -64,6 +71,13 @@ public class BDKItem extends Item {
     }
 
     @Override
+    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
+        if (!entity.level().isClientSide) {
+            stopBDKSound(entity, SoundsInit.C4_DISARMSTART.get());
+        }
+    }
+
+    @Override
     public @NotNull ItemStack finishUsingItem(@NotNull ItemStack itemStack, @NotNull Level level, @NotNull LivingEntity entity) {
         if (!level.isClientSide) {
             if (entity instanceof ServerPlayer player) {
@@ -73,6 +87,8 @@ public class BDKItem extends Item {
                         FpsSavedData savedData = FpsSavedData.getInstance(player.getServer());
                         savedData.setBombPosition((byte) 0);
                         savedData.setBombExist(false);
+                        savedData.setBombCountdownTicks(0);
+                        playBDKSound(player, SoundsInit.C4_DISARMFINISH.get(), 1.0F, 1.0F);
                     }
                 }
             }
@@ -83,5 +99,17 @@ public class BDKItem extends Item {
     public static float getShearingProgress(Player player, float partialTicks) {
         if (!player.isUsingItem() || !player.getUseItem().is(ItemInit.BDK.get())) return -1F;
         return Mth.clamp((player.getTicksUsingItem() + partialTicks) / SETTING_DURATION, 0, 1.0F);
+    }
+    private static void playBDKSound(LivingEntity entity, SoundEvent soundEvent, float volume, float pitch) {
+        entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), soundEvent, SoundSource.PLAYERS, volume, pitch);
+    }
+    private static void stopBDKSound(LivingEntity entity, SoundEvent soundEvent) {
+        if (entity.level() instanceof ServerLevel serverLevel) {
+            for (ServerPlayer player : serverLevel.players()) {
+                if (player.distanceToSqr(entity) < 256.0D) {
+                    player.connection.send(new ClientboundStopSoundPacket(soundEvent.getLocation(), SoundSource.PLAYERS));
+                }
+            }
+        }
     }
 }

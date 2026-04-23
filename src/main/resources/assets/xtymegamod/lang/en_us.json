@@ -3,7 +3,6 @@
 
   "entity.xtymegamod.wine" : "空酒瓶",
   "entity.xtymegamod.c4" : "C4",
-  "entity.xtymegamod.bdk" : "C4钳",
 
   "block.xtymegamod.gold_spawnpoint_block" : "重生点金块",
   "block.xtymegamod.gold_spawnpoint_block.lore" : "设置站在方块上的玩家的重生点",
@@ -19,6 +18,7 @@
   "item.xtymegamod.bounty_board" : "悬赏板",
   "item.xtymegamod.optical_nanosuit" : "光学纳米服",
   "item.xtymegamod.c4_bomb" : "C4",
+  "item.xtymegamod.bdk" : "C4钳",
 
   "creative_mode_tab.main.name" : "Mega地图制作",
 

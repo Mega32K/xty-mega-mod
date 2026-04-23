@@ -4,6 +4,9 @@ import com.mega.endinglib.api.data.CompoundTagUtils;
 import com.mega.endinglib.util.mixin.level.ServerEC;
 import com.mega.xty.common.data.fps.kad.ServerSynchedKADData;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
+import com.mega.xty.common.data.map2.Map2SavedData;
+import com.mega.xty.common.entity.C4Entity;
+import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
@@ -11,51 +14,37 @@ import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public class FpsSavedData extends SavedData {
+    public static final int BOMB_COUNTDOWN_TOTAL_TICKS = 40 * 20;
     private boolean enableKAD = false;
     private boolean kadDirty = false;
     private boolean bombExist = false;
+    private int bombCountdownTicks = 0;
     //
     private byte bombPosition = 0;
     private Map<UUID, ServerSynchedKADData> kadData;
     private boolean playerNamesDirty = false;
     private Map<UUID, TabData> playerTabData;
 
-    public boolean isBombExist() {
-        return bombExist;
-    }
-
-    public void setBombExist(boolean bombExist) {
-        if (this.bombExist != bombExist) {
-            this.setDirty();
-            for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
-                NetworkHandler.sendToPlayer(new S2CBombDataPacket(bombExist, this.bombPosition), serverPlayer);
-        }
-        this.bombExist = bombExist;
-    }
-    public byte getBombPosition() {
-        return bombPosition;
-    }
-    public void setBombPosition(byte bombPosition) {
-        if (this.bombPosition != bombPosition) {
-            this.setDirty();
-            for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
-                NetworkHandler.sendToPlayer(new S2CBombDataPacket(this.bombExist, bombPosition), serverPlayer);
-        }
-        this.bombPosition = bombPosition;
-    }
 
     public MinecraftServer server;
     public FpsSavedData() {
@@ -80,7 +69,78 @@ public class FpsSavedData extends SavedData {
         data.enableKAD = tag.getBoolean("enableKAD");
         data.bombExist = tag.getBoolean("bombExist");
         data.bombPosition = tag.getByte("bombPosition");
+        data.bombCountdownTicks = tag.getInt("bombCountdownTicks");
         return data;
+    }
+    public boolean isBombExist() {
+        return bombExist;
+    }
+
+    public void setBombExist(boolean bombExist) {
+        if (this.bombExist != bombExist) {
+            this.setDirty();
+        }
+        this.bombExist = bombExist;
+    }
+    public byte getBombPosition() {
+        return bombPosition;
+    }
+    public void setBombPosition(byte bombPosition) {
+        if (this.bombPosition != bombPosition) {
+            this.setDirty();
+        }
+        this.bombPosition = bombPosition;
+    }
+    public int getBombCountdownTicks() {
+        return bombCountdownTicks;
+    }
+    public void setBombCountdownTicks(int bombCountdownTicks) {
+        int value = Math.max(0, bombCountdownTicks);
+        if (this.bombCountdownTicks != value) {
+            this.setDirty();
+        }
+        this.bombCountdownTicks = value;
+        for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
+            NetworkHandler.sendToPlayer(new S2CBombDataPacket(this.bombExist, this.bombPosition, this.bombCountdownTicks), serverPlayer);
+    }
+    public void tickBombCountdown() {
+        if (bombExist && bombCountdownTicks > 0) {
+            bombCountdownTicks--;
+            this.setDirty();
+            if (bombCountdownTicks <= 0) {
+                bombCountdownTicks = 0;
+                explodeBombEffects();
+                this.bombExist = false;
+                this.bombPosition = 0;
+                this.setBombCountdownTicks(0);
+                onBombCountdownFinished();
+            }
+        }
+    }
+    public void onBombCountdownFinished() {
+    }
+    private void explodeBombEffects() {
+        Map2SavedData map2SavedData = Map2SavedData.getInstance(server);
+        Set<AABB> queryBoxes = new LinkedHashSet<>();
+        if (map2SavedData.getPointA() != null) {
+            queryBoxes.add(new AABB(map2SavedData.getPointA()).inflate(32.0D));
+        }
+        if (map2SavedData.getPointB() != null) {
+            queryBoxes.add(new AABB(map2SavedData.getPointB()).inflate(32.0D));
+        }
+        for (ServerLevel level : server.getAllLevels()) {
+            for (AABB queryBox : queryBoxes) {
+                for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, queryBox)) {
+                    Vec3 pos = c4Entity.position().add(0.0D, 0.2D, 0.0D);
+                    level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                    level.sendParticles(ParticleTypes.EXPLOSION, pos.x, pos.y, pos.z, 16, 0.35D, 0.12D, 0.35D, 0.02D);
+                    level.sendParticles(ParticleTypes.LARGE_SMOKE, pos.x, pos.y, pos.z, 24, 0.45D, 0.18D, 0.45D, 0.02D);
+                    level.playSound(null, pos.x, pos.y, pos.z, SoundsInit.C4_EXPLODE1.get(), SoundSource.PLAYERS, 2.6F, 1.0F);
+                    level.playSound(null, pos.x, pos.y, pos.z, level.random.nextBoolean() ? SoundsInit.C4_EXP_DEB1.get() : SoundsInit.C4_EXP_DEB2.get(), SoundSource.PLAYERS, 1.5F, 1.0F);
+                    c4Entity.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+                }
+            }
+        }
     }
     public void setPlayerTabData(Map<UUID, TabData> playerTabData) {
         this.playerTabData = playerTabData instanceof Object2ObjectOpenHashMap<UUID, TabData> map ? map : new Object2ObjectOpenHashMap<>(playerTabData);
@@ -102,6 +162,7 @@ public class FpsSavedData extends SavedData {
         compoundTag.putBoolean("enableKAD", this.enableKAD);
         compoundTag.putBoolean("bombExist", this.bombExist);
         compoundTag.putByte("bombPosition", this.bombPosition);
+        compoundTag.putInt("bombCountdownTicks", this.bombCountdownTicks);
         return compoundTag;
     }
     public boolean isEnableKAD() {

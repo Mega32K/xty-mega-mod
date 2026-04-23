@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -55,15 +56,10 @@ public class C4Entity extends Entity {
 
     @Override
     public void tick() {
-        super.tick();
         if (this.lockedPos != null) {
-            this.xOld = this.lockedPos.x;
-            this.yOld = this.lockedPos.y;
-            this.zOld = this.lockedPos.z;
-            this.setPos(lockedPos);
+            this.setPos(this.lockedPos.x, this.getY(), this.lockedPos.z);
         }
-        if (this.getDeltaMovement().y > -1D)
-            this.addDeltaMovement(new Vec3(0D, -1D, 0D));
+        this.move(MoverType.SELF, new Vec3(0D, -8D, 0D));
     }
 
     @Override
