@@ -36,4 +36,9 @@ public class EntityInit {
                     .sized(0.25F, 0.25F).clientTrackingRange(16).updateInterval(20)
                     .build("game2_item")
     );
+    public static final RegistryObject<EntityType<C4Entity>> C4 = ENTITIES.register("c4", ()->
+            EntityType.Builder.<C4Entity>of(C4Entity::new, MobCategory.MISC)
+                    .sized(0.35F, 0.25F).clientTrackingRange(16).updateInterval(20)
+                    .build("c4")
+    );
 }

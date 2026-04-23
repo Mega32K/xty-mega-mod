@@ -4,10 +4,13 @@ import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.api.client.screen.BlitInfo;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.client.renderer.BlurRectRenderer;
+import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.map2.ClientGame2Data;
-import com.mega.xty.common.item.component.C4BombItem;
+import com.mega.xty.common.item.fps.BDKItem;
+import com.mega.xty.common.item.fps.C4BombItem;
 import com.mega.xty.proxy.ClientProxy;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -39,7 +42,11 @@ public class C4Overlay implements IGuiOverlay {
         if (mc.player != null) {
             //若已安放炸弹
             if (ClientFpsData.bombExist) {
-
+                //若正在拆包
+                float progress = BDKItem.getShearingProgress(mc.player, partialTick);
+                if (progress >= 0.0F) {
+                    renderShearingAnimation(mc.player, gui, MegaGuiGraphics.of(guiGraphics), progress, screenWidth, screenHeight);
+                }
             } else {
                 //若正在下包
                 float progress = C4BombItem.getSettingProgress(mc.player, partialTick);
@@ -54,17 +61,119 @@ public class C4Overlay implements IGuiOverlay {
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
         Font font = gui.getFont();
+        int percentColor = ((int)(alpha * 255) << 24) | 0x00A0A0A0;
         float barWidth = screenWidth * 0.3F;
         float barHeight = barWidth * 0.1F;
+        float textBarWidth = barWidth * 0.5F;
         float x = (screenWidth - barWidth) / 2;
         float y = screenHeight * 0.75F;
         y += (-10 * (1F - alpha));
-        int teamColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), (int) (alpha * 255) << 24 | 0x00A00000 | 0x0000A000 | 0x000000A0);
+        float textBarX = (screenWidth - textBarWidth) / 2;
+        float textBarY = y - barHeight - 2;
+        int teamColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), percentColor);
         graphics.flush();
+        //安装提示框
+        BlurRectRenderer.render(graphics, textBarX, textBarY, textBarWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
+        //安装提示词
+        graphics.drawCenteredString(font, "炸弹安装中", (int) (textBarX + textBarWidth / 2F), (int) (textBarY + (barHeight - font.lineHeight) / 2), percentColor);
         //模糊条
         BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
+        float renderProgress = Math.min(1F, Math.max(0F, progress));
+        float progressBarX = x + 2F;
+        float progressBarY = y + 3F;
+        float progressBarWidth = barWidth - 4F;
+        float progressBarHeight = barHeight - 6F;
+        float progressWidth = progressBarWidth * renderProgress;
+        if (progressWidth > 0F) {
+            float whiteProgress = Math.min(1F, Math.max(0F, (renderProgress - 0.8F) / 0.2F));
+            int baseR = FastColor.ARGB32.red(0xFF8b9ea8);
+            int baseG = FastColor.ARGB32.green(0xFF8b9ea8);
+            int baseB = FastColor.ARGB32.blue(0xFF8b9ea8);
+            float r = (baseR + (255 - baseR) * whiteProgress) / 255F;
+            float g = (baseG + (255 - baseG) * whiteProgress) / 255F;
+            float b = (baseB + (255 - baseB) * whiteProgress) / 255F;
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            graphics.setColor(r, g, b, alpha);
+            ModShaders.logoGlitch((player.tickCount + Minecraft.getInstance().getPartialTick()) / 20F, 0.7F + renderProgress * 0.8F);
+            graphics.blit(ClientProxy.FPS_UI_ICONS_LOCATION,
+                    progressBarX, progressBarY,
+                    progressWidth, progressBarHeight,
+                    34F, 1F,
+                    1F, 1F,
+                    512F, 384F,
+                    ModShaders::getLogoGlitch
+            );
+            graphics.setColor(1F, 1F, 1F, 1F);
+        }
+        //安装提示框左右边框
+        graphics.fill(textBarX - 2, textBarY, textBarX, textBarY + barHeight, teamColor);
+        graphics.fill(textBarX + textBarWidth, textBarY, textBarX + textBarWidth + 2, textBarY + barHeight, teamColor);
+        //模糊条左右边框
         graphics.fill(x - 2, y, x, y + barHeight, teamColor);
         graphics.fill(x + barWidth, y, x + barWidth + 2, y + barHeight, teamColor);
+        String percentText = Math.round(renderProgress * 100F) + "%";
+        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1F, progressBarY + (progressBarHeight - font.lineHeight) / 2F, percentColor, false);
+        poseStack.popPose();
+    }
+    public void renderShearingAnimation(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, float progress, int screenWidth, int screenHeight) {
+        float alpha = 1F - Easing.IN_OUT_CUBIC.calculate((1F - Math.min(1F, progress * 7F)));
+        PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        Font font = gui.getFont();
+        int percentColor = ((int)(alpha * 255) << 24) | 0x00A0A0A0;
+        float barWidth = screenWidth * 0.3F;
+        float barHeight = barWidth * 0.1F;
+        float textBarWidth = barWidth * 0.5F;
+        float x = (screenWidth - barWidth) / 2;
+        float y = screenHeight * 0.75F;
+        y += (-10 * (1F - alpha));
+        float textBarX = (screenWidth - textBarWidth) / 2;
+        float textBarY = y - barHeight - 2;
+        int teamColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), percentColor);
+        graphics.flush();
+        //拆除提示框
+        BlurRectRenderer.render(graphics, textBarX, textBarY, textBarWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
+        //拆除提示词
+        graphics.drawCenteredString(font, "炸弹拆除中", (int) (textBarX + textBarWidth / 2F), (int) (textBarY + (barHeight - font.lineHeight) / 2), percentColor);
+        //模糊条
+        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
+        float renderProgress = Math.min(1F, Math.max(0F, progress));
+        float progressBarX = x + 2F;
+        float progressBarY = y + 3F;
+        float progressBarWidth = barWidth - 4F;
+        float progressBarHeight = barHeight - 6F;
+        float progressWidth = progressBarWidth * renderProgress;
+        if (progressWidth > 0F) {
+            float whiteProgress = Math.min(1F, Math.max(0F, (renderProgress - 0.8F) / 0.2F));
+            int baseR = FastColor.ARGB32.red(0xFF8b9ea8);
+            int baseG = FastColor.ARGB32.green(0xFF8b9ea8);
+            int baseB = FastColor.ARGB32.blue(0xFF8b9ea8);
+            float r = (baseR + (255 - baseR) * whiteProgress) / 255F;
+            float g = (baseG + (255 - baseG) * whiteProgress) / 255F;
+            float b = (baseB + (255 - baseB) * whiteProgress) / 255F;
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            graphics.setColor(r, g, b, alpha);
+            ModShaders.logoGlitch((player.tickCount + Minecraft.getInstance().getPartialTick()) / 20F, 0.7F + renderProgress * 0.8F);
+            graphics.blit(ClientProxy.FPS_UI_ICONS_LOCATION,
+                    progressBarX, progressBarY,
+                    progressWidth, progressBarHeight,
+                    34F, 1F,
+                    1F, 1F,
+                    512F, 384F,
+                    ModShaders::getLogoGlitch
+            );
+            graphics.setColor(1F, 1F, 1F, 1F);
+        }
+        //拆除提示框左右边框
+        graphics.fill(textBarX - 2, textBarY, textBarX, textBarY + barHeight, teamColor);
+        graphics.fill(textBarX + textBarWidth, textBarY, textBarX + textBarWidth + 2, textBarY + barHeight, teamColor);
+        //模糊条左右边框
+        graphics.fill(x - 2, y, x, y + barHeight, teamColor);
+        graphics.fill(x + barWidth, y, x + barWidth + 2, y + barHeight, teamColor);
+        String percentText = Math.round(renderProgress * 100F) + "%";
+        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1F, progressBarY + (progressBarHeight - font.lineHeight) / 2F, percentColor, false);
         poseStack.popPose();
     }
 }

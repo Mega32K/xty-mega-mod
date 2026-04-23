@@ -5,11 +5,11 @@ import com.mega.xty.common.block.IItemBlock;
 import com.mega.xty.common.item.FillFunctionCreatorItem;
 import com.mega.xty.common.item.armor.OpticalNanosuit;
 import com.mega.xty.common.item.armor.WineBottleHat;
-import com.mega.xty.common.item.component.C4BombItem;
+import com.mega.xty.common.item.fps.BDKItem;
+import com.mega.xty.common.item.fps.C4BombItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -20,6 +20,7 @@ public class ItemInit {
     public static final RegistryObject<Item> WINE_BOTTLE_HAT = ITEMS.register("wine_bottle_hat", WineBottleHat::new);
     public static final RegistryObject<Item> OPTICAL_NANOSUIT = ITEMS.register("optical_nanosuit", OpticalNanosuit::new);
     public static final RegistryObject<Item> C4_BOMB = ITEMS.register("c4_bomb", C4BombItem::new);
+    public static final RegistryObject<Item> BDK = ITEMS.register("bdk", BDKItem::new);
     static {
         BlockInit.BLOCKS.getEntries().forEach(ro -> ITEMS.register(ro.getId().getPath(), ()-> {
             Block block = ro.get();

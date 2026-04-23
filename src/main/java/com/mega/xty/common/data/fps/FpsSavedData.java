@@ -5,6 +5,7 @@ import com.mega.endinglib.util.mixin.level.ServerEC;
 import com.mega.xty.common.data.fps.kad.ServerSynchedKADData;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
 import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
@@ -25,9 +26,37 @@ import java.util.UUID;
 public class FpsSavedData extends SavedData {
     private boolean enableKAD = false;
     private boolean kadDirty = false;
+    private boolean bombExist = false;
+    //
+    private byte bombPosition = 0;
     private Map<UUID, ServerSynchedKADData> kadData;
     private boolean playerNamesDirty = false;
     private Map<UUID, TabData> playerTabData;
+
+    public boolean isBombExist() {
+        return bombExist;
+    }
+
+    public void setBombExist(boolean bombExist) {
+        if (this.bombExist != bombExist) {
+            this.setDirty();
+            for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
+                NetworkHandler.sendToPlayer(new S2CBombDataPacket(bombExist, this.bombPosition), serverPlayer);
+        }
+        this.bombExist = bombExist;
+    }
+    public byte getBombPosition() {
+        return bombPosition;
+    }
+    public void setBombPosition(byte bombPosition) {
+        if (this.bombPosition != bombPosition) {
+            this.setDirty();
+            for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
+                NetworkHandler.sendToPlayer(new S2CBombDataPacket(this.bombExist, bombPosition), serverPlayer);
+        }
+        this.bombPosition = bombPosition;
+    }
+
     public MinecraftServer server;
     public FpsSavedData() {
     }
@@ -49,6 +78,8 @@ public class FpsSavedData extends SavedData {
         data.setPlayerTabData(CompoundTagUtils.getMap(tag, "PlayerTabData", CompoundTag::getUUID, TabData.NBT_READER));
         data.setKadData(CompoundTagUtils.getMap(tag, "KAD", CompoundTag::getUUID, ServerSynchedKADData.NBT_READER.apply(data)));
         data.enableKAD = tag.getBoolean("enableKAD");
+        data.bombExist = tag.getBoolean("bombExist");
+        data.bombPosition = tag.getByte("bombPosition");
         return data;
     }
     public void setPlayerTabData(Map<UUID, TabData> playerTabData) {
@@ -69,6 +100,8 @@ public class FpsSavedData extends SavedData {
         CompoundTagUtils.putMap(compoundTag, "PlayerTabData", playerTabData, CompoundTag::putUUID, TabData.NBT_WRITER);
         CompoundTagUtils.putMap(compoundTag, "KAD", kadData, CompoundTag::putUUID, ServerSynchedKADData.NBT_WRITER);
         compoundTag.putBoolean("enableKAD", this.enableKAD);
+        compoundTag.putBoolean("bombExist", this.bombExist);
+        compoundTag.putByte("bombPosition", this.bombPosition);
         return compoundTag;
     }
     public boolean isEnableKAD() {

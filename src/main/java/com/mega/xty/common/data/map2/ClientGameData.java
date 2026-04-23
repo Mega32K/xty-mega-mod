@@ -39,6 +39,7 @@ public class ClientGameData {
     public static Component rightTopTextTip = null;
     @Nullable
     public static BlockPos pointA;
+    @Nullable
     public static BlockPos pointB;
     public static int currentCameraPlayerIndex;
     public static List<AbstractClientPlayer> aliveSameTeamPlayers = new ObjectArrayList<>();

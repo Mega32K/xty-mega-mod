@@ -10,10 +10,7 @@ import com.mega.xty.client.overlay.DebugOverlays;
 import com.mega.xty.client.overlay.loading.MegaStyleLoadingEffect;
 import com.mega.xty.client.overlay.map1.HealthOverlay;
 import com.mega.xty.client.overlay.map2.*;
-import com.mega.xty.client.renderer.entity.BlackHoleRenderer;
-import com.mega.xty.client.renderer.entity.Game2ItemRenderer;
-import com.mega.xty.client.renderer.entity.ShadowPlayerRenderer;
-import com.mega.xty.client.renderer.entity.WrappedPlayerRenderer;
+import com.mega.xty.client.renderer.entity.*;
 import com.mega.xty.client.screen.map2.GameStartScreen;
 import com.mega.xty.client.screen.map2.RenameScreen;
 import com.mega.xty.client.shader.ModShaders;
@@ -135,6 +132,7 @@ public class ClientProxy implements ModProxy {
         event.registerEntityRenderer(EntityInit.SHADOW_PLAYER.get(), ShadowPlayerRenderer::new);
         event.registerEntityRenderer(EntityInit.BLACKHOLE.get(), BlackHoleRenderer::new);
         event.registerEntityRenderer(EntityInit.GAME_ITEM.get(), Game2ItemRenderer::new);
+        event.registerEntityRenderer(EntityInit.C4.get(), C4EntityRenderer::new);
     }
     private void registerParticleProviders(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ParticleInit.GAME2_HIT.get(), Game2HitParticle.Provider::new);

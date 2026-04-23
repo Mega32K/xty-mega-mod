@@ -2,6 +2,8 @@
   "mega.xty.spawnpoint_set" : "已设置重生点",
 
   "entity.xtymegamod.wine" : "空酒瓶",
+  "entity.xtymegamod.c4" : "C4",
+  "entity.xtymegamod.bdk" : "C4钳",
 
   "block.xtymegamod.gold_spawnpoint_block" : "重生点金块",
   "block.xtymegamod.gold_spawnpoint_block.lore" : "设置站在方块上的玩家的重生点",

@@ -10,6 +10,7 @@ import com.mega.xty.common.network.c2s.map2.C2SSetNamePacket;
 import com.mega.xty.common.network.c2s.map2.C2SStopJoiningGamePacket;
 import com.mega.xty.common.network.s2c.S2CDisableBIPacket;
 import com.mega.xty.common.network.s2c.S2CPartialTeleportPacket;
+import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerKADPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerNamePacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
@@ -68,6 +69,7 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CPlayerNamePacket.class, S2CPlayerNamePacket::encode, S2CPlayerNamePacket::decode, S2CPlayerNamePacket::handle);
         INSTANCE.registerMessage(id(), S2CMap2TextTipPacket.class, S2CMap2TextTipPacket::encode, S2CMap2TextTipPacket::decode, S2CMap2TextTipPacket::handle);
         INSTANCE.registerMessage(id(), S2CSyncTeamWinsPacket.class, S2CSyncTeamWinsPacket::encode, S2CSyncTeamWinsPacket::decode, S2CSyncTeamWinsPacket::handle);
+        INSTANCE.registerMessage(id(), S2CBombDataPacket.class, S2CBombDataPacket::encode, S2CBombDataPacket::decode, S2CBombDataPacket::handle);
     }
     public static <MSG> void sendToAll(MSG msg) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), msg);

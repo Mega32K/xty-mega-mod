@@ -5,6 +5,7 @@ import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.fps.kad.ServerSynchedKADData;
 import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerKADPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerNamePacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
@@ -31,6 +32,7 @@ public class FpsCommonEventsHandler {
             if (data.isEnableKAD()) {
                 NetworkHandler.sendToPlayer(new S2CPlayerKADPacket(true, data.getKadData()), serverPlayer);
             }
+            NetworkHandler.sendToPlayer(new S2CBombDataPacket(data.isBombExist(), data.getBombPosition()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CPlayerNamePacket(true, data.getPlayerTabData()), serverPlayer);
         }
     }

@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class LocalPlayerShootMixin {
     @WrapOperation(method = "shoot", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;getSynSprintTime()F"))
     private float game2CanSprintingShoot(IGunOperator instance, Operation<Float> original) {
-        if (!ClientGame2Data.isStopped)
+        if (ClientGame2Data.isStopped)
             return 0F;
         return original.call(instance);
     }
