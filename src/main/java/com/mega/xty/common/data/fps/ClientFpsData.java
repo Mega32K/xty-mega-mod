@@ -110,7 +110,7 @@ public class ClientFpsData {
     public static boolean shouldPlayBombBeep(int remainingTicks) {
         return remainingTicks > 0 && remainingTicks % getBombBeepIntervalTicks(remainingTicks) == 0;
     }
-    private static int getBombBeepIntervalTicks(int remainingTicks) {
+    public static int getBombBeepIntervalTicks(int remainingTicks) {
         if (remainingTicks > 25 * 20) {
             return 20;
         }

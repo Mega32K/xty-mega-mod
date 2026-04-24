@@ -148,7 +148,8 @@ public class KillCountOverlay implements IGuiOverlay {
                 } else {
                     float size = 16F;
                     //渲染C4图标
-                    graphics.setColor(1F, 0F, 0F, 1F);
+                    float[] c4Color = getC4IconColor(partialTick);
+                    graphics.setColor(c4Color[0], c4Color[1], c4Color[2], 1F);
                     graphics.blit(C4_1.texture(),
                             screenWidth / 2F - size / 2F, 7,
                             size, size,
@@ -262,5 +263,21 @@ public class KillCountOverlay implements IGuiOverlay {
         }
         HealthOverlay.renderProfileIcon(player, graphics, poseStack, headSize);
         poseStack.popPose();
+    }
+    private static float[] getC4IconColor(float partialTick) {
+        float baseR = 0x88 / 255F;
+        float baseB = 0x1B / 255F;
+        float flash = getC4IconFlashStrength(partialTick);
+        return new float[] {
+                baseR + (1.0F - baseR) * flash,
+                0.0F,
+                baseB * (1.0F - flash)
+        };
+    }
+    private static float getC4IconFlashStrength(float partialTick) {
+        int interval = ClientFpsData.getBombBeepIntervalTicks(ClientFpsData.bombCountdownTicks);
+        int ticksSinceBeep = ((interval - ((ClientFpsData.bombCountdownTicks + 1) % interval)) % interval);
+        float flashDuration = interval > 10 ? 6.0F : interval > 5 ? 4.0F : 2.0F;
+        return 1.0F - Math.min(1.0F, (ticksSinceBeep + partialTick) / flashDuration);
     }
 }
