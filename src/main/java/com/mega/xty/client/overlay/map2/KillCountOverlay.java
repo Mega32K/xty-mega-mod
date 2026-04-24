@@ -1,5 +1,6 @@
 package com.mega.xty.client.overlay.map2;
 
+import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.api.client.screen.BlitInfo;
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
@@ -148,8 +149,15 @@ public class KillCountOverlay implements IGuiOverlay {
                 } else {
                     float size = 16F;
                     //渲染C4图标
+                    graphics.setColor(0x88 / 255F, 0F, 0x1B / 255F, 1F);
+                    graphics.blit(C4_2.texture(),
+                            screenWidth / 2F - size / 2F, 7,
+                            size, size,
+                            C4_2.startX(), C4_2.startY(),
+                            C4_2.width(), C4_2.height(),
+                            512F, 384F);
                     float[] c4Color = getC4IconColor(partialTick);
-                    graphics.setColor(c4Color[0], c4Color[1], c4Color[2], 1F);
+                    graphics.setColor(c4Color[0], c4Color[1], c4Color[2], c4Color[3]);
                     graphics.blit(C4_1.texture(),
                             screenWidth / 2F - size / 2F, 7,
                             size, size,
@@ -271,13 +279,15 @@ public class KillCountOverlay implements IGuiOverlay {
         return new float[] {
                 baseR + (1.0F - baseR) * flash,
                 0.0F,
-                baseB * (1.0F - flash)
+                baseB * (1.0F - flash),
+                flash
         };
     }
     private static float getC4IconFlashStrength(float partialTick) {
         int interval = ClientFpsData.getBombBeepIntervalTicks(ClientFpsData.bombCountdownTicks);
         int ticksSinceBeep = ((interval - ((ClientFpsData.bombCountdownTicks + 1) % interval)) % interval);
         float flashDuration = interval > 10 ? 6.0F : interval > 5 ? 4.0F : 2.0F;
-        return 1.0F - Math.min(1.0F, (ticksSinceBeep + partialTick) / flashDuration);
+        float progress = Math.min(1.0F, (ticksSinceBeep + partialTick) / flashDuration);
+        return 1.0F - Easing.OUT_CUBIC.calculate(progress);
     }
 }
