@@ -60,14 +60,14 @@ public class C4Overlay implements IGuiOverlay {
         }
     }
     public void renderBombCountdown(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, int countdownTicks, int screenWidth, int screenHeight, float partialTicks) {
-        float alpha = Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer, 10) / 10.0F);
+        float alpha = Easing.OUT_CUBIC.calculate(Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer - partialTicks, 10) / 10.0F)) * Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10F));
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
         Font font = gui.getFont();
         String text1 = "炸弹已被安放";
         String text2 = "离被引爆还剩" + ClientFpsData.getDisplayBombSeconds(countdownTicks) + "秒";
         float width = Math.max(font.width(text1), font.width(text2)) + 24F;
-        float realWidth = Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10F)) * width;
+        float realWidth = alpha * width;
         float height = font.lineHeight * 2F + 10F;
         float x = screenWidth / 2F;
         float y = screenHeight * 0.62F;
@@ -81,6 +81,10 @@ public class C4Overlay implements IGuiOverlay {
         graphics.drawCenteredString(font, text1, (int) x, (int) (y + 4F), textColor);
         graphics.drawCenteredString(font, text2, (int) x, (int) (y + 6F + font.lineHeight), textColor);
         graphics.disableScissor();
+        //模仿CS2的白色淡入淡出
+        if (ClientFpsData.bombCountdownRenderTimer >= ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - 10)
+            graphics.fill(x - realWidth / 2F, y, x + realWidth / 2F, y + height, ((int)(255 - alpha * 255) << 24 | 0x00FF0000 | 0x0000FF00 | 0x000000FF));
+
         poseStack.popPose();
     }
     public void renderBombSettingAnimation(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, float progress, int screenWidth, int screenHeight) {

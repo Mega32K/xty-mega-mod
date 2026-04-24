@@ -44,8 +44,8 @@ public class GameCommonEvents {
                 MinecraftServer server = event.getServer();
                 FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
                 if (!Game2SavedData.getInstance(server).isStopped() && fpsSavedData.isBombExist()) {
-                    data.setCountdown(fpsSavedData.getBombCountdownTicks());
-                    if (data.getCountdown() % 20 == 0 || data.getCountdown() <= 0) {
+                    if (data.getCountdown() != 0) {
+                        data.setCountdown(0);
                         NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
                     }
                 } else if (data.getCountdown() > 0) {
