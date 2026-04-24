@@ -132,8 +132,7 @@ public class FpsSavedData extends SavedData {
         if (map2SavedData.getPointB() != null) {
             queryBoxes.add(new AABB(map2SavedData.getPointB()).inflate(32.0D));
         }
-        Game2SavedData savedData = Game2SavedData.getInstance(server);
-        String func = savedData.getGame2Functions().getOnPlayerDeathFunction();
+        String func = map2SavedData.getMap2Functions().getCountdownStopFunction();
         for (ServerLevel level : server.getAllLevels()) {
             for (AABB queryBox : queryBoxes) {
                 for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, queryBox)) {
@@ -145,7 +144,7 @@ public class FpsSavedData extends SavedData {
                     level.playSound(null, pos.x, pos.y, pos.z, level.random.nextBoolean() ? SoundsInit.C4_EXP_DEB1.get() : SoundsInit.C4_EXP_DEB2.get(), SoundSource.PLAYERS, 1.5F, 1.0F);
                     c4Entity.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
                 }
-                if (!savedData.isStopped() && func != null && !func.isEmpty()) {
+                if (!Game2SavedData.getInstance(server).isStopped() && func != null && !func.isEmpty()) {
                     for (Player alivePlayer : level.getEntitiesOfClass(Player.class, queryBox, EntitySelector.NO_CREATIVE_OR_SPECTATOR)) {
                         CommonProxy.getMap2Cap(alivePlayer).ifPresent(cap -> {
                             if (!cap.isXaeroDead()) {

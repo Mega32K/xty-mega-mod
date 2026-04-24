@@ -5,8 +5,10 @@ import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.shader.ModShaders;
+import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.map2.ClientGame1Data;
 import com.mega.xty.common.data.map2.ClientGameData;
+import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,6 +34,16 @@ public class KillCountOverlay implements IGuiOverlay {
     public static final BlitInfo TEAM_SCORE = new BlitInfo(
             ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/display_killcount.png"),
             0, 17, 35, 16
+    );
+    public static final BlitInfo C4_1 = new BlitInfo(
+            ClientProxy.FPS_UI_ICONS_LOCATION,
+            256, 0,
+            128, 128
+    );
+    public static final BlitInfo C4_2 = new BlitInfo(
+            ClientProxy.FPS_UI_ICONS_LOCATION,
+            384, 0,
+            128, 128
     );
     @SuppressWarnings("DataFlowIssue")
     @Override
@@ -128,10 +140,23 @@ public class KillCountOverlay implements IGuiOverlay {
                     left = right;
                     right = v2;
                 }
-                graphics.drawCenteredString(
-                        font,
-                        mid,
-                        graphics.guiWidth() / 2, 12, 0xFFFFFFFF);
+                if (!ClientFpsData.bombExist) {
+                    graphics.drawCenteredString(
+                            font,
+                            mid,
+                            graphics.guiWidth() / 2, 12, 0xFFFFFFFF);
+                } else {
+                    float size = 16F;
+                    //渲染C4图标
+                    graphics.setColor(1F, 0F, 0F, 1F);
+                    graphics.blit(C4_1.texture(),
+                            screenWidth / 2F - size / 2F, 7,
+                            size, size,
+                            C4_1.startX(), C4_1.startY(),
+                            C4_1.width(), C4_1.height(),
+                            512F, 384F);
+                    graphics.setColor(1F, 1F, 1F, 1F);
+                }
                 graphics.drawCenteredString(
                         font,
                         left,

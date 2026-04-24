@@ -21,17 +21,6 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 public class C4Overlay implements IGuiOverlay {
-    public static int[] CODE = new int[] {7,3,5,5,6,0,8};
-    public static final BlitInfo C4_1 = new BlitInfo(
-            ClientProxy.FPS_UI_ICONS_LOCATION,
-            256, 0,
-            128, 128
-    );
-    public static final BlitInfo C4_2 = new BlitInfo(
-            ClientProxy.FPS_UI_ICONS_LOCATION,
-            384, 0,
-            128, 128
-    );
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
 
@@ -60,13 +49,16 @@ public class C4Overlay implements IGuiOverlay {
         }
     }
     public void renderBombCountdown(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, int countdownTicks, int screenWidth, int screenHeight, float partialTicks) {
+        //透明度(淡入淡出进度)的设置
         float alpha = Easing.OUT_CUBIC.calculate(Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer - partialTicks, 10) / 10.0F)) * Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10F));
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
         Font font = gui.getFont();
         String text1 = "炸弹已被安放";
         String text2 = "离被引爆还剩" + ClientFpsData.getDisplayBombSeconds(countdownTicks) + "秒";
+        //长度取所有文本最长者+24
         float width = Math.max(font.width(text1), font.width(text2)) + 24F;
+        //实际渲染宽度
         float realWidth = alpha * width;
         float height = font.lineHeight * 2F + 10F;
         float x = screenWidth / 2F;
