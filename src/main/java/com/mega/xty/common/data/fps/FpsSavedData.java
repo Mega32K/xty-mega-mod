@@ -4,6 +4,7 @@ import com.mega.endinglib.api.data.CompoundTagUtils;
 import com.mega.endinglib.util.mixin.level.ServerEC;
 import com.mega.xty.common.data.fps.kad.ServerSynchedKADData;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
+import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.SoundsInit;
@@ -13,12 +14,15 @@ import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.commands.CommandFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
@@ -101,7 +105,7 @@ public class FpsSavedData extends SavedData {
         }
         this.bombCountdownTicks = value;
         for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
-            NetworkHandler.sendToPlayer(new S2CBombDataPacket(this.bombExist, this.bombPosition, this.bombCountdownTicks), serverPlayer);
+            com.mega.xty.common.network.NetworkHandler.sendToPlayer(new S2CBombDataPacket(this.bombExist, this.bombPosition, this.bombCountdownTicks), serverPlayer);
     }
     public void tickBombCountdown() {
         if (bombExist && bombCountdownTicks > 0) {
@@ -128,6 +132,8 @@ public class FpsSavedData extends SavedData {
         if (map2SavedData.getPointB() != null) {
             queryBoxes.add(new AABB(map2SavedData.getPointB()).inflate(32.0D));
         }
+        Game2SavedData savedData = Game2SavedData.getInstance(server);
+        String func = savedData.getGame2Functions().getOnPlayerDeathFunction();
         for (ServerLevel level : server.getAllLevels()) {
             for (AABB queryBox : queryBoxes) {
                 for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, queryBox)) {
@@ -138,6 +144,15 @@ public class FpsSavedData extends SavedData {
                     level.playSound(null, pos.x, pos.y, pos.z, SoundsInit.C4_EXPLODE1.get(), SoundSource.PLAYERS, 2.6F, 1.0F);
                     level.playSound(null, pos.x, pos.y, pos.z, level.random.nextBoolean() ? SoundsInit.C4_EXP_DEB1.get() : SoundsInit.C4_EXP_DEB2.get(), SoundSource.PLAYERS, 1.5F, 1.0F);
                     c4Entity.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+                }
+                if (!savedData.isStopped() && func != null && !func.isEmpty()) {
+                    for (Player alivePlayer : level.getEntitiesOfClass(Player.class, queryBox, EntitySelector.NO_CREATIVE_OR_SPECTATOR)) {
+                        CommonProxy.getMap2Cap(alivePlayer).ifPresent(cap -> {
+                            if (!cap.isXaeroDead()) {
+                                server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f -> server.getFunctions().execute(f, alivePlayer.createCommandSourceStack().withSuppressedOutput().withMaximumPermission(2)));
+                            }
+                        });
+                    }
                 }
             }
         }

@@ -95,6 +95,10 @@ public class C4BombItem extends Item {
                 }
             }
             savedData.setBombCountdownTicks(FpsSavedData.BOMB_COUNTDOWN_TOTAL_TICKS);
+            if (!com.mega.xty.common.data.map2.Game2SavedData.getInstance(sl.getServer()).isStopped()) {
+                map2SavedData.setCountdown(0);
+                NetworkHandler.sendToAll(new com.mega.xty.common.network.s2c.map2.S2CMap2CountdownPacket(0));
+            }
             playC4Sound(player, SoundsInit.C4_PLANT.get(), 1.0F, 1.0F);
             playC4Sound(player, SoundsInit.C4_INITIATE.get(), 0.8F, 1.0F);
         }

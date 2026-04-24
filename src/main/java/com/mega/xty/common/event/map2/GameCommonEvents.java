@@ -1,5 +1,7 @@
 package com.mega.xty.common.event.map2;
 
+import com.mega.xty.common.data.fps.FpsSavedData;
+import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.data.map2.ServerGameData;
@@ -40,7 +42,13 @@ public class GameCommonEvents {
             Map2SavedData data = Map2SavedData.getInstance(event.getServer());
             if (!data.isStopped()) {
                 MinecraftServer server = event.getServer();
-                if (data.getCountdown() > 0) {
+                FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
+                if (!Game2SavedData.getInstance(server).isStopped() && fpsSavedData.isBombExist()) {
+                    data.setCountdown(fpsSavedData.getBombCountdownTicks());
+                    if (data.getCountdown() % 20 == 0 || data.getCountdown() <= 0) {
+                        NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
+                    }
+                } else if (data.getCountdown() > 0) {
                     data.setCountdown(data.getCountdown() - 1);
                     if (data.getCountdown() % 20 == 0) {
                         NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
