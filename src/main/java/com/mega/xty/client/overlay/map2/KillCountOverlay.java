@@ -147,11 +147,11 @@ public class KillCountOverlay implements IGuiOverlay {
                             mid,
                             graphics.guiWidth() / 2, 12, 0xFFFFFFFF);
                 } else {
-                    float size = 16F;
+                    float size = 18F;
                     //渲染C4图标
                     graphics.setColor(0x88 / 255F, 0F, 0x1B / 255F, 1F);
                     graphics.blit(C4_2.texture(),
-                            screenWidth / 2F - size / 2F, 7,
+                            screenWidth / 2F - size / 2F + 2, 6.5F,
                             size, size,
                             C4_2.startX(), C4_2.startY(),
                             C4_2.width(), C4_2.height(),
@@ -159,7 +159,7 @@ public class KillCountOverlay implements IGuiOverlay {
                     float[] c4Color = getC4IconColor(partialTick);
                     graphics.setColor(c4Color[0], c4Color[1], c4Color[2], c4Color[3]);
                     graphics.blit(C4_1.texture(),
-                            screenWidth / 2F - size / 2F, 7,
+                            screenWidth / 2F - size / 2F + 2, 6.5F,
                             size, size,
                             C4_1.startX(), C4_1.startY(),
                             C4_1.width(), C4_1.height(),
@@ -276,12 +276,20 @@ public class KillCountOverlay implements IGuiOverlay {
         float baseR = 0x88 / 255F;
         float baseB = 0x1B / 255F;
         float flash = getC4IconFlashStrength(partialTick);
+        float alpha = getC4IconAlpha(partialTick);
         return new float[] {
                 baseR + (1.0F - baseR) * flash,
                 0.0F,
                 baseB * (1.0F - flash),
-                flash
+                alpha
         };
+    }
+    private static float getC4IconAlpha(float partialTick) {
+        int interval = ClientFpsData.getBombBeepIntervalTicks(ClientFpsData.bombCountdownTicks);
+        int ticksSinceBeep = ((interval - ((ClientFpsData.bombCountdownTicks + 1) % interval)) % interval);
+        float flashDuration = interval > 10 ? 6.0F : interval > 5 ? 4.0F : 2.0F;
+        float progress = Math.min(1.0F, (ticksSinceBeep + partialTick) / flashDuration);
+        return 1.0F - Easing.IN_OUT_SINE.calculate(progress);
     }
     private static float getC4IconFlashStrength(float partialTick) {
         int interval = ClientFpsData.getBombBeepIntervalTicks(ClientFpsData.bombCountdownTicks);
