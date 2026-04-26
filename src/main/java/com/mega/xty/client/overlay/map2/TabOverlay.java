@@ -1,8 +1,6 @@
 package com.mega.xty.client.overlay.map2;
 
-import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
-import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.map2.ClientGame1Data;
@@ -16,17 +14,13 @@ import net.minecraft.Optionull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.PlayerFaceRenderer;
-import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
@@ -36,7 +30,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class TabOverlay implements IGuiOverlay {
     private static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt((p_253306_) -> p_253306_.getGameMode() == GameType.SPECTATOR ? 1 : 0).thenComparing((p_269613_) -> Optionull.mapOrDefault(p_269613_.getTeam(), PlayerTeam::getName, "")).thenComparing((p_253305_) -> p_253305_.getProfile().getName(), String::compareToIgnoreCase);

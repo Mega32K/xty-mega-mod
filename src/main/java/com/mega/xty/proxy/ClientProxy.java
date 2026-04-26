@@ -3,7 +3,6 @@ package com.mega.xty.proxy;
 import com.google.gson.JsonSyntaxException;
 import com.mega.endinglib.api.client.levelevent.LevelEventManager;
 import com.mega.endinglib.api.client.shader.post.PostEffectHandler;
-import com.mega.endinglib.client.ClientWrapped;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.MapLevelEvents;
 import com.mega.xty.client.overlay.DebugOverlays;
@@ -13,8 +12,10 @@ import com.mega.xty.client.overlay.map2.*;
 import com.mega.xty.client.renderer.entity.*;
 import com.mega.xty.client.screen.map2.GameStartScreen;
 import com.mega.xty.client.screen.map2.RenameScreen;
-import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.client.shader.post.GuiRectBlurPostEffect;
+import com.mega.xty.client.shader.post.map2.DeadPostEffect;
+import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
+import com.mega.xty.client.shader.post.map2.MotionBlurPostEffect;
 import com.mega.xty.client.text.ClientItemDisplayTooltip;
 import com.mega.xty.client.text.ItemDisplayTooltip;
 import com.mega.xty.common.data.map2.ClientGameData;
@@ -24,21 +25,18 @@ import com.mega.xty.common.init.ParticleInit;
 import com.mega.xty.common.particle.Game2HitParticle;
 import com.mega.xty.util.data_expand.ExtraPlayerRenderer;
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.PostChain;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
@@ -52,7 +50,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.lwjgl.glfw.GLFW;
 
@@ -115,6 +112,9 @@ public class ClientProxy implements ModProxy {
                 }
             });
             PostEffectHandler.registerEffect(GuiRectBlurPostEffect::new);
+            PostEffectHandler.registerEffect(MotionBlurPostEffect::new);
+            PostEffectHandler.registerEffect(Game2StartPostEffect::new);
+            PostEffectHandler.registerEffect(DeadPostEffect::new);
         });
     }
     private void onKeyRegister(RegisterKeyMappingsEvent event) {
@@ -152,7 +152,7 @@ public class ClientProxy implements ModProxy {
         event.registerAboveAll("fps/tab", new TabOverlay());
         event.registerAboveAll("map2/text_tip", new TextTipOverlay());
         event.registerAboveAll("fps/c4", new C4Overlay());
-            event.registerAboveAll("map2/win", new WinOverlay());
+        event.registerAboveAll("map2/win", new WinOverlay());
     }
     public static void setObj(ShadowPlayerEntity entity, Player player) {
         if (player instanceof AbstractClientPlayer clientPlayer) {

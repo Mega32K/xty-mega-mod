@@ -1,5 +1,6 @@
 package com.mega.xty.common.data.fps;
 
+import com.mega.endinglib.api.client.Easing;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.proxy.ClientProxy;
@@ -29,6 +30,7 @@ public class ClientFpsData {
     public static final int BOMB_COUNTDOWN_TOTAL_TICKS = 40 * 20;
     public static final int BOMB_COUNTDOWN_REQUEST_INTERVAL = 15 * 20;
     public static final int BOMB_COUNTDOWN_PROMPT_DURATION = 60;
+    public static final int ROUND_WIN_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION;
     public static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).kills).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).assists).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).deaths);
     public static boolean enabled;
     public static final Map<UUID, SynchedKADData> kadData = new Object2ObjectOpenHashMap<>();
@@ -39,6 +41,7 @@ public class ClientFpsData {
     public static int bombCountdownTicks;
     public static int bombCountdownRenderTicks;
     public static int bombCountdownRenderTimer;
+    public static int roundWinRenderTimer;
     public static SynchedKADData getPlayerKAD(Player player) {
         if (!enabled) return SynchedKADData.EMPTY_KAD;
         return kadData.getOrDefault(player.getUUID(), SynchedKADData.EMPTY_KAD);
@@ -79,6 +82,9 @@ public class ClientFpsData {
         if (bombCountdownRenderTimer > 0) {
             bombCountdownRenderTimer--;
         }
+        if (roundWinRenderTimer > 0) {
+            roundWinRenderTimer--;
+        }
         if (!bombExist || bombCountdownTicks <= 0) {
             return;
         }
@@ -101,6 +107,17 @@ public class ClientFpsData {
     public static void requestBombCountdownRender(int countdownTicks) {
         bombCountdownRenderTicks = Math.max(0, countdownTicks);
         bombCountdownRenderTimer = BOMB_COUNTDOWN_PROMPT_DURATION;
+    }
+    public static boolean shouldRenderRoundWin() {
+        return roundWinRenderTimer > 0;
+    }
+    public static void requestRoundWinRender() {
+        roundWinRenderTimer = ROUND_WIN_PROMPT_DURATION;
+    }
+    public static float getRoundWinNotificationAlpha(float partialTicks) {
+        float fadeIn = Math.min(1.0F, Math.min(roundWinRenderTimer - partialTicks, 10.0F) / 10.0F);
+        float fadeOut = Math.min(1.0F, (ROUND_WIN_PROMPT_DURATION - roundWinRenderTimer + partialTicks) / 10.0F);
+        return Easing.OUT_CUBIC.calculate(fadeIn) * Easing.OUT_CUBIC.calculate(fadeOut);
     }
     public static int getDisplayBombSeconds(int countdownTicks) {
         return Math.max(0, (countdownTicks + 19) / 20);

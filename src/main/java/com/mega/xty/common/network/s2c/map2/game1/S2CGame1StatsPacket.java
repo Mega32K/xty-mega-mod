@@ -1,7 +1,6 @@
 package com.mega.xty.common.network.s2c.map2.game1;
 
 import com.mega.xty.common.data.map2.ClientGame1Data;
-import com.mega.xty.common.data.map2.ClientGameData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
