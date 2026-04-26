@@ -4,6 +4,7 @@ import com.mega.endinglib.api.client.cmc.LoreHelper;
 import com.mega.endinglib.api.client.screen.BlitInfo;
 import com.mega.endinglib.mixin.accessor.AccessorGuiGraphics;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
@@ -57,6 +58,7 @@ public class SelectPlayerOverlay implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui) return;
         if (ClientGameData.isStopped) return;
+        if (DeathCameraEffectHandler.isPlaying()) return;
         gui.setupOverlayRenderState(true, false);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {

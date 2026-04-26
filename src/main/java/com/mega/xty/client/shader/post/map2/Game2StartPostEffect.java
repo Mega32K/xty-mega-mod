@@ -2,6 +2,7 @@ package com.mega.xty.client.shader.post.map2;
 
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.shader.post.TimePostEffect;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 public class Game2StartPostEffect extends TimePostEffect {
@@ -23,6 +24,7 @@ public class Game2StartPostEffect extends TimePostEffect {
 
     @Override
     public boolean canUse() {
-        return false;
+        this.canUse = Minecraft.getInstance().player != null && Minecraft.getInstance().player.isShiftKeyDown();
+        return super.canUse();
     }
 }

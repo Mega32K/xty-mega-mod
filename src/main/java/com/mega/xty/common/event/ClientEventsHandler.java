@@ -4,6 +4,7 @@ import com.mega.endinglib.api.event.client.RenderShadowEvent;
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.mixin.accessor.AccessorEntity;
 import com.mega.endinglib.util.time.TimeContext;
+import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.data.map2.DeathData;
@@ -32,6 +33,7 @@ public class ClientEventsHandler {
             Minecraft mc = Minecraft.getInstance();
             ClientLevel clientLevel = mc.level;
             if (clientLevel != null) {
+                DeathCameraEffectHandler.clientTick();
                 if (!mc.isPaused()) ClientFpsData.tick();
                 if (!ClientGameData.map2Playing()) {
                     if (!ClientGameData.toAddDeathData.isEmpty()) ClientGameData.toAddDeathData.clear();

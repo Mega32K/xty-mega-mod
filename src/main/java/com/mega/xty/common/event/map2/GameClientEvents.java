@@ -1,6 +1,7 @@
 package com.mega.xty.common.event.map2;
 
 import com.mega.xty.client.shader.ModShaders;
+import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.proxy.CommonProxy;
@@ -86,6 +87,7 @@ public class GameClientEvents {
     }
     @SubscribeEvent
     public static void onDisconnected(ClientPlayerNetworkEvent.LoggingOut event) {
+        DeathCameraEffectHandler.stop();
         if (event.getMultiPlayerGameMode() != null) {
             ClientGameData.currentCameraPlayerIndex = 0;
             ClientGameData.aliveSameTeamPlayers.clear();

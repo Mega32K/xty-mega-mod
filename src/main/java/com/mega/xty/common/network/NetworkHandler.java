@@ -19,6 +19,7 @@ import com.mega.xty.common.network.s2c.map1.game2.S2CGame2StatsPacket;
 import com.mega.xty.common.network.s2c.map1.game2.S2CScreenShakePacket;
 import com.mega.xty.common.network.s2c.map1.game2.S2CSimpleScreenShakePacket;
 import com.mega.xty.common.network.s2c.map2.*;
+import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
 import com.mega.xty.common.network.s2c.map2.game1.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -70,6 +71,7 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CMap2TextTipPacket.class, S2CMap2TextTipPacket::encode, S2CMap2TextTipPacket::decode, S2CMap2TextTipPacket::handle);
         INSTANCE.registerMessage(id(), S2CSyncTeamWinsPacket.class, S2CSyncTeamWinsPacket::encode, S2CSyncTeamWinsPacket::decode, S2CSyncTeamWinsPacket::handle);
         INSTANCE.registerMessage(id(), S2CBombDataPacket.class, S2CBombDataPacket::encode, S2CBombDataPacket::decode, S2CBombDataPacket::handle);
+        INSTANCE.registerMessage(id(), S2CGame2DeathEffectPacket.class, S2CGame2DeathEffectPacket::encode, S2CGame2DeathEffectPacket::decode, S2CGame2DeathEffectPacket::handle);
     }
     public static <MSG> void sendToAll(MSG msg) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), msg);

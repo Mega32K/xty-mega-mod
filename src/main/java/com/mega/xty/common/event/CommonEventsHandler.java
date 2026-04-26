@@ -6,6 +6,8 @@ import com.mega.xty.common.data.map2.Game1SavedData;
 import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.data.map2.ServerGameData;
+import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
 import com.mega.xty.proxy.CommonProxy;
 import com.tacz.guns.api.event.common.EntityKillByGunEvent;
 import com.tacz.guns.api.event.common.GunDamageSourcePart;
@@ -37,6 +39,8 @@ import java.util.EnumSet;
 
 @Mod.EventBusSubscriber
 public class CommonEventsHandler {
+    private static final double GAME2_DEATH_CAMERA_DISTANCE = 3.0D;
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();
@@ -58,6 +62,9 @@ public class CommonEventsHandler {
                         Map2SavedData map2SavedData = Map2SavedData.getInstance(server);
                         if (map2SavedData.isTeamMode()) {
                             Vec3 deathPos = deathP.position();
+                            Vec3 deathCameraStart = deathP.getEyePosition();
+                            float deathCameraXRot = deathP.getXRot();
+                            float deathCameraYRot = deathP.getYRot();
                             ResourceKey<Level> dimension = deathP.level().dimension();
                             deathP.respawn();
                             ServerLevel dimensionLevel = server.getLevel(dimension);
@@ -65,6 +72,7 @@ public class CommonEventsHandler {
                                 deathP.teleportTo(dimensionLevel, deathPos.x, deathPos.y, deathPos.z, 0, 0);
                             CommonProxy.getMap2Cap(deathP).ifPresent(cap -> cap.setXaeroDead(true));
                             if (!Game2SavedData.getInstance(server).isStopped()) {
+                                playGame2DeathEffect(killer, deathP, deathCameraStart, deathCameraXRot, deathCameraYRot);
                                 Game2SavedData savedData = Game2SavedData.getInstance(server);
                                 String func = savedData.getGame2Functions().getOnPlayerDeathFunction();
                                 if (func != null && !func.isEmpty())
@@ -146,5 +154,24 @@ public class CommonEventsHandler {
         }
 
         return set;
+    }
+
+    private static void playGame2DeathEffect(ServerPlayer killer, ServerPlayer deadPlayer, Vec3 deathCameraStart, float xRot, float yRot) {
+        Vec3 killerPos = killer.getEyePosition();
+        Vec3 direction = deathCameraStart.subtract(killerPos);
+        if (direction.lengthSqr() < 1.0E-7D) {
+            direction = deadPlayer.getLookAngle();
+        }
+        if (direction.lengthSqr() < 1.0E-7D) {
+            direction = new Vec3(0.0D, 0.0D, 1.0D);
+        }
+
+        Vec3 deathCameraEnd = deathCameraStart.add(direction.normalize().scale(GAME2_DEATH_CAMERA_DISTANCE));
+        NetworkHandler.sendToPlayer(new S2CGame2DeathEffectPacket(
+                deathCameraStart,
+                deathCameraEnd,
+                xRot,
+                yRot
+        ), deadPlayer);
     }
 }
