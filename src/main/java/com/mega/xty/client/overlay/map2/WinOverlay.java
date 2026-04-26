@@ -18,6 +18,8 @@ import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import java.util.Optional;
 
 public class WinOverlay implements IGuiOverlay {
+    private static final float MVP_WIDTH_SCALE = 1.25F;
+
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui) return;
@@ -29,21 +31,27 @@ public class WinOverlay implements IGuiOverlay {
 
         gui.setupOverlayRenderState(true, false);
         MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
-        float alpha = ClientFpsData.getRoundWinNotificationAlpha(partialTick);
-        if (alpha <= 0.0F) return;
+        float titleAlpha = ClientFpsData.getRoundWinNotificationAlpha(partialTick);
+        if (titleAlpha <= 0.0F) return;
+        float mvpAlpha = ClientFpsData.getRoundWinMvpNotificationAlpha(partialTick);
 
         Font font = gui.getFont();
         float width = Math.max(screenWidth * 0.25F, 160.0F);
+        float mvpWidth = width * MVP_WIDTH_SCALE;
         float x = screenWidth / 2.0F;
         float titleHeight = font.lineHeight * 2.0F + 12.0F;
         float mvpHeight = font.lineHeight * 2.0F + 14.0F;
         float titleY = screenHeight * 0.18F;
         float mvpY = titleY + titleHeight + 5.0F;
-        int textColor = ((int) (alpha * 255.0F) << 24) | 0x00D0D0D0;
-        int borderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), textColor);
+        int titleTextColor = ((int) (titleAlpha * 255.0F) << 24) | 0x00D0D0D0;
+        int titleBorderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), titleTextColor);
 
-        renderTitleBox(graphics, font, "回合胜利", x, titleY, width, titleHeight, alpha, textColor, borderColor);
-        findMvp(mc).ifPresent(mvp -> renderMvpBox(graphics, font, mvp, x, mvpY, width, mvpHeight, alpha, textColor, borderColor));
+        renderTitleBox(graphics, font, "回合胜利", x, titleY, width, titleHeight, titleAlpha, titleTextColor, titleBorderColor);
+        if (mvpAlpha > 0.0F) {
+            int mvpTextColor = ((int) (mvpAlpha * 255.0F) << 24) | 0x00D0D0D0;
+            int mvpBorderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), mvpTextColor);
+            findMvp(mc).ifPresent(mvp -> renderMvpBox(graphics, font, mvp, x, mvpY, mvpWidth, mvpHeight, mvpAlpha, mvpTextColor, mvpBorderColor));
+        }
     }
 
     private static void renderTitleBox(MegaGuiGraphics graphics, Font font, String text, float centerX, float y, float width, float height, float alpha, int textColor, int borderColor) {
@@ -54,7 +62,7 @@ public class WinOverlay implements IGuiOverlay {
         poseStack.pushPose();
         poseStack.translate(centerX - font.width(text), y + (height - font.lineHeight * 2.0F) / 2.0F, 0.0F);
         poseStack.scale(2.0F, 2.0F, 1.0F);
-        graphics.drawString(font, text, 0, 0, textColor, false);
+        graphics.drawString(font, text, 0, 0, textColor, true);
         poseStack.popPose();
         graphics.disableScissor();
         renderWhiteFlash(graphics, centerX, y, realWidth, height, alpha);
@@ -76,8 +84,9 @@ public class WinOverlay implements IGuiOverlay {
         float textX = contentX + headSize + 9.0F;
         float textWidth = left + width - 12.0F - textX;
         Component name = ClientFpsData.getPlayerName(playerInfo);
+        int killTextColor = (textColor & 0xFF000000) | 0x00FFD54F;
         drawFittedString(graphics, font, name, textX, y + 7.0F, textWidth, textColor);
-        drawFittedString(graphics, font, Component.literal("本局击杀 " + kad.kills), textX, y + height - font.lineHeight - 7.0F, textWidth, textColor);
+        drawFittedString(graphics, font, Component.literal("本局击杀 " + kad.kills), textX, y + height - font.lineHeight - 7.0F, textWidth, killTextColor);
 
         graphics.disableScissor();
         renderWhiteFlash(graphics, centerX, y, realWidth, height, alpha);
@@ -102,7 +111,7 @@ public class WinOverlay implements IGuiOverlay {
         poseStack.pushPose();
         poseStack.translate(x, y, 0.0F);
         poseStack.scale(textScale, textScale, 1.0F);
-        graphics.drawString(font, text, 0, 0, color, false);
+        graphics.drawString(font, text, 0, 0, color, true);
         poseStack.popPose();
     }
 

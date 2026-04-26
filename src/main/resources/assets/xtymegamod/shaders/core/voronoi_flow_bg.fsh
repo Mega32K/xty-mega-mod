@@ -89,8 +89,6 @@ vec2 fastVoronoiUV(vec2 fragCoord, float cellSize, float time)
 
 void main()
 {
-    vec4 textureCol = texture(Sampler0, texCoord0);
-    if (textureCol.a <= 0.0) discard;
     float time = _ProgramTime;
 
     // 可调参数
@@ -102,7 +100,5 @@ void main()
     vec2 sampleUV = fastVoronoiUV(pos.xy, cellSize, time);
 
     // 三色渐变着色
-    vec4 col = threeColorGradient(sampleUV, time);
-
-    fragColor = vec4(col.rgb, textureCol.a);
+    fragColor = threeColorGradient(sampleUV, time);
 }

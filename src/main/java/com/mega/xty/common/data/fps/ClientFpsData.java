@@ -30,7 +30,9 @@ public class ClientFpsData {
     public static final int BOMB_COUNTDOWN_TOTAL_TICKS = 40 * 20;
     public static final int BOMB_COUNTDOWN_REQUEST_INTERVAL = 15 * 20;
     public static final int BOMB_COUNTDOWN_PROMPT_DURATION = 60;
-    public static final int ROUND_WIN_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION;
+    public static final int ROUND_WIN_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION + 4 * 20;
+    public static final int ROUND_LOSE_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION + 4 * 20;
+    public static final int ROUND_RESULT_MVP_DELAY = 20;
     public static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).kills).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).assists).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).deaths);
     public static boolean enabled;
     public static final Map<UUID, SynchedKADData> kadData = new Object2ObjectOpenHashMap<>();
@@ -42,6 +44,7 @@ public class ClientFpsData {
     public static int bombCountdownRenderTicks;
     public static int bombCountdownRenderTimer;
     public static int roundWinRenderTimer;
+    public static int roundLoseRenderTimer;
     public static SynchedKADData getPlayerKAD(Player player) {
         if (!enabled) return SynchedKADData.EMPTY_KAD;
         return kadData.getOrDefault(player.getUUID(), SynchedKADData.EMPTY_KAD);
@@ -85,6 +88,9 @@ public class ClientFpsData {
         if (roundWinRenderTimer > 0) {
             roundWinRenderTimer--;
         }
+        if (roundLoseRenderTimer > 0) {
+            roundLoseRenderTimer--;
+        }
         if (!bombExist || bombCountdownTicks <= 0) {
             return;
         }
@@ -118,6 +124,23 @@ public class ClientFpsData {
         float fadeIn = Math.min(1.0F, Math.min(roundWinRenderTimer - partialTicks, 10.0F) / 10.0F);
         float fadeOut = Math.min(1.0F, (ROUND_WIN_PROMPT_DURATION - roundWinRenderTimer + partialTicks) / 10.0F);
         return Easing.OUT_CUBIC.calculate(fadeIn) * Easing.OUT_CUBIC.calculate(fadeOut);
+    }
+    public static float getRoundWinMvpNotificationAlpha(float partialTicks) {
+        return getDelayedRoundResultAlpha(roundWinRenderTimer, ROUND_WIN_PROMPT_DURATION, partialTicks);
+    }
+    public static boolean shouldRenderRoundLose() {
+        return roundLoseRenderTimer > 0;
+    }
+    public static void requestRoundLoseRender() {
+        roundLoseRenderTimer = ROUND_LOSE_PROMPT_DURATION;
+    }
+    public static float getRoundLoseNotificationAlpha(float partialTicks) {
+        float fadeIn = Math.min(1.0F, Math.min(roundLoseRenderTimer - partialTicks, 10.0F) / 10.0F);
+        float fadeOut = Math.min(1.0F, (ROUND_LOSE_PROMPT_DURATION - roundLoseRenderTimer + partialTicks) / 10.0F);
+        return Easing.OUT_CUBIC.calculate(fadeIn) * Easing.OUT_CUBIC.calculate(fadeOut);
+    }
+    public static float getRoundLoseMvpNotificationAlpha(float partialTicks) {
+        return getDelayedRoundResultAlpha(roundLoseRenderTimer, ROUND_LOSE_PROMPT_DURATION, partialTicks);
     }
     public static int getDisplayBombSeconds(int countdownTicks) {
         return Math.max(0, (countdownTicks + 19) / 20);
@@ -160,5 +183,15 @@ public class ClientFpsData {
             }
         }
         return nearest == null ? null : nearest.position();
+    }
+
+    private static float getDelayedRoundResultAlpha(int timer, int totalDuration, float partialTicks) {
+        float elapsed = totalDuration - timer + partialTicks;
+        if (elapsed < ROUND_RESULT_MVP_DELAY) {
+            return 0.0F;
+        }
+        float fadeIn = Math.min(1.0F, (elapsed - ROUND_RESULT_MVP_DELAY) / 10.0F);
+        float fadeOut = Math.min(1.0F, (timer - partialTicks) / 10.0F);
+        return Easing.OUT_CUBIC.calculate(fadeIn) * Easing.OUT_CUBIC.calculate(fadeOut);
     }
 }

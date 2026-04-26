@@ -83,12 +83,16 @@ public class GameCommonEvents {
     public static void checkLockingPos(Player player) {
         CommonProxy.getMap2Cap(player).ifPresent(cap -> {
             if (cap.isXaeroDead()) {
-                cap.getLastDeathPos().ifPresent(pos -> {
-                    player.xOld = pos.x;
-                    player.yOld = pos.y;
-                    player.zOld = pos.z;
-                    player.setPos(new Vec3(pos));
-                });
+                Vec3 lockPos = cap.getPlayerC4Pos()
+                        .map(Vec3::new)
+                        .or(() -> cap.getLastDeathPos().map(Vec3::new))
+                        .orElse(null);
+                if (lockPos != null) {
+                    player.xOld = lockPos.x;
+                    player.yOld = lockPos.y;
+                    player.zOld = lockPos.z;
+                    player.setPos(lockPos);
+                }
             }
         });
     }

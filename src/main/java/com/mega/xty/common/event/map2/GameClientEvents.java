@@ -1,6 +1,7 @@
 package com.mega.xty.common.event.map2;
 
 import com.mega.xty.client.shader.ModShaders;
+import com.mega.xty.client.shader.post.map2.C4SpectateCameraHandler;
 import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
@@ -61,7 +62,7 @@ public class GameClientEvents {
         if (player == null) return;
         CommonProxy.getMap2Cap(player).ifPresent(cap -> {
             if (cap.isXaeroDead()) {
-                List<AbstractClientPlayer> teamPlayers = ClientGameData.aliveSameTeamPlayersWithoutLocal;
+                List<AbstractClientPlayer> teamPlayers = ClientGameData.getSpectatablePlayers();
                 if (teamPlayers.isEmpty()) {
                     ClientGameData.currentCameraPlayerIndex = -1;
                 } else {
@@ -88,6 +89,7 @@ public class GameClientEvents {
     @SubscribeEvent
     public static void onDisconnected(ClientPlayerNetworkEvent.LoggingOut event) {
         DeathCameraEffectHandler.stop();
+        C4SpectateCameraHandler.stop();
         if (event.getMultiPlayerGameMode() != null) {
             ClientGameData.currentCameraPlayerIndex = 0;
             ClientGameData.aliveSameTeamPlayers.clear();

@@ -2,6 +2,7 @@ package com.mega.xty.common.data.map2;
 
 import com.google.common.collect.Queues;
 import com.mega.endinglib.client.ClientWrapped;
+import com.mega.xty.client.shader.post.map2.C4SpectateCameraHandler;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.FixedLengthList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -15,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -118,11 +120,36 @@ public class ClientGameData {
         LocalPlayer player = mc.player;
         if (player == null) return;
         updateAliveSameTeamPlayers();
+        List<AbstractClientPlayer> spectatablePlayers = getSpectatablePlayers();
         int pIndex = ClientGameData.currentCameraPlayerIndex;
-        if (pIndex >= 0 && !aliveSameTeamPlayersWithoutLocal.isEmpty() && aliveSameTeamPlayersWithoutLocal.size() > pIndex) {
-            mc.setCameraEntity(aliveSameTeamPlayersWithoutLocal.get(pIndex));
+        if (pIndex >= 0 && !spectatablePlayers.isEmpty() && spectatablePlayers.size() > pIndex) {
+            C4SpectateCameraHandler.stop();
+            mc.setCameraEntity(spectatablePlayers.get(pIndex));
         } else {
             mc.setCameraEntity(player);
+            var capOpt = CommonProxy.getMap2Cap(player);
+            if (!capOpt.isPresent()) {
+                C4SpectateCameraHandler.stop();
+                return;
+            }
+            capOpt.ifPresent(cap -> {
+                if (cap.isXaeroDead() && ClientGame2Data.playing()) {
+                    cap.getPlayerC4Pos().ifPresentOrElse(C4SpectateCameraHandler::start, C4SpectateCameraHandler::stop);
+                } else {
+                    C4SpectateCameraHandler.stop();
+                }
+            });
         }
+    }
+
+    public static List<AbstractClientPlayer> getSpectatablePlayers() {
+        List<AbstractClientPlayer> spectatablePlayers = new ArrayList<>();
+        for (AbstractClientPlayer candidate : aliveSameTeamPlayersWithoutLocal) {
+            boolean isDead = CommonProxy.getMap2Cap(candidate).map(map2Capability -> map2Capability.isXaeroDead()).orElse(false);
+            if (!isDead) {
+                spectatablePlayers.add(candidate);
+            }
+        }
+        return spectatablePlayers;
     }
 }

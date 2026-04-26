@@ -13,6 +13,8 @@ import com.mega.xty.common.network.s2c.S2CPartialTeleportPacket;
 import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerKADPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerNamePacket;
+import com.mega.xty.common.network.s2c.fps.S2CRoundLoseRenderPacket;
+import com.mega.xty.common.network.s2c.fps.S2CRoundWinRenderPacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.common.network.s2c.map1.game2.S2CGame2HitEffectPacket;
 import com.mega.xty.common.network.s2c.map1.game2.S2CGame2StatsPacket;
@@ -71,6 +73,8 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CMap2TextTipPacket.class, S2CMap2TextTipPacket::encode, S2CMap2TextTipPacket::decode, S2CMap2TextTipPacket::handle);
         INSTANCE.registerMessage(id(), S2CSyncTeamWinsPacket.class, S2CSyncTeamWinsPacket::encode, S2CSyncTeamWinsPacket::decode, S2CSyncTeamWinsPacket::handle);
         INSTANCE.registerMessage(id(), S2CBombDataPacket.class, S2CBombDataPacket::encode, S2CBombDataPacket::decode, S2CBombDataPacket::handle);
+        INSTANCE.registerMessage(id(), S2CRoundLoseRenderPacket.class, S2CRoundLoseRenderPacket::encode, S2CRoundLoseRenderPacket::decode, S2CRoundLoseRenderPacket::handle);
+        INSTANCE.registerMessage(id(), S2CRoundWinRenderPacket.class, S2CRoundWinRenderPacket::encode, S2CRoundWinRenderPacket::decode, S2CRoundWinRenderPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame2DeathEffectPacket.class, S2CGame2DeathEffectPacket::encode, S2CGame2DeathEffectPacket::decode, S2CGame2DeathEffectPacket::handle);
     }
     public static <MSG> void sendToAll(MSG msg) {

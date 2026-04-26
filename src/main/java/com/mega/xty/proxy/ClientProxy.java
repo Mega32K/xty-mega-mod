@@ -59,6 +59,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ClientProxy implements ModProxy {
+    public static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/white.png");
     public static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/icons.png");
     public static final ResourceLocation DEATH_PLAYER_SKIN = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/entity/death.png");
     public static final ResourceLocation FPS_UI_ICONS_LOCATION = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/icons.png");
@@ -153,6 +154,7 @@ public class ClientProxy implements ModProxy {
         event.registerAboveAll("map2/text_tip", new TextTipOverlay());
         event.registerAboveAll("fps/c4", new C4Overlay());
         event.registerAboveAll("map2/win", new WinOverlay());
+        event.registerAboveAll("map2/lose", new LoseOverlay());
     }
     public static void setObj(ShadowPlayerEntity entity, Player player) {
         if (player instanceof AbstractClientPlayer clientPlayer) {

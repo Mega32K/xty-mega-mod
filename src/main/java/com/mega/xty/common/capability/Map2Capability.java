@@ -10,11 +10,15 @@ import com.mega.endinglib.common.data.EndingLibrarySavedData;
 import com.mega.endinglib.common.data.InputOperations;
 import com.mega.endinglib.proxy.CommonProxy;
 import com.mega.xty.XtyMegaMod;
+import com.mega.xty.client.shader.post.map2.C4SpectateCameraHandler;
 import com.mega.xty.client.MapLevelEvents;
 import com.mega.xty.common.data.map2.ClientGame1Data;
+import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
+import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.data.map2.ServerGameData;
+import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.proxy.ClientProxy;
 import net.minecraft.Util;
@@ -31,7 +35,10 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
@@ -39,13 +46,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class Map2Capability extends EntitySyncCapabilityBase {
     public static final ResourceLocation DEATH_PLAYER_SKIN = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/entity/death.png");
     public static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "mega_map2");
+    private static final double C4_SITE_SEARCH_RADIUS = 64.0D;
+    private static final double C4_SPECTATE_SEARCH_RADIUS = 16.0D;
+    private static final int C4_SPECTATE_TRY_COUNT = 256;
     public final CapabilityEntityData<Integer> KILLCOUNT1 = this.dataManager.define(0, "killcount1", 0, CapabilityDataSerializers.INT);
     public final CapabilityEntityData<Integer> KILLCOUNT2 = this.dataManager.define(1, "killcount2", 0, CapabilityDataSerializers.INT);
     public final CapabilityEntityData<Boolean> NEED_START = this.dataManager.define(2, "needStart", false, CapabilityDataSerializers.BOOLEAN);
@@ -57,12 +70,13 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     public final CapabilityEntityData<Integer> EVOLUTION_KILL_COUNT = this.dataManager.define(5, "evolutionKillCount", 0, CapabilityDataSerializers.INT);
     public final CapabilityEntityData<Boolean> XAERO_DEAD = this.dataManager.define(6, "xaeroDead", false, CapabilityDataSerializers.BOOLEAN);
     public final CapabilityEntityData<Optional<Vector3f>> LAST_DEATH = this.dataManager.define(7, "lastDeathPos", Optional.empty(), CapabilityDataSerializers.OPTIONAL_VEC3F);
-    public final CapabilityEntityData<ItemStack> SLOT_0 = this.dataManager.defineWithoutSerialization(8, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
-    public final CapabilityEntityData<ItemStack> SLOT_1 = this.dataManager.defineWithoutSerialization(9, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
-    public final CapabilityEntityData<ItemStack> SLOT_2 = this.dataManager.defineWithoutSerialization(10, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
-    public final CapabilityEntityData<ItemStack> SLOT_3 = this.dataManager.defineWithoutSerialization(11, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
-    public final CapabilityEntityData<ItemStack> SLOT_4 = this.dataManager.defineWithoutSerialization(12, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
-    public final CapabilityEntityData<ItemStack> SLOT_5 = this.dataManager.defineWithoutSerialization(13, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
+    public final CapabilityEntityData<Optional<Vector3f>> PLAYER_C4_POS = this.dataManager.define(8, "playerC4Pos", Optional.empty(), CapabilityDataSerializers.OPTIONAL_VEC3F);
+    public final CapabilityEntityData<ItemStack> SLOT_0 = this.dataManager.defineWithoutSerialization(9, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
+    public final CapabilityEntityData<ItemStack> SLOT_1 = this.dataManager.defineWithoutSerialization(10, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
+    public final CapabilityEntityData<ItemStack> SLOT_2 = this.dataManager.defineWithoutSerialization(11, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
+    public final CapabilityEntityData<ItemStack> SLOT_3 = this.dataManager.defineWithoutSerialization(12, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
+    public final CapabilityEntityData<ItemStack> SLOT_4 = this.dataManager.defineWithoutSerialization(13, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
+    public final CapabilityEntityData<ItemStack> SLOT_5 = this.dataManager.defineWithoutSerialization(14, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
     public Vec3 lastPos = new Vec3(0F, 0F, 0F);
     public int lastSoulInvisible;
     public NonNullList<ItemStack> clientEvolutionWeapons = Util.make(() -> {
@@ -94,12 +108,26 @@ public class Map2Capability extends EntitySyncCapabilityBase {
             if (this.getEntity() == ClientWrapped.clientPlayer()) {
                 this.getLastDeathPos().ifPresent(pos-> ClientGameData.fpsSpectate());
             }
+        } else if (this.PLAYER_C4_POS.equals(data)) {
+            if (this.getEntity() == ClientWrapped.clientPlayer()) {
+                if (this.isXaeroDead() && ClientGame2Data.playing()) {
+                    ClientGameData.fpsSpectate();
+                } else {
+                    C4SpectateCameraHandler.stop();
+                }
+            }
         } else if (this.XAERO_DEAD.equals(data)) {
             if (this.getEntity() == ClientWrapped.clientPlayer()) {
                 if (!this.isXaeroDead()) {
                     Player player = ClientWrapped.clientPlayer();
                     player.setPos(player.position().add(0, -32F, 0F));
+                    player.noPhysics = false;
+                    player.setNoGravity(false);
+                    player.setDeltaMovement(Vec3.ZERO);
                     ClientWrapped.setCameraEntity(null);
+                    C4SpectateCameraHandler.stop();
+                } else if (ClientGame2Data.playing()) {
+                    ClientGameData.fpsSpectate();
                 }
             }
         }
@@ -136,6 +164,12 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     protected void tick(Entity entity) {
         if (entity instanceof Player player) {
             lastSoulInvisible = getSoulInvisible();
+            if (this.isXaeroDead()) {
+                player.noPhysics = true;
+                player.setNoGravity(true);
+                player.fallDistance = 0F;
+                player.setDeltaMovement(Vec3.ZERO);
+            }
             if (!player.level().isClientSide) {
                 if (player.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
                     boolean onGround = player.onGround();
@@ -158,6 +192,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                         this.setSlot4(inventory.getItem(4).copy());
                         this.setSlot5(inventory.getItem(5).copy());
                     }
+                    updatePlayerC4PosState(serverLevel, player);
                 }
             } else {
                 if (!ClientGame1Data.isStopped && !ClientGameData.isStopped) {
@@ -238,6 +273,11 @@ public class Map2Capability extends EntitySyncCapabilityBase {
         if (value) {CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
             setLastDeathPos(player.position().toVector3f().add(0, 32, 0));
             cap.setCustomSkin(DEATH_PLAYER_SKIN.toString());
+            if (!hasAliveTeammateToSpectate(player) && !Game2SavedData.getInstance(player.server).isStopped()) {
+                this.setPlayerC4Pos(findC4SpectatePos(player).orElse(null));
+            } else {
+                this.setPlayerC4Pos(null);
+            }
             savedData.addDisabledPermission(player, InputOperations.MOVEMENT);
             savedData.addDisabledPermission(player, InputOperations.SNEAK);
 
@@ -257,7 +297,11 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 this.getLastDeathPos().ifPresent(pos -> {
                     setLastDeathPos(null);
                 });
+                this.getPlayerC4Pos().ifPresent(pos -> this.setPlayerC4Pos(null));
                 player.fallDistance = 0F;
+                player.noPhysics = false;
+                player.setNoGravity(false);
+                player.setDeltaMovement(Vec3.ZERO);
                 cap.setCustomSkin("");
                 savedData.removeDisabledPermission(player, InputOperations.MOVEMENT);
                 savedData.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
@@ -287,6 +331,22 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     }
     public Optional<Vector3f> getLastDeathPos() {
         return this.dataManager.getValue(LAST_DEATH);
+    }
+    public void setPlayerC4Pos(@Nullable Vector3f value) {
+        if (this.getEntity() instanceof ServerPlayer serverPlayer) {
+            EndingLibrarySavedData savedData = EndingLibrarySavedData.getInstance(serverPlayer.server);
+            if (value != null) {
+                savedData.addDisabledPermission(serverPlayer, InputOperations.ROTATION_HORIZONTAL);
+                savedData.addDisabledPermission(serverPlayer, InputOperations.ROTATION_VERTICAL);
+            } else {
+                savedData.removeDisabledPermission(serverPlayer, InputOperations.ROTATION_HORIZONTAL);
+                savedData.removeDisabledPermission(serverPlayer, InputOperations.ROTATION_VERTICAL);
+            }
+        }
+        this.dataManager.setValue(PLAYER_C4_POS, Optional.ofNullable(value));
+    }
+    public Optional<Vector3f> getPlayerC4Pos() {
+        return this.dataManager.getValue(PLAYER_C4_POS);
     }
     public void setSlot0(ItemStack itemStack) {
         if (!itemEquals(itemStack, this.getSlot0())) {
@@ -370,5 +430,91 @@ public class Map2Capability extends EntitySyncCapabilityBase {
             }
         }
         return false;
+    }
+
+    private void updatePlayerC4PosState(ServerLevel serverLevel, Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+        boolean keepC4Pos = this.isXaeroDead() && ServerGameData.map2Playing(serverLevel.getServer()) && !Game2SavedData.getInstance(serverLevel.getServer()).isStopped();
+        if (!keepC4Pos) {
+            if (this.getPlayerC4Pos().isPresent()) {
+                this.setPlayerC4Pos(null);
+            }
+            return;
+        }
+        if (hasAliveTeammateToSpectate(serverPlayer)) {
+            if (this.getPlayerC4Pos().isPresent()) {
+                this.setPlayerC4Pos(null);
+            }
+            return;
+        }
+        if (this.getPlayerC4Pos().isEmpty()) {
+            this.setPlayerC4Pos(findC4SpectatePos(serverPlayer).orElse(null));
+        }
+    }
+
+    private boolean hasAliveTeammateToSpectate(ServerPlayer player) {
+        for (ServerPlayer other : player.serverLevel().players()) {
+            if (other == player || !other.isAlive() || !other.isAlliedTo(player)) continue;
+            boolean isDead = com.mega.xty.proxy.CommonProxy.getMap2Cap(other).map(Map2Capability::isXaeroDead).orElse(false);
+            if (!isDead) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Optional<Vector3f> findC4SpectatePos(ServerPlayer player) {
+        List<C4Entity> c4Entities = findC4EntitiesNearSites(player.serverLevel(), Map2SavedData.getInstance(player.server));
+        for (C4Entity c4Entity : c4Entities) {
+            Optional<Vec3> spectatePos = findVisibleSpectatePos(player, c4Entity.position());
+            if (spectatePos.isPresent()) {
+                return Optional.of(spectatePos.get().toVector3f());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private List<C4Entity> findC4EntitiesNearSites(ServerLevel level, Map2SavedData map2SavedData) {
+        Set<C4Entity> entities = new LinkedHashSet<>();
+        addC4EntitiesAroundSite(level, entities, map2SavedData.getPointA());
+        addC4EntitiesAroundSite(level, entities, map2SavedData.getPointB());
+        return List.copyOf(entities);
+    }
+
+    private void addC4EntitiesAroundSite(ServerLevel level, Set<C4Entity> entities, @Nullable BlockPos sitePos) {
+        if (sitePos == null) return;
+        entities.addAll(level.getEntitiesOfClass(C4Entity.class, new AABB(sitePos).inflate(C4_SITE_SEARCH_RADIUS)));
+    }
+
+    private Optional<Vec3> findVisibleSpectatePos(ServerPlayer player, Vec3 c4Pos) {
+        AABB playerBox = player.getDimensions(player.getPose()).makeBoundingBox(player.position());
+        double eyeHeight = player.getEyeHeight();
+        for (int i = 0; i < C4_SPECTATE_TRY_COUNT; i++) {
+            Vec3 candidate = c4Pos.add(
+                    player.getRandom().triangle(0.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D),
+                    player.getRandom().triangle(1.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D),
+                    player.getRandom().triangle(0.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D)
+            );
+            if (canUseSpectatePos(player, playerBox, eyeHeight, candidate, c4Pos)) {
+                return Optional.of(candidate);
+            }
+        }
+
+        Vec3 fallback = c4Pos.add(0.0D, 1.0D, 6.0D);
+        if (canUseSpectatePos(player, playerBox, eyeHeight, fallback, c4Pos)) {
+            return Optional.of(fallback);
+        }
+        return Optional.empty();
+    }
+
+    private boolean canUseSpectatePos(ServerPlayer player, AABB playerBox, double eyeHeight, Vec3 candidate, Vec3 c4Pos) {
+        AABB movedBox = playerBox.move(candidate.subtract(player.position()));
+        if (!player.level().noCollision(player, movedBox)) {
+            return false;
+        }
+        Vec3 from = candidate.add(0.0D, eyeHeight, 0.0D);
+        Vec3 to = c4Pos.add(0.0D, 0.2D, 0.0D);
+        HitResult hitResult = player.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        return hitResult.getType() == HitResult.Type.MISS;
     }
 }

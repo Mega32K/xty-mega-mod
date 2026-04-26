@@ -10,10 +10,13 @@ import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
+import com.mega.xty.common.network.s2c.fps.S2CRoundLoseRenderPacket;
+import com.mega.xty.common.network.s2c.fps.S2CRoundWinRenderPacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.particles.ParticleTypes;
@@ -27,6 +30,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Team;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,6 +127,16 @@ public class FpsSavedData extends SavedData {
         }
     }
     public void onBombCountdownFinished() {
+        for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
+            Team team = serverPlayer.getTeam();
+            if (team != null) {
+                if (team.getColor() == ChatFormatting.RED) {
+                    NetworkHandler.sendToPlayer(new S2CRoundWinRenderPacket(), serverPlayer);
+                } else if (team.getColor() == ChatFormatting.BLUE) {
+                    NetworkHandler.sendToPlayer(new S2CRoundLoseRenderPacket(), serverPlayer);
+                }
+            }
+        }
     }
     private void explodeBombEffects() {
         Map2SavedData map2SavedData = Map2SavedData.getInstance(server);
@@ -148,6 +163,7 @@ public class FpsSavedData extends SavedData {
                     for (Player alivePlayer : level.getEntitiesOfClass(Player.class, queryBox, EntitySelector.NO_CREATIVE_OR_SPECTATOR)) {
                         CommonProxy.getMap2Cap(alivePlayer).ifPresent(cap -> {
                             if (!cap.isXaeroDead()) {
+                                cap.setXaeroDead(true);
                                 server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f -> server.getFunctions().execute(f, alivePlayer.createCommandSourceStack().withSuppressedOutput().withMaximumPermission(2)));
                             }
                         });
