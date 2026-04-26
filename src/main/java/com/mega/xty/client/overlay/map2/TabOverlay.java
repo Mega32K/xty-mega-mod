@@ -2,6 +2,7 @@ package com.mega.xty.client.overlay.map2;
 
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.map2.ClientGame1Data;
@@ -73,6 +74,7 @@ public class TabOverlay implements IGuiOverlay {
         float deathsX = left + halfLongestWidth - textUnitWidth;
         float assistsX = deathsX - textUnitWidth * 1.5F;
         float killsX = assistsX - textUnitWidth * 1.5F;
+        int barCount = 10;
         RenderSystem.depthFunc(GL11.GL_LESS);
         RenderSystem.enableDepthTest();
         if (!title.isEmpty()) {
@@ -82,8 +84,7 @@ public class TabOverlay implements IGuiOverlay {
             graphics.drawCenteredString(font, title, screenWidth / 2, (int) (top + font.lineHeight * 0.25F), 0xFFFFFFFF);
             graphics.fill(left, top, left + longestWidth, top + lineHeight, BACKGROUND_DEFAULT_I_COLOR);
             top += lineHeight;
-        }
-        //渲染列名条
+        }//渲染列名条
         graphics.fill(left, top, left + longestWidth, top + lineHeight, BACKGROUND_DEFAULT_I_COLOR);
         //渲染列名
         for (int l=0;l<=1;l++) {
@@ -97,7 +98,6 @@ public class TabOverlay implements IGuiOverlay {
             poseStack.translate(-l * halfLongestWidth, 0, 0);
         }
         top += lineHeight + periodOfLine;
-        int barCount = 10;
         //1~20人大小框
         float realHudHeight = top + (lineHeight + periodOfLine) * barCount + periodOfLine;
         graphics.fill(left, top - periodOfLine, left + halfLongestWidth - 1, realHudHeight, 0xD8303030);

@@ -101,6 +101,9 @@ public class C4BombItem extends Item {
             }
             playC4Sound(player, SoundsInit.C4_PLANT.get(), 1.0F, 1.0F);
             playC4Sound(player, SoundsInit.C4_INITIATE.get(), 0.8F, 1.0F);
+            if (!player.getAbilities().instabuild) {
+                itemStack.shrink(1);
+            }
         }
         return super.finishUsingItem(itemStack, level, entity);
     }

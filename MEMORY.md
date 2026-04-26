@@ -27,6 +27,7 @@
 - 用户已经明确同意以后可以直接运行 Gradle 编译测试。
 - `XtyMegaMod` 的 `compileJava`、`processResources` 已多次验证可正常执行。
 - 普通权限下偶尔会遇到 Gradle wrapper 的 `.zip.lck` 访问问题；必要时可以提升权限执行。
+- 以后若单次代码改动超过 300 行，需要进行编译检测。
 
 ### 2.2 API 真实性要求
 

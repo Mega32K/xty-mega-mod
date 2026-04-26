@@ -152,6 +152,7 @@ public class ClientProxy implements ModProxy {
         event.registerAboveAll("fps/tab", new TabOverlay());
         event.registerAboveAll("map2/text_tip", new TextTipOverlay());
         event.registerAboveAll("fps/c4", new C4Overlay());
+            event.registerAboveAll("map2/win", new WinOverlay());
     }
     public static void setObj(ShadowPlayerEntity entity, Player player) {
         if (player instanceof AbstractClientPlayer clientPlayer) {

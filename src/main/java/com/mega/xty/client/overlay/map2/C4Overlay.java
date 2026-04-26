@@ -31,13 +31,13 @@ public class C4Overlay implements IGuiOverlay {
         if (mc.player != null) {
             //若已安放炸弹
             if (ClientFpsData.bombExist) {
-                if (ClientFpsData.shouldRenderBombCountdown()) {
-                    renderBombCountdown(mc.player, gui, MegaGuiGraphics.of(guiGraphics), ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight, partialTick);
-                }
                 //若正在拆包
                 float progress = BDKItem.getShearingProgress(mc.player, partialTick);
                 if (progress >= 0.0F) {
                     renderShearingAnimation(mc.player, gui, MegaGuiGraphics.of(guiGraphics), progress, screenWidth, screenHeight);
+                }
+                if (ClientFpsData.shouldRenderBombCountdown()) {
+                    renderBombCountdown(mc.player, gui, MegaGuiGraphics.of(guiGraphics), ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight, partialTick);
                 }
             } else {
                 //若正在下包
