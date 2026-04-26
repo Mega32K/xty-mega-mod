@@ -1,26 +1,26 @@
 package com.mega.xty.mixin.map2.game2;
 
 import com.mega.endinglib.client.ClientWrapped;
-import com.mega.endinglib.util.SafeClass;
 import com.mega.endinglib.util.time.TimeContext;
-import com.mega.xty.common.capability.Map2Capability;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.irisshaders.batchedentityrendering.impl.FullyBufferedMultiBufferSource;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HeadedModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,14 +35,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
 @Mixin(PlayerItemInHandLayer.class)
 public abstract class PlayerItemInHandLayerMixin<T extends Player, M extends EntityModel<T> & ArmedModel & HeadedModel> extends ItemInHandLayer<T, M> {
     @Shadow @Final private ItemInHandRenderer itemInHandRenderer;
-
-    @Shadow protected abstract void renderArmWithSpyglass(LivingEntity p_174518_, ItemStack p_174519_, HumanoidArm p_174520_, PoseStack p_174521_, MultiBufferSource p_174522_, int p_174523_);
 
     public PlayerItemInHandLayerMixin(RenderLayerParent<T, M> p_234846_, ItemInHandRenderer p_234847_) {
         super(p_234846_, p_234847_);
@@ -63,16 +58,25 @@ public abstract class PlayerItemInHandLayerMixin<T extends Player, M extends Ent
                             PoseStack p = new PoseStack();
                             p.setIdentity();
                             p.mulPoseMatrix(p_270124_.last().pose());
+                            boolean spyglass = p_270379_.is(Items.SPYGLASS) && p_270884_.getUseItem() == p_270379_ && p_270884_.swingTime == 0;
+                            boolean leftHand = p_270324_ == HumanoidArm.LEFT;
+                            ItemDisplayContext itemDisplayContext = p_270607_;
+                            boolean itemLeftHand = leftHand;
+                            if (spyglass) {
+                                transformSpyglass(p_270324_, p);
+                                itemDisplayContext = ItemDisplayContext.HEAD;
+                                itemLeftHand = false;
+                            } else {
+                                transformHandItem(p_270324_, p);
+                            }
+                            ItemDisplayContext finalItemDisplayContext = itemDisplayContext;
+                            boolean finalItemLeftHand = itemLeftHand;
                             ClientGame2Data.addPostRenderedItemRender(p, (poseStack -> {
                                 MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
                                 RenderSystem.enableBlend();
                                 RenderSystem.defaultBlendFunc();
                                 RenderSystem.setShaderColor(1F, 1F, 1F, finalInvisible);
-                                if (p_270379_.is(Items.SPYGLASS) && p_270884_.getUseItem() == p_270379_ && p_270884_.swingTime == 0) {
-                                    this.renderArmWithSpyglass(p_270884_, p_270379_, p_270324_, poseStack, bufferSource, p_270295_);
-                                } else {
-                                    super.renderArmWithItem(p_270884_, p_270379_, p_270607_, p_270324_, poseStack, bufferSource, p_270295_);
-                                }
+                                this.itemInHandRenderer.renderItem(p_270884_, p_270379_, finalItemDisplayContext, finalItemLeftHand, poseStack, bufferSource, p_270295_);
                                 RenderSystem.enableBlend();
                                 RenderSystem.defaultBlendFunc();
                                 bufferSource.endBatch();
@@ -84,5 +88,24 @@ public abstract class PlayerItemInHandLayerMixin<T extends Player, M extends Ent
                 }
             });
         }
+    }
+
+    private void transformHandItem(HumanoidArm arm, PoseStack poseStack) {
+        this.getParentModel().translateToHand(arm, poseStack);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        boolean leftHand = arm == HumanoidArm.LEFT;
+        poseStack.translate((float) (leftHand ? -1 : 1) / 16.0F, 0.125F, -0.625F);
+    }
+
+    private void transformSpyglass(HumanoidArm arm, PoseStack poseStack) {
+        ModelPart modelPart = this.getParentModel().getHead();
+        float xRot = modelPart.xRot;
+        modelPart.xRot = Mth.clamp(modelPart.xRot, (-(float) Math.PI / 6F), ((float) Math.PI / 2F));
+        modelPart.translateAndRotate(poseStack);
+        modelPart.xRot = xRot;
+        CustomHeadLayer.translateToHead(poseStack, false);
+        boolean leftHand = arm == HumanoidArm.LEFT;
+        poseStack.translate((leftHand ? -2.5F : 2.5F) / 16.0F, -0.0625F, 0.0F);
     }
 }
