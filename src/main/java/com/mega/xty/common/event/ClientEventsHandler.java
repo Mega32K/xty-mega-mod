@@ -4,7 +4,7 @@ import com.mega.endinglib.api.event.client.RenderShadowEvent;
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.endinglib.mixin.accessor.AccessorEntity;
 import com.mega.endinglib.util.time.TimeContext;
-import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
+import com.mega.xty.common.event.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.data.map2.DeathData;

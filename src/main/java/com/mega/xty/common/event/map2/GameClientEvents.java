@@ -1,8 +1,6 @@
 package com.mega.xty.common.event.map2;
 
 import com.mega.xty.client.shader.ModShaders;
-import com.mega.xty.client.shader.post.map2.C4SpectateCameraHandler;
-import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.proxy.CommonProxy;

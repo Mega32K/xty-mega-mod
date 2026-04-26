@@ -7,17 +7,13 @@ import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.proxy.ClientProxy;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
@@ -27,13 +23,13 @@ import org.joml.Matrix4f;
 
 import java.util.Optional;
 
-public class WinOverlay implements IGuiOverlay {
+public class LoseOverlay implements IGuiOverlay {
     private static final float MVP_WIDTH_SCALE = 1.25F;
 
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui) return;
-        if (!ClientFpsData.shouldRenderRoundWin()) return;
+        if (!ClientFpsData.shouldRenderRoundLose()) return;
 
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -41,9 +37,9 @@ public class WinOverlay implements IGuiOverlay {
 
         gui.setupOverlayRenderState(true, false);
         MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
-        float titleAlpha = ClientFpsData.getRoundWinNotificationAlpha(partialTick);
+        float titleAlpha = ClientFpsData.getRoundLoseNotificationAlpha(partialTick);
         if (titleAlpha <= 0.0F) return;
-        float mvpAlpha = ClientFpsData.getRoundWinMvpNotificationAlpha(partialTick);
+        float mvpAlpha = ClientFpsData.getRoundLoseMvpNotificationAlpha(partialTick);
 
         Font font = gui.getFont();
         float width = Math.max(screenWidth * 0.25F, 160.0F);
@@ -56,7 +52,7 @@ public class WinOverlay implements IGuiOverlay {
         int titleTextColor = ((int) (titleAlpha * 255.0F) << 24) | 0x00D0D0D0;
         int titleBorderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), titleTextColor);
 
-        renderTitleBox(graphics, font, "回合胜利", x, titleY, width, titleHeight, titleAlpha, titleTextColor, titleBorderColor);
+        renderTitleBox(graphics, font, "回合失败", x, titleY, width, titleHeight, titleAlpha, titleTextColor, titleBorderColor);
         if (mvpAlpha > 0.0F) {
             int mvpTextColor = ((int) (mvpAlpha * 255.0F) << 24) | 0x00D0D0D0;
             int mvpBorderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), mvpTextColor);
@@ -136,9 +132,8 @@ public class WinOverlay implements IGuiOverlay {
         graphics.fill(centerX - 2.0F - realWidth / 2.0F, y, centerX - realWidth / 2.0F, y + height, borderColor);
         graphics.fill(centerX + realWidth / 2.0F, y, centerX + realWidth / 2.0F + 2.0F, y + height, borderColor);
     }
-
     private static void renderWhiteFlash(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha) {
-        if (ClientFpsData.roundWinRenderTimer >= ClientFpsData.ROUND_WIN_PROMPT_DURATION - 10) {
+        if (ClientFpsData.roundLoseRenderTimer >= ClientFpsData.ROUND_LOSE_PROMPT_DURATION - 10) {
             graphics.fill(centerX - realWidth / 2.0F, y, centerX + realWidth / 2.0F, y + height, ((int)(255.0F - alpha * 255.0F) << 24) | 0x00FFFFFF);
         }
     }

@@ -1,6 +1,6 @@
 package com.mega.xty.common.network.s2c.map2.game2;
 
-import com.mega.xty.client.shader.post.map2.DeathCameraEffectHandler;
+import com.mega.xty.common.event.map2.DeathCameraEffectHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkDirection;

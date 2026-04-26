@@ -2,7 +2,7 @@ package com.mega.xty.common.data.map2;
 
 import com.google.common.collect.Queues;
 import com.mega.endinglib.client.ClientWrapped;
-import com.mega.xty.client.shader.post.map2.C4SpectateCameraHandler;
+import com.mega.xty.common.event.map2.C4SpectateCameraHandler;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.FixedLengthList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

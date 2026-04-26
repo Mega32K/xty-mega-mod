@@ -1,7 +1,8 @@
-package com.mega.xty.client.shader.post.map2;
+package com.mega.xty.common.event.map2;
 
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.api.event.render.CameraPosEvent;
+import com.mega.xty.client.shader.post.map2.DeadPostEffect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
