@@ -52,6 +52,7 @@ public class C4Overlay implements IGuiOverlay {
         //透明度(淡入淡出进度)的设置
         float alpha = Easing.OUT_CUBIC.calculate(Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer - partialTicks, 10) / 10.0F)) * Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10F));
         PoseStack poseStack = graphics.pose();
+        poseStack.translate(0, 0, 100);
         poseStack.pushPose();
         Font font = gui.getFont();
         String text1 = "炸弹已被安放";

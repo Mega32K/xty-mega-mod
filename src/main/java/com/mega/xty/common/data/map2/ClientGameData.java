@@ -18,7 +18,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientGameData {
@@ -134,7 +136,12 @@ public class ClientGameData {
             }
             capOpt.ifPresent(cap -> {
                 if (cap.isXaeroDead() && ClientGame2Data.playing()) {
-                    cap.getPlayerC4Pos().ifPresentOrElse(C4SpectateCameraHandler::start, C4SpectateCameraHandler::stop);
+                    if (cap.getPlayerC4Pos().isPresent()) {
+                        cap.getPlayerC4Pos().ifPresent(C4SpectateCameraHandler::start);
+                    } else {
+                        C4SpectateCameraHandler.stop();
+                        getRandomEnemySpectatablePlayer(player).ifPresent(mc::setCameraEntity);
+                    }
                 } else {
                     C4SpectateCameraHandler.stop();
                 }
@@ -151,5 +158,26 @@ public class ClientGameData {
             }
         }
         return spectatablePlayers;
+    }
+
+    public static Optional<AbstractClientPlayer> getRandomEnemySpectatablePlayer(LocalPlayer localPlayer) {
+        ClientLevel clientLevel = Minecraft.getInstance().level;
+        if (clientLevel == null) {
+            return Optional.empty();
+        }
+        List<AbstractClientPlayer> spectatablePlayers = new ArrayList<>();
+        for (AbstractClientPlayer candidate : clientLevel.players()) {
+            if (candidate == localPlayer || candidate.isAlliedTo(localPlayer)) {
+                continue;
+            }
+            boolean isDead = CommonProxy.getMap2Cap(candidate).map(map2Capability -> map2Capability.isXaeroDead()).orElse(false);
+            if (!isDead) {
+                spectatablePlayers.add(candidate);
+            }
+        }
+        if (spectatablePlayers.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(spectatablePlayers.get(ThreadLocalRandom.current().nextInt(spectatablePlayers.size())));
     }
 }

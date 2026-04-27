@@ -82,6 +82,8 @@ public class Map2SavedData extends SavedData {
     private Map2Functions map2Functions = new Map2Functions(this);
     private static final int HOME_MAX_SIZE = 10;
     private static final int NEW_ROUND_POST_EFFECT_TICKS = 10 * 20;
+    private static final int NEXT_ROUND_DELAY_TICKS = 7 * 20;
+    private boolean game2NextRoundPending;
     public static Map2SavedData readOrCreate(MinecraftServer server) {
         Map2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Map2SavedData::new, "xty_map2");
         data.server = server;
@@ -237,18 +239,6 @@ public class Map2SavedData extends SavedData {
             this.setDirty();
             for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
                 NetworkHandler.sendToPlayer(new S2CMap2StatsPacket(stopped), serverPlayer);
-        }
-        if (stopped) {
-            FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
-            EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
-            for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
-                clearRoundControlInputs(elData, serverPlayer);
-                resetPlayerToDefaultMaxHealth(serverPlayer);
-                clearRoundArmor(serverPlayer);
-                //清空KAD
-                fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
-                fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_GENERAL, KAD.deserialize(0));
-            }
         }
         isStopped = stopped;
     }
@@ -488,6 +478,13 @@ public class Map2SavedData extends SavedData {
         }
     }
     public void finish(boolean redWin) {
+        boolean game2Playing = !this.isStopped() && !Game2SavedData.getInstance(this.server).isStopped();
+        if (game2Playing) {
+            if (this.game2NextRoundPending) {
+                return;
+            }
+            this.game2NextRoundPending = true;
+        }
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         if (!players.isEmpty()) {
             SoundEvent sound = redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
@@ -518,6 +515,9 @@ public class Map2SavedData extends SavedData {
                 }
             }
         }
+        if (game2Playing) {
+            scheduleGame2NextRound();
+        }
     }
     public void backToHome(List<ServerPlayer> players) {
         ServerLevel targetLevel = getGame2ServerLevel();
@@ -528,6 +528,7 @@ public class Map2SavedData extends SavedData {
         teleportTeamToHomes(players, targetLevel, ChatFormatting.BLUE, this.blueHome);
     }
     public void startGame2NewRound() {
+        this.game2NextRoundPending = false;
         if (this.maxWins > 0 && (this.redWins >= this.maxWins || this.blueWins >= this.maxWins)) {
             this.setRedWins(0);
             this.setBlueWins(0);
@@ -536,12 +537,13 @@ public class Map2SavedData extends SavedData {
         }
         List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
         EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
+        for (ServerPlayer player : players) {
+            resetPlayerForNewRound(player);
+        }
         Set<UUID> teleportedPlayers = backToHomeInternal(players);
         long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
-        FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
         for (ServerPlayer player : players) {
             NetworkHandler.sendToPlayer(new S2CRoundStartRenderPacket(), player);
-            resetPlayerForNewRound(player);
             if (teleportedPlayers.contains(player.getUUID())) {
                 equipRoundArmor(player);
                 elData.addDisabledPermission(player, InputOperations.MOVE_FORWARD);
@@ -606,8 +608,8 @@ public class Map2SavedData extends SavedData {
     }
 
     private void resetPlayerForNewRound(ServerPlayer player) {
-        //清空本局kad
         FpsSavedData.getInstance(player.server).getOrPutKAD(player).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
+        CommonProxy.getMap2Cap(player).ifPresent(cap -> cap.setXaeroDead(false));
         player.removeAllEffects();
         player.clearFire();
         player.setRemainingFireTicks(0);
@@ -620,25 +622,6 @@ public class Map2SavedData extends SavedData {
         });
     }
 
-    private void resetPlayerToDefaultMaxHealth(ServerPlayer player) {
-        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(20.0D);
-        if (player.getHealth() > 20.0F) {
-            player.setHealth(20.0F);
-        }
-        CommonProxy.getXtyCap(player).ifPresent(cap -> {
-            cap.setGame2MaxHealth(20.0F);
-            cap.setGame2Health(player.getHealth());
-        });
-    }
-
-    private void clearRoundControlInputs(EndingLibrarySavedData data, ServerPlayer player) {
-        data.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
-        data.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
-        data.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
-        data.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
-        data.removeDisabledPermission(player, InputOperations.JUMP);
-        data.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
-    }
     private void clearRoundKeyboardInputs(EndingLibrarySavedData data, ServerPlayer player) {
         data.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
         data.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
@@ -662,18 +645,6 @@ public class Map2SavedData extends SavedData {
                     .build());
             chestplate.setDamageValue(0);
             player.setItemSlot(EquipmentSlot.CHEST, chestplate);
-        }
-    }
-    private void clearRoundArmor(ServerPlayer player) {
-        if (player.isCreative() || player.isSpectator()) {
-            return;
-        }
-        Team team = player.getTeam();
-        if (team == null) {
-            return;
-        }
-        if (team.getColor() == ChatFormatting.RED || team.getColor() == ChatFormatting.BLUE) {
-            player.getInventory().armor.replaceAll(itemStack -> ItemStack.EMPTY);
         }
     }
 
@@ -707,5 +678,19 @@ public class Map2SavedData extends SavedData {
                 }
             }
         }, task -> ((int) task.getArgs().get(0)) >= NEW_ROUND_POST_EFFECT_TICKS).addToManager();
+    }
+
+    private void scheduleGame2NextRound() {
+        new LambdaServerTask(new Args(0), task -> {
+            int tick = task.getArgs().get(0);
+            tick++;
+            task.getArgs().set(0, tick);
+            if (tick >= NEXT_ROUND_DELAY_TICKS && this.game2NextRoundPending) {
+                this.game2NextRoundPending = false;
+                if (!this.isStopped() && !Game2SavedData.getInstance(this.server).isStopped()) {
+                    this.startGame2NewRound();
+                }
+            }
+        }, task -> ((int) task.getArgs().get(0)) >= NEXT_ROUND_DELAY_TICKS).addToManager();
     }
 }
