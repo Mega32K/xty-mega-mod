@@ -890,6 +890,32 @@
               }
             },
 
+            "maxWins": {
+              "type":"literal",
+              "children": {
+
+                "set": {
+                  "type":"literal",
+                  "children": {
+
+                    "value": {
+                      "type":"argument",
+                      "parser":"brigadier:integer",
+                      "properties": {
+                        "min": 0
+                      },
+                      "executable":true
+                    }
+                  }
+                },
+
+                "get": {
+                  "type":"literal",
+                  "executable":true
+                }
+              }
+            },
+
             "playerCountNeed": {
               "type":"literal",
               "children": {

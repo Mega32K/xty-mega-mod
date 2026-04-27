@@ -154,6 +154,16 @@ public class Map2Command {
                                 .executes(context -> getCountdown(context.getSource()))
                         )
                 )
+                .then(Commands.literal("maxWins")
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("value", IntegerArgumentType.integer(0))
+                                        .executes(context -> setMaxWins(context.getSource(), IntegerArgumentType.getInteger(context, "value")))
+                                )
+                        )
+                        .then(Commands.literal("get")
+                                .executes(context -> getMaxWins(context.getSource()))
+                        )
+                )
                 .then(Commands.literal("playerCountNeed")
                         .then(Commands.literal("set")
                                 .then(Commands.argument("value", IntegerArgumentType.integer(0))
@@ -378,6 +388,18 @@ public class Map2Command {
         int i = data.getCountdown();
         sourceStack.sendSuccess(()-> Component.translatable("commands.xtymegamod.message.map2.countdown.get", LoreHelper.number(i, ChatFormatting.GOLD)), false);
         return i;
+    }
+    private static int setMaxWins(CommandSourceStack sourceStack, int value) {
+        Map2SavedData data = Map2SavedData.getInstance(sourceStack.getServer());
+        data.setMaxWins(value);
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.map2.max_wins.set", value), false);
+        return value;
+    }
+    private static int getMaxWins(CommandSourceStack sourceStack) {
+        Map2SavedData data = Map2SavedData.getInstance(sourceStack.getServer());
+        int value = data.getMaxWins();
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.map2.max_wins.get", value), false);
+        return value;
     }
     private static CommandSourceStack storeRedScoreFrom(CommandSourceStack sourceStack) {
         return sourceStack.withCallback((s, success, rV) -> {

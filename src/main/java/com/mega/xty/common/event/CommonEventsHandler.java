@@ -1,6 +1,7 @@
 package com.mega.xty.common.event;
 
 import com.mega.xty.common.capability.FpsCapability;
+import com.mega.xty.common.capability.Map2Capability;
 import com.mega.xty.common.data.fps.DeathSourceType;
 import com.mega.xty.common.data.map2.Game1SavedData;
 import com.mega.xty.common.data.map2.Game2SavedData;
@@ -11,6 +12,7 @@ import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
 import com.mega.xty.proxy.CommonProxy;
 import com.tacz.guns.api.event.common.EntityKillByGunEvent;
 import com.tacz.guns.api.event.common.GunDamageSourcePart;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
@@ -27,6 +29,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Team;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -73,6 +76,7 @@ public class CommonEventsHandler {
                             CommonProxy.getMap2Cap(deathP).ifPresent(cap -> cap.setXaeroDead(true));
                             if (!Game2SavedData.getInstance(server).isStopped()) {
                                 playGame2DeathEffect(killer, deathP, deathCameraStart, deathCameraXRot, deathCameraYRot);
+                                finishGame2RoundIfTeamAllDead(server, deathP);
                                 Game2SavedData savedData = Game2SavedData.getInstance(server);
                                 String func = savedData.getGame2Functions().getOnPlayerDeathFunction();
                                 if (func != null && !func.isEmpty())
@@ -173,5 +177,27 @@ public class CommonEventsHandler {
                 xRot,
                 yRot
         ), deadPlayer);
+    }
+
+    private static void finishGame2RoundIfTeamAllDead(MinecraftServer server, ServerPlayer deadPlayer) {
+        Team team = deadPlayer.getTeam();
+        if (team == null) {
+            return;
+        }
+        ChatFormatting color = team.getColor();
+        if (color != ChatFormatting.RED && color != ChatFormatting.BLUE) {
+            return;
+        }
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            Team playerTeam = player.getTeam();
+            if (playerTeam == null || playerTeam.getColor() != color) {
+                continue;
+            }
+            boolean dead = CommonProxy.getMap2Cap(player).map(Map2Capability::isXaeroDead).orElse(false);
+            if (!dead) {
+                return;
+            }
+        }
+        Map2SavedData.getInstance(server).finish(color == ChatFormatting.BLUE);
     }
 }

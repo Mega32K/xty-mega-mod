@@ -73,6 +73,7 @@ public class Map2SavedData extends SavedData {
     private BlockPos pointB;
     private int redWins;
     private int blueWins;
+    private int maxWins;
     private final Map<UUID, Inventory> deadSavedInventory = new Object2ObjectOpenHashMap<>();
     private final List<BlockPos> redHome = new ObjectArrayList<>();
     private final List<BlockPos> blueHome = new ObjectArrayList<>();
@@ -109,6 +110,8 @@ public class Map2SavedData extends SavedData {
             data.redWins = tag.getInt("redWins");
         if (CompoundTagUtils.containsInt(tag, "blueWins"))
             data.blueWins = tag.getInt("blueWins");
+        if (CompoundTagUtils.containsInt(tag, "maxWins"))
+            data.maxWins = tag.getInt("maxWins");
         data.teamScoreVisible = tag.getBoolean("teamScoreVisible");
         data.isTeamMode = tag.getBoolean("isTeamMode");
         if (CompoundTagUtils.containsIntArray(tag, "pointA"))  {
@@ -171,6 +174,7 @@ public class Map2SavedData extends SavedData {
         tag.putInt("blueScore", this.blueScore);
         tag.putInt("redWins", this.redWins);
         tag.putInt("blueWins", this.blueWins);
+        tag.putInt("maxWins", this.maxWins);
         tag.putBoolean("teamScoreVisible", this.teamScoreVisible);
         tag.putBoolean("scoreOverlayVisible", this.scoreOverlayVisible);
         if (this.pointA != null)
@@ -334,6 +338,15 @@ public class Map2SavedData extends SavedData {
         for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
             NetworkHandler.sendToPlayer(new S2CSyncTeamWinsPacket(this.redWins, blueWins), serverPlayer);
     }
+    public int getMaxWins() {
+        return maxWins;
+    }
+    public void setMaxWins(int maxWins) {
+        if (this.maxWins != maxWins) {
+            this.maxWins = maxWins;
+            this.setDirty();
+        }
+    }
     public int getPlayerCountNeed() {
         return playerCountNeed;
     }
@@ -480,12 +493,8 @@ public class Map2SavedData extends SavedData {
             SoundEvent sound = redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
             PacketHandler.playSound(players.get(0), sound, SoundSource.PLAYERS, 1.0F, 1.0F);
         }
-        FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
-        for (ServerPlayer serverPlayer : players) {
-            //清空本局kad
-            fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
-        }
         if (redWin) {
+            this.setRedWins(this.getRedWins() + 1);
             for (ServerPlayer serverPlayer : players) {
                 Team team = serverPlayer.getTeam();
                 if (team != null) {
@@ -497,6 +506,7 @@ public class Map2SavedData extends SavedData {
                 }
             }
         } else {
+            this.setBlueWins(this.getBlueWins() + 1);
             for (ServerPlayer serverPlayer : players) {
                 Team team = serverPlayer.getTeam();
                 if (team != null) {
@@ -518,10 +528,17 @@ public class Map2SavedData extends SavedData {
         teleportTeamToHomes(players, targetLevel, ChatFormatting.BLUE, this.blueHome);
     }
     public void startGame2NewRound() {
+        if (this.maxWins > 0 && (this.redWins >= this.maxWins || this.blueWins >= this.maxWins)) {
+            this.setRedWins(0);
+            this.setBlueWins(0);
+            Game2SavedData.getInstance(this.server).setStopped(true);
+            return;
+        }
         List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
         EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
         Set<UUID> teleportedPlayers = backToHomeInternal(players);
         long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
+        FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
         for (ServerPlayer player : players) {
             NetworkHandler.sendToPlayer(new S2CRoundStartRenderPacket(), player);
             resetPlayerForNewRound(player);
@@ -589,6 +606,8 @@ public class Map2SavedData extends SavedData {
     }
 
     private void resetPlayerForNewRound(ServerPlayer player) {
+        //清空本局kad
+        FpsSavedData.getInstance(player.server).getOrPutKAD(player).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
         player.removeAllEffects();
         player.clearFire();
         player.setRemainingFireTicks(0);

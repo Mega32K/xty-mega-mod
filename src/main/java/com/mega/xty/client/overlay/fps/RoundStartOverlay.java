@@ -30,6 +30,7 @@ public class RoundStartOverlay implements IGuiOverlay {
         float alpha = RoundStartData.getRoundStartNotificationAlpha(partialTicks);
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
+        poseStack.translate(0, 0, 100);
         Font font = gui.getFont();
         String text1 = "回合即将开始";
         String text2 = "倒计时" + RoundStartData.getDisplayCountdownSeconds(partialTicks) + "秒";
