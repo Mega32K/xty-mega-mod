@@ -6,10 +6,12 @@ import com.mega.endinglib.mixin.accessor.AccessorEntity;
 import com.mega.endinglib.util.time.TimeContext;
 import com.mega.xty.common.event.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
+import com.mega.xty.common.data.fps.RoundStartData;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.data.map2.DeathData;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.proxy.CommonProxy;
+import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -34,7 +36,11 @@ public class ClientEventsHandler {
             ClientLevel clientLevel = mc.level;
             if (clientLevel != null) {
                 DeathCameraEffectHandler.clientTick();
-                if (!mc.isPaused()) ClientFpsData.tick();
+                Game2StartPostEffect.clientTick();
+                if (!mc.isPaused()) {
+                    RoundStartData.tick();
+                    ClientFpsData.tick();
+                }
                 if (!ClientGameData.map2Playing()) {
                     if (!ClientGameData.toAddDeathData.isEmpty()) ClientGameData.toAddDeathData.clear();
                     if (!ClientGameData.toRemoveDeathData.isEmpty()) ClientGameData.toRemoveDeathData.clear();

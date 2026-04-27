@@ -83,7 +83,11 @@ public class SelectPlayerOverlay implements IGuiOverlay {
                 0xFFFFFFFF);
         poseStack.popPose();
         //渲染当前玩家信息
-        renderSelectedPlayerInfo(gui, graphics, poseStack, cameraP, font, screenWidth, screenHeight);
+        CommonProxy.getMap2Cap(cameraP).ifPresent(cap -> {
+            if (!cap.isXaeroDead()) {
+                renderSelectedPlayerInfo(gui, graphics, poseStack, cameraP, font, screenWidth, screenHeight);
+            }
+        });
 
         //渲染每条玩家信息
 

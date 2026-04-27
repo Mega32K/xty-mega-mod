@@ -6,6 +6,7 @@ import com.mega.endinglib.api.client.shader.post.PostEffectHandler;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.MapLevelEvents;
 import com.mega.xty.client.overlay.DebugOverlays;
+import com.mega.xty.client.overlay.fps.RoundStartOverlay;
 import com.mega.xty.client.overlay.loading.MegaStyleLoadingEffect;
 import com.mega.xty.client.overlay.map1.HealthOverlay;
 import com.mega.xty.client.overlay.map2.*;
@@ -153,6 +154,7 @@ public class ClientProxy implements ModProxy {
         event.registerAboveAll("fps/tab", new TabOverlay());
         event.registerAboveAll("map2/text_tip", new TextTipOverlay());
         event.registerAboveAll("fps/c4", new C4Overlay());
+        event.registerAboveAll("fps/round_start", new RoundStartOverlay());
         event.registerAboveAll("map2/win", new WinOverlay());
         event.registerAboveAll("map2/lose", new LoseOverlay());
     }

@@ -56,9 +56,10 @@ import java.util.function.Predicate;
 public class Map2Capability extends EntitySyncCapabilityBase {
     public static final ResourceLocation DEATH_PLAYER_SKIN = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/entity/death.png");
     public static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "mega_map2");
+    private static final String ROUND_KEYBOARD_UNLOCK_TIME_KEY = "roundKeyboardUnlockGameTime";
     private static final double C4_SITE_SEARCH_RADIUS = 64.0D;
     private static final double C4_SPECTATE_SEARCH_RADIUS = 16.0D;
-    private static final int C4_SPECTATE_TRY_COUNT = 256;
+    private static final int C4_SPECTATE_TRY_COUNT = 128;
     public final CapabilityEntityData<Integer> KILLCOUNT1 = this.dataManager.define(0, "killcount1", 0, CapabilityDataSerializers.INT);
     public final CapabilityEntityData<Integer> KILLCOUNT2 = this.dataManager.define(1, "killcount2", 0, CapabilityDataSerializers.INT);
     public final CapabilityEntityData<Boolean> NEED_START = this.dataManager.define(2, "needStart", false, CapabilityDataSerializers.BOOLEAN);
@@ -79,6 +80,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     public final CapabilityEntityData<ItemStack> SLOT_5 = this.dataManager.defineWithoutSerialization(14, ItemStack.EMPTY, CapabilityDataSerializers.ITEM_STACK);
     public Vec3 lastPos = new Vec3(0F, 0F, 0F);
     public int lastSoulInvisible;
+    private long roundKeyboardUnlockGameTime = -1L;
     public NonNullList<ItemStack> clientEvolutionWeapons = Util.make(() -> {
         NonNullList<ItemStack> list = NonNullList.withSize(3, ItemStack.EMPTY);
         for (int i=0;i<3;i++)
@@ -135,6 +137,9 @@ public class Map2Capability extends EntitySyncCapabilityBase {
 
     @Override
     public void syncData(CompoundTag compoundTag, Dist dist, CapabilitySyncType capabilitySyncType, Entity entity) {
+        if (capabilitySyncType == CapabilitySyncType.PLAYER_LOGGED_IN && entity instanceof ServerPlayer serverPlayer) {
+            tryClearPendingRoundKeyboardUnlock(serverPlayer);
+        }
     }
     @Override
     public void readSyncData(CompoundTag compoundTag, Dist dist, CapabilitySyncType capabilitySyncType, Entity entity) {
@@ -148,10 +153,18 @@ public class Map2Capability extends EntitySyncCapabilityBase {
 
     @Override
     public void customSerializeNBT(CompoundTag compoundTag) {
+        if (this.roundKeyboardUnlockGameTime >= 0L) {
+            compoundTag.putLong(ROUND_KEYBOARD_UNLOCK_TIME_KEY, this.roundKeyboardUnlockGameTime);
+        }
     }
 
     @Override
     public void customDeserializeNBT(CompoundTag compoundTag) {
+        if (compoundTag.contains(ROUND_KEYBOARD_UNLOCK_TIME_KEY)) {
+            this.roundKeyboardUnlockGameTime = compoundTag.getLong(ROUND_KEYBOARD_UNLOCK_TIME_KEY);
+        } else {
+            this.roundKeyboardUnlockGameTime = -1L;
+        }
         if (this.getEntity() instanceof ServerPlayer serverPlayer) {
             Map2SavedData data = Map2SavedData.getInstance(serverPlayer.server);
             if (!data.isStopped()) {
@@ -348,6 +361,15 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     public Optional<Vector3f> getPlayerC4Pos() {
         return this.dataManager.getValue(PLAYER_C4_POS);
     }
+    public void setRoundKeyboardUnlockGameTime(long roundKeyboardUnlockGameTime) {
+        this.roundKeyboardUnlockGameTime = roundKeyboardUnlockGameTime;
+    }
+    public void clearRoundKeyboardUnlockGameTime() {
+        this.roundKeyboardUnlockGameTime = -1L;
+    }
+    public long getRoundKeyboardUnlockGameTime() {
+        return this.roundKeyboardUnlockGameTime;
+    }
     public void setSlot0(ItemStack itemStack) {
         if (!itemEquals(itemStack, this.getSlot0())) {
             this.dataManager.setValue(SLOT_0, itemStack, true);
@@ -490,6 +512,16 @@ public class Map2Capability extends EntitySyncCapabilityBase {
         AABB playerBox = player.getDimensions(player.getPose()).makeBoundingBox(player.position());
         double eyeHeight = player.getEyeHeight();
         for (int i = 0; i < C4_SPECTATE_TRY_COUNT; i++) {
+            for (float f=8.0F;f>2.0F;f=0.5F) {
+                Vec3 candidate = c4Pos.add(
+                        player.getRandom().triangle(0.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D),
+                        player.getRandom().triangle(1.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D),
+                        f
+                );
+                if (canUseSpectatePos(player, playerBox, eyeHeight, candidate, c4Pos)) {
+                    return Optional.of(candidate);
+                }
+            }
             Vec3 candidate = c4Pos.add(
                     player.getRandom().triangle(0.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D),
                     player.getRandom().triangle(1.0D, C4_SPECTATE_SEARCH_RADIUS * 0.45D),
@@ -516,5 +548,21 @@ public class Map2Capability extends EntitySyncCapabilityBase {
         Vec3 to = c4Pos.add(0.0D, 0.2D, 0.0D);
         HitResult hitResult = player.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
         return hitResult.getType() == HitResult.Type.MISS;
+    }
+    private void tryClearPendingRoundKeyboardUnlock(ServerPlayer player) {
+        if (this.roundKeyboardUnlockGameTime < 0L) {
+            return;
+        }
+        boolean gameStopped = Game2SavedData.getInstance(player.server).isStopped();
+        long gameTime = player.server.overworld().getGameTime();
+        if (gameStopped || gameTime >= this.roundKeyboardUnlockGameTime) {
+            EndingLibrarySavedData savedData = EndingLibrarySavedData.getInstance(player.server);
+            savedData.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
+            savedData.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
+            savedData.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
+            savedData.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
+            savedData.removeDisabledPermission(player, InputOperations.JUMP);
+            this.clearRoundKeyboardUnlockGameTime();
+        }
     }
 }

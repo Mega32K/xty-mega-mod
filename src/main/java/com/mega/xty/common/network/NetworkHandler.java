@@ -14,6 +14,7 @@ import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerKADPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerNamePacket;
 import com.mega.xty.common.network.s2c.fps.S2CRoundLoseRenderPacket;
+import com.mega.xty.common.network.s2c.fps.S2CRoundStartRenderPacket;
 import com.mega.xty.common.network.s2c.fps.S2CRoundWinRenderPacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.common.network.s2c.map1.game2.S2CGame2HitEffectPacket;
@@ -22,6 +23,7 @@ import com.mega.xty.common.network.s2c.map1.game2.S2CScreenShakePacket;
 import com.mega.xty.common.network.s2c.map1.game2.S2CSimpleScreenShakePacket;
 import com.mega.xty.common.network.s2c.map2.*;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
+import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StartEffectPacket;
 import com.mega.xty.common.network.s2c.map2.game1.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -75,7 +77,9 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CBombDataPacket.class, S2CBombDataPacket::encode, S2CBombDataPacket::decode, S2CBombDataPacket::handle);
         INSTANCE.registerMessage(id(), S2CRoundLoseRenderPacket.class, S2CRoundLoseRenderPacket::encode, S2CRoundLoseRenderPacket::decode, S2CRoundLoseRenderPacket::handle);
         INSTANCE.registerMessage(id(), S2CRoundWinRenderPacket.class, S2CRoundWinRenderPacket::encode, S2CRoundWinRenderPacket::decode, S2CRoundWinRenderPacket::handle);
+        INSTANCE.registerMessage(id(), S2CRoundStartRenderPacket.class, S2CRoundStartRenderPacket::encode, S2CRoundStartRenderPacket::decode, S2CRoundStartRenderPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame2DeathEffectPacket.class, S2CGame2DeathEffectPacket::encode, S2CGame2DeathEffectPacket::decode, S2CGame2DeathEffectPacket::handle);
+        INSTANCE.registerMessage(id(), S2CGame2StartEffectPacket.class, S2CGame2StartEffectPacket::encode, S2CGame2StartEffectPacket::decode, S2CGame2StartEffectPacket::handle);
     }
     public static <MSG> void sendToAll(MSG msg) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), msg);

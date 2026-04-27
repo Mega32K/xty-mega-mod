@@ -1,6 +1,7 @@
 package com.mega.xty.common.item.fps;
 
 import com.mega.xty.common.data.fps.FpsSavedData;
+import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.init.SoundsInit;
@@ -89,6 +90,7 @@ public class BDKItem extends Item {
                         savedData.setBombExist(false);
                         savedData.setBombCountdownTicks(0);
                         playBDKSound(player, SoundsInit.C4_DISARMFINISH.get(), 1.0F, 1.0F);
+                        Map2SavedData.getInstance(player.server).finish(false);
                     }
                 }
             }

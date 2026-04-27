@@ -39,6 +39,8 @@ public class SoundsInit {
     public static final RegistryObject<SoundEvent> KEY_PRESS5 = register("fps.c4.key_press5");
     public static final RegistryObject<SoundEvent> KEY_PRESS6 = register("fps.c4.key_press6");
     public static final RegistryObject<SoundEvent> KEY_PRESS7 = register("fps.c4.key_press7");
+    public static final RegistryObject<SoundEvent> CTWIN = register("fps.ctwin");
+    public static final RegistryObject<SoundEvent> TERWIN = register("fps.terwin");
 
     private static RegistryObject<SoundEvent> register(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, name), C4_SOUND_RANGE));

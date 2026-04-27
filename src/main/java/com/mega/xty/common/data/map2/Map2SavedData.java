@@ -3,22 +3,53 @@ package com.mega.xty.common.data.map2;
 import com.mega.endinglib.api.data.CompoundTagReader;
 import com.mega.endinglib.api.data.CompoundTagUtils;
 import com.mega.endinglib.api.data.CompoundTagWriter;
+import com.mega.endinglib.api.item.component.ComponentChanges;
+import com.mega.endinglib.api.item.component.DataComponents;
+import com.mega.endinglib.api.item.component.ItemComponentManager;
+import com.mega.endinglib.api.server.LambdaServerTask;
+import com.mega.endinglib.common.data.EndingLibrarySavedData;
+import com.mega.endinglib.common.data.InputOperations;
+import com.mega.xty.common.capability.Map2Capability;
+import com.mega.xty.common.data.fps.FpsSavedData;
+import com.mega.xty.common.data.fps.kad.KAD;
+import com.mega.xty.common.network.s2c.fps.S2CRoundStartRenderPacket;
+import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StartEffectPacket;
 import com.mega.endinglib.util.mixin.level.ServerEC;
+import com.mega.endinglib.util.java.Args;
 import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.network.s2c.fps.S2CRoundLoseRenderPacket;
+import com.mega.xty.common.network.s2c.fps.S2CRoundWinRenderPacket;
 import com.mega.xty.common.network.s2c.map2.*;
+import com.mega.xty.common.init.SoundsInit;
+import com.mega.xty.common.init.ItemInit;
+import com.mega.endinglib.common.network.PacketHandler;
+import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +74,13 @@ public class Map2SavedData extends SavedData {
     private int redWins;
     private int blueWins;
     private final Map<UUID, Inventory> deadSavedInventory = new Object2ObjectOpenHashMap<>();
+    private final List<BlockPos> redHome = new ObjectArrayList<>();
+    private final List<BlockPos> blueHome = new ObjectArrayList<>();
+    @Nullable
+    private ResourceKey<Level> game2Dimension;
     private Map2Functions map2Functions = new Map2Functions(this);
+    private static final int HOME_MAX_SIZE = 10;
+    private static final int NEW_ROUND_POST_EFFECT_TICKS = 10 * 20;
     public static Map2SavedData readOrCreate(MinecraftServer server) {
         Map2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Map2SavedData::new, "xty_map2");
         data.server = server;
@@ -92,6 +129,33 @@ public class Map2SavedData extends SavedData {
             data.deadSavedInventory.clear();
             data.deadSavedInventory.putAll(CompoundTagUtils.getMap(tag, "DeadSavedInventories", CompoundTag::getUUID, Inventory.NBT_READER));
         }
+        if (tag.contains("RedHome", Tag.TAG_LIST)) {
+            data.redHome.clear();
+            ListTag listTag = tag.getList("RedHome", Tag.TAG_INT_ARRAY);
+            for (Tag value : listTag) {
+                if (value instanceof net.minecraft.nbt.IntArrayTag intArrayTag) {
+                    int[] array = intArrayTag.getAsIntArray();
+                    if (array.length >= 3) {
+                        data.redHome.add(new BlockPos(array[0], array[1], array[2]));
+                    }
+                }
+            }
+        }
+        if (tag.contains("BlueHome", Tag.TAG_LIST)) {
+            data.blueHome.clear();
+            ListTag listTag = tag.getList("BlueHome", Tag.TAG_INT_ARRAY);
+            for (Tag value : listTag) {
+                if (value instanceof net.minecraft.nbt.IntArrayTag intArrayTag) {
+                    int[] array = intArrayTag.getAsIntArray();
+                    if (array.length >= 3) {
+                        data.blueHome.add(new BlockPos(array[0], array[1], array[2]));
+                    }
+                }
+            }
+        }
+        if (CompoundTagUtils.containsString(tag, "Game2Dimension")) {
+            data.game2Dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("Game2Dimension")));
+        }
         return data;
     }
     @Override
@@ -117,6 +181,23 @@ public class Map2SavedData extends SavedData {
             tag.putString("RightTopText", Component.Serializer.toJson(this.rightTopText));
         if (!this.deadSavedInventory.isEmpty())
             CompoundTagUtils.putMap(tag, "DeadSavedInventories", this.deadSavedInventory, CompoundTag::putUUID, Inventory.NBT_WRITER);
+        if (!this.redHome.isEmpty()) {
+            ListTag listTag = new ListTag();
+            for (BlockPos pos : this.redHome) {
+                listTag.add(new net.minecraft.nbt.IntArrayTag(new int[] {pos.getX(), pos.getY(), pos.getZ()}));
+            }
+            tag.put("RedHome", listTag);
+        }
+        if (!this.blueHome.isEmpty()) {
+            ListTag listTag = new ListTag();
+            for (BlockPos pos : this.blueHome) {
+                listTag.add(new net.minecraft.nbt.IntArrayTag(new int[] {pos.getX(), pos.getY(), pos.getZ()}));
+            }
+            tag.put("BlueHome", listTag);
+        }
+        if (this.game2Dimension != null) {
+            tag.putString("Game2Dimension", this.game2Dimension.location().toString());
+        }
         return tag;
     }
 
@@ -152,6 +233,18 @@ public class Map2SavedData extends SavedData {
             this.setDirty();
             for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
                 NetworkHandler.sendToPlayer(new S2CMap2StatsPacket(stopped), serverPlayer);
+        }
+        if (stopped) {
+            FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
+            EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
+            for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
+                clearRoundControlInputs(elData, serverPlayer);
+                resetPlayerToDefaultMaxHealth(serverPlayer);
+                clearRoundArmor(serverPlayer);
+                //清空KAD
+                fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
+                fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_GENERAL, KAD.deserialize(0));
+            }
         }
         isStopped = stopped;
     }
@@ -267,6 +360,27 @@ public class Map2SavedData extends SavedData {
     public Map<UUID, Inventory> getDeadSavedInventory() {
         return Collections.unmodifiableMap(deadSavedInventory);
     }
+    public List<BlockPos> getRedHome() {
+        return Collections.unmodifiableList(this.redHome);
+    }
+    public void setRedHome(List<BlockPos> homes) {
+        updateHomeList(this.redHome, homes);
+    }
+    public List<BlockPos> getBlueHome() {
+        return Collections.unmodifiableList(this.blueHome);
+    }
+    public void setBlueHome(List<BlockPos> homes) {
+        updateHomeList(this.blueHome, homes);
+    }
+    public @Nullable ResourceKey<Level> getGame2Dimension() {
+        return this.game2Dimension;
+    }
+    public void setGame2Dimension(@Nullable ResourceKey<Level> game2Dimension) {
+        if (!Objects.equals(this.game2Dimension, game2Dimension)) {
+            this.game2Dimension = game2Dimension;
+            this.setDirty();
+        }
+    }
     public void storeDeadPlayerInventory(Player player) {
         deadSavedInventory.put(player.getUUID(), Inventory.createFromInventory(player.getInventory()));
         this.setDirty();
@@ -359,5 +473,220 @@ public class Map2SavedData extends SavedData {
             for (int i=0;i<this.offhand.size();i++)
                 pInv.offhand.set(i, this.offhand.get(i));
         }
+    }
+    public void finish(boolean redWin) {
+        List<ServerPlayer> players = server.getPlayerList().getPlayers();
+        if (!players.isEmpty()) {
+            SoundEvent sound = redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
+            PacketHandler.playSound(players.get(0), sound, SoundSource.PLAYERS, 1.0F, 1.0F);
+        }
+        FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
+        for (ServerPlayer serverPlayer : players) {
+            //清空本局kad
+            fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
+        }
+        if (redWin) {
+            for (ServerPlayer serverPlayer : players) {
+                Team team = serverPlayer.getTeam();
+                if (team != null) {
+                    if (team.getColor() == ChatFormatting.RED) {
+                        NetworkHandler.sendToPlayer(new S2CRoundWinRenderPacket(), serverPlayer);
+                    } else if (team.getColor() == ChatFormatting.BLUE) {
+                        NetworkHandler.sendToPlayer(new S2CRoundLoseRenderPacket(), serverPlayer);
+                    }
+                }
+            }
+        } else {
+            for (ServerPlayer serverPlayer : players) {
+                Team team = serverPlayer.getTeam();
+                if (team != null) {
+                    if (team.getColor() == ChatFormatting.RED) {
+                        NetworkHandler.sendToPlayer(new S2CRoundLoseRenderPacket(), serverPlayer);
+                    } else if (team.getColor() == ChatFormatting.BLUE) {
+                        NetworkHandler.sendToPlayer(new S2CRoundWinRenderPacket(), serverPlayer);
+                    }
+                }
+            }
+        }
+    }
+    public void backToHome(List<ServerPlayer> players) {
+        ServerLevel targetLevel = getGame2ServerLevel();
+        if (targetLevel == null) {
+            return;
+        }
+        teleportTeamToHomes(players, targetLevel, ChatFormatting.RED, this.redHome);
+        teleportTeamToHomes(players, targetLevel, ChatFormatting.BLUE, this.blueHome);
+    }
+    public void startGame2NewRound() {
+        List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
+        EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
+        Set<UUID> teleportedPlayers = backToHomeInternal(players);
+        long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
+        for (ServerPlayer player : players) {
+            NetworkHandler.sendToPlayer(new S2CRoundStartRenderPacket(), player);
+            resetPlayerForNewRound(player);
+            if (teleportedPlayers.contains(player.getUUID())) {
+                equipRoundArmor(player);
+                elData.addDisabledPermission(player, InputOperations.MOVE_FORWARD);
+                elData.addDisabledPermission(player, InputOperations.MOVE_BACKWARD);
+                elData.addDisabledPermission(player, InputOperations.MOVE_LEFT);
+                elData.addDisabledPermission(player, InputOperations.MOVE_RIGHT);
+                elData.addDisabledPermission(player, InputOperations.JUMP);
+                elData.addDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+                CommonProxy.getMap2Cap(player).ifPresent(cap -> cap.setRoundKeyboardUnlockGameTime(unlockGameTime));
+                NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(NEW_ROUND_POST_EFFECT_TICKS), player);
+            } else {
+                CommonProxy.getMap2Cap(player).ifPresent(Map2Capability::clearRoundKeyboardUnlockGameTime);
+                NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(0), player);
+            }
+        }
+        scheduleRoundKeyboardUnlock(teleportedPlayers);
+    }
+
+    private Set<UUID> backToHomeInternal(List<ServerPlayer> players) {
+        ServerLevel targetLevel = getGame2ServerLevel();
+        if (targetLevel == null) {
+            return Collections.emptySet();
+        }
+        Set<UUID> teleported = new HashSet<>();
+        teleportTeamToHomes(players, targetLevel, ChatFormatting.RED, this.redHome, teleported);
+        teleportTeamToHomes(players, targetLevel, ChatFormatting.BLUE, this.blueHome, teleported);
+        return teleported;
+    }
+
+    private void teleportTeamToHomes(List<ServerPlayer> players, ServerLevel targetLevel, ChatFormatting teamColor, List<BlockPos> homes) {
+        teleportTeamToHomes(players, targetLevel, teamColor, homes, null);
+    }
+
+    private void teleportTeamToHomes(List<ServerPlayer> players, ServerLevel targetLevel, ChatFormatting teamColor, List<BlockPos> homes, @Nullable Set<UUID> teleported) {
+        if (homes.isEmpty()) {
+            return;
+        }
+        int index = 0;
+        for (ServerPlayer player : players) {
+            Team team = player.getTeam();
+            if (team == null || team.getColor() != teamColor) {
+                continue;
+            }
+            if (index >= homes.size()) {
+                break;
+            }
+            BlockPos homePos = homes.get(targetLevel.random.nextInt(homes.size()));
+            player.teleportTo(targetLevel, homePos.getX() + 0.5D, homePos.getY(), homePos.getZ() + 0.5D, player.getYRot(), player.getXRot());
+            if (teleported != null) {
+                teleported.add(player.getUUID());
+            }
+            index++;
+        }
+    }
+
+    @Nullable
+    private ServerLevel getGame2ServerLevel() {
+        if (this.game2Dimension == null) {
+            return null;
+        }
+        return this.server.getLevel(this.game2Dimension);
+    }
+
+    private void resetPlayerForNewRound(ServerPlayer player) {
+        player.removeAllEffects();
+        player.clearFire();
+        player.setRemainingFireTicks(0);
+        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100.0D);
+        player.setHealth(100.0F);
+        player.getFoodData().setFoodLevel(20);
+        CommonProxy.getXtyCap(player).ifPresent(cap -> {
+            cap.setGame2MaxHealth(100.0F);
+            cap.setGame2Health(100.0F);
+        });
+    }
+
+    private void resetPlayerToDefaultMaxHealth(ServerPlayer player) {
+        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(20.0D);
+        if (player.getHealth() > 20.0F) {
+            player.setHealth(20.0F);
+        }
+        CommonProxy.getXtyCap(player).ifPresent(cap -> {
+            cap.setGame2MaxHealth(20.0F);
+            cap.setGame2Health(player.getHealth());
+        });
+    }
+
+    private void clearRoundControlInputs(EndingLibrarySavedData data, ServerPlayer player) {
+        data.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
+        data.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
+        data.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
+        data.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
+        data.removeDisabledPermission(player, InputOperations.JUMP);
+        data.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+    }
+    private void clearRoundKeyboardInputs(EndingLibrarySavedData data, ServerPlayer player) {
+        data.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
+        data.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
+        data.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
+        data.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
+        data.removeDisabledPermission(player, InputOperations.JUMP);
+        data.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+    }
+    private void equipRoundArmor(ServerPlayer player) {
+        Team team = player.getTeam();
+        if (team == null) {
+            return;
+        }
+        if (team.getColor() == ChatFormatting.RED) {
+            player.setItemSlot(EquipmentSlot.CHEST, ItemInit.OPTICAL_NANOSUIT.get().getDefaultInstance());
+        } else if (team.getColor() == ChatFormatting.BLUE) {
+            ItemStack chestplate = Items.CHAINMAIL_CHESTPLATE.getDefaultInstance();
+            ItemComponentManager.get(chestplate).mergeChangedToNBTAndUpdate(ComponentChanges
+                    .builder(chestplate.getItem())
+                    .add(DataComponents.MAX_DAMAGE, 10)
+                    .build());
+            chestplate.setDamageValue(0);
+            player.setItemSlot(EquipmentSlot.CHEST, chestplate);
+        }
+    }
+    private void clearRoundArmor(ServerPlayer player) {
+        if (player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        Team team = player.getTeam();
+        if (team == null) {
+            return;
+        }
+        if (team.getColor() == ChatFormatting.RED || team.getColor() == ChatFormatting.BLUE) {
+            player.getInventory().armor.replaceAll(itemStack -> ItemStack.EMPTY);
+        }
+    }
+
+    private void updateHomeList(List<BlockPos> target, List<BlockPos> homes) {
+        List<BlockPos> trimmed = new ObjectArrayList<>(Math.min(HOME_MAX_SIZE, homes.size()));
+        for (int i = 0; i < homes.size() && i < HOME_MAX_SIZE; i++) {
+            trimmed.add(homes.get(i));
+        }
+        if (!target.equals(trimmed)) {
+            target.clear();
+            target.addAll(trimmed);
+            this.setDirty();
+        }
+    }
+    private void scheduleRoundKeyboardUnlock(Set<UUID> teleportedPlayers) {
+        if (teleportedPlayers.isEmpty()) {
+            return;
+        }
+        new LambdaServerTask(new Args(0), task -> {
+            int tick = task.getArgs().get(0);
+            tick++;
+            task.getArgs().set(0, tick);
+            if (tick >= NEW_ROUND_POST_EFFECT_TICKS) {
+                EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
+                for (UUID uuid : teleportedPlayers) {
+                    ServerPlayer player = this.server.getPlayerList().getPlayer(uuid);
+                    if (player != null) {
+                        clearRoundKeyboardInputs(elData, player);
+                        CommonProxy.getMap2Cap(player).ifPresent(Map2Capability::clearRoundKeyboardUnlockGameTime);
+                    }
+                }
+            }
+        }, task -> ((int) task.getArgs().get(0)) >= NEW_ROUND_POST_EFFECT_TICKS).addToManager();
     }
 }

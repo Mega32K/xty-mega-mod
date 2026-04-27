@@ -194,5 +194,19 @@
         "name": "xtymegamod:fps/c4/key_press7"
       }
     ]
+  },
+  "fps.ctwin": {
+    "sounds": [
+      {
+        "name": "xtymegamod:fps/ctwin"
+      }
+    ]
+  },
+  "fps.terwin": {
+    "sounds": [
+      {
+        "name": "xtymegamod:fps/terwin"
+      }
+    ]
   }
 }

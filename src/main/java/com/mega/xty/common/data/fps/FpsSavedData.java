@@ -16,6 +16,7 @@ import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.nbt.CompoundTag;
@@ -127,20 +128,11 @@ public class FpsSavedData extends SavedData {
         }
     }
     public void onBombCountdownFinished() {
-        for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
-            Team team = serverPlayer.getTeam();
-            if (team != null) {
-                if (team.getColor() == ChatFormatting.RED) {
-                    NetworkHandler.sendToPlayer(new S2CRoundWinRenderPacket(), serverPlayer);
-                } else if (team.getColor() == ChatFormatting.BLUE) {
-                    NetworkHandler.sendToPlayer(new S2CRoundLoseRenderPacket(), serverPlayer);
-                }
-            }
-        }
+        Map2SavedData.getInstance(server).finish(true);
     }
     private void explodeBombEffects() {
         Map2SavedData map2SavedData = Map2SavedData.getInstance(server);
-        Set<AABB> queryBoxes = new LinkedHashSet<>();
+        Set<AABB> queryBoxes = new ObjectOpenHashSet<>();
         if (map2SavedData.getPointA() != null) {
             queryBoxes.add(new AABB(map2SavedData.getPointA()).inflate(32.0D));
         }
@@ -150,24 +142,25 @@ public class FpsSavedData extends SavedData {
         String func = map2SavedData.getMap2Functions().getCountdownStopFunction();
         for (ServerLevel level : server.getAllLevels()) {
             for (AABB queryBox : queryBoxes) {
+                if (!Game2SavedData.getInstance(server).isStopped()) {
+                    for (Player alivePlayer : level.getEntitiesOfClass(Player.class, queryBox, EntitySelector.NO_CREATIVE_OR_SPECTATOR)) {
+                        CommonProxy.getMap2Cap(alivePlayer).ifPresent(cap -> {
+                            if (!cap.isXaeroDead()) {
+                                cap.setXaeroDead(true);
+                                if (func != null && !func.isEmpty())
+                                    server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f -> server.getFunctions().execute(f, alivePlayer.createCommandSourceStack().withSuppressedOutput().withMaximumPermission(2)));
+                            }
+                        });
+                    }
+                }
                 for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, queryBox)) {
                     Vec3 pos = c4Entity.position().add(0.0D, 0.2D, 0.0D);
-                    level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                    level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 4, 0.0D, 0.0D, 0.0D, 0.0D);
                     level.sendParticles(ParticleTypes.EXPLOSION, pos.x, pos.y, pos.z, 16, 0.35D, 0.12D, 0.35D, 0.02D);
                     level.sendParticles(ParticleTypes.LARGE_SMOKE, pos.x, pos.y, pos.z, 24, 0.45D, 0.18D, 0.45D, 0.02D);
                     level.playSound(null, pos.x, pos.y, pos.z, SoundsInit.C4_EXPLODE1.get(), SoundSource.PLAYERS, 2.6F, 1.0F);
                     level.playSound(null, pos.x, pos.y, pos.z, level.random.nextBoolean() ? SoundsInit.C4_EXP_DEB1.get() : SoundsInit.C4_EXP_DEB2.get(), SoundSource.PLAYERS, 1.5F, 1.0F);
                     c4Entity.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
-                }
-                if (!Game2SavedData.getInstance(server).isStopped() && func != null && !func.isEmpty()) {
-                    for (Player alivePlayer : level.getEntitiesOfClass(Player.class, queryBox, EntitySelector.NO_CREATIVE_OR_SPECTATOR)) {
-                        CommonProxy.getMap2Cap(alivePlayer).ifPresent(cap -> {
-                            if (!cap.isXaeroDead()) {
-                                cap.setXaeroDead(true);
-                                server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f -> server.getFunctions().execute(f, alivePlayer.createCommandSourceStack().withSuppressedOutput().withMaximumPermission(2)));
-                            }
-                        });
-                    }
                 }
             }
         }
