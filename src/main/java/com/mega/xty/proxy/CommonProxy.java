@@ -10,6 +10,7 @@ import com.mega.endinglib.api.item.component.ItemComponentType;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.capability.FpsCapability;
 import com.mega.xty.common.capability.Map2Capability;
+import com.mega.xty.common.capability.WeaponWarehouseCapability;
 import com.mega.xty.common.capability.XtyModPlayerCapability;
 import com.mega.xty.common.command.argument.LimbArgumentType;
 import com.mega.xty.common.component.ComponentInit;
@@ -44,6 +45,9 @@ public class CommonProxy implements ModProxy {
     });
     public static LazyOptional<Capability<FpsCapability>> FPS_CAP = LazyOptional.of(() -> {
         return ELCapabilityManager.getCapability(FpsCapability.NAME.toString());
+    });
+    public static LazyOptional<Capability<WeaponWarehouseCapability>> WEAPON_WAREHOUSE_CAP = LazyOptional.of(() -> {
+        return ELCapabilityManager.getCapability(WeaponWarehouseCapability.NAME.toString());
     });
     public static final DeferredRegister<CreativeModeTab> CT = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, XtyMegaMod.MODID);
     public static final RegistryObject<CreativeModeTab> CREATIVE_MODE_TAB = CT.register("main", () ->
@@ -99,6 +103,11 @@ public class CommonProxy implements ModProxy {
     public static LazyOptional<FpsCapability> getFPSCap(Player player) {
         return player.getCapability(FPS_CAP.orElse(ELCapabilityManager.getCapability(FpsCapability.NAME.toString())));
     }
+
+    @AutoCapGetter(WeaponWarehouseCapability.class)
+    public static LazyOptional<WeaponWarehouseCapability> getWeaponWarehouseCap(Player player) {
+        return player.getCapability(WEAPON_WAREHOUSE_CAP.orElse(ELCapabilityManager.getCapability(WeaponWarehouseCapability.NAME.toString())));
+    }
     private void onCommonFMLSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(()-> {
             ELCapabilityManager.regsterCapability(XtyModPlayerCapability::new, new CapabilityToken<XtyModPlayerCapability>() {
@@ -106,6 +115,8 @@ public class CommonProxy implements ModProxy {
             ELCapabilityManager.regsterCapability(Map2Capability::new, new CapabilityToken<Map2Capability>() {
             });
             ELCapabilityManager.regsterCapability(FpsCapability::new, new CapabilityToken<FpsCapability>() {
+            });
+            ELCapabilityManager.regsterCapability(WeaponWarehouseCapability::new, new CapabilityToken<WeaponWarehouseCapability>() {
             });
             ArgumentTypeInfos.registerByClass(LimbArgumentType.class, ModCommandArgumentTypes.LIMBS.get());
         });

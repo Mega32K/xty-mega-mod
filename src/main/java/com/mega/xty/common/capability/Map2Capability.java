@@ -122,7 +122,6 @@ public class Map2Capability extends EntitySyncCapabilityBase {
             if (this.getEntity() == ClientWrapped.clientPlayer()) {
                 if (!this.isXaeroDead()) {
                     Player player = ClientWrapped.clientPlayer();
-                    player.setPos(player.position().add(0, -32F, 0F));
                     player.noPhysics = false;
                     player.setNoGravity(false);
                     player.setDeltaMovement(Vec3.ZERO);
@@ -267,6 +266,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
         this.dataManager.setValue(XAERO_DEAD, value);
         if (this.XAERO_DEAD.isDirty()) {
             if (this.getEntity() instanceof ServerPlayer player) {
+                player.setInvulnerable(value);
                 EndingLibrarySavedData elSavedData = EndingLibrarySavedData.readOrCreate(player.server);
                 Map2SavedData map2SavedData = Map2SavedData.getInstance(player.server);
                 Inventory inventory = player.getInventory();
@@ -283,34 +283,34 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     }
 
     public void updateXaeroDead(boolean value, ServerPlayer player, EndingLibrarySavedData savedData) {
-        if (value) {CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
-            setLastDeathPos(player.position().toVector3f().add(0, 32, 0));
-            cap.setCustomSkin(DEATH_PLAYER_SKIN.toString());
-            if (!hasAliveTeammateToSpectate(player) && !Game2SavedData.getInstance(player.server).isStopped()) {
-                this.setPlayerC4Pos(findC4SpectatePos(player).orElse(null));
-            } else {
-                this.setPlayerC4Pos(null);
-            }
-            savedData.addDisabledPermission(player, InputOperations.MOVEMENT);
-            savedData.addDisabledPermission(player, InputOperations.SNEAK);
+        if (value) {
+            CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
+                setLastDeathPos(player.position().toVector3f().add(0, 32, 0));
+                cap.setCustomSkin(DEATH_PLAYER_SKIN.toString());
+                if (!hasAliveTeammateToSpectate(player) && !Game2SavedData.getInstance(player.server).isStopped()) {
+                    this.setPlayerC4Pos(findC4SpectatePos(player).orElse(null));
+                } else {
+                    this.setPlayerC4Pos(null);
+                }
+                savedData.addDisabledPermission(player, InputOperations.MOVEMENT);
+                savedData.addDisabledPermission(player, InputOperations.SNEAK);
 
-            savedData.addDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
-            savedData.addDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
-            savedData.addDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
-            savedData.addDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
-            savedData.addDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
-            player.serverLevel().levelEvent(player, 110120, BlockPos.ZERO, MapLevelEvents.FPS_SPECTATE);
-        });
+                savedData.addDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
+                savedData.addDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
+                savedData.addDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
+                savedData.addDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
+                savedData.addDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
+                player.serverLevel().levelEvent(player, 110120, BlockPos.ZERO, MapLevelEvents.FPS_SPECTATE);
+            });
             CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {
                 cap.setRenderScale(new Vector3f(0F, 0F, 0F));
                 cap.setRenderScaleInterpolationDuration(1);
             });
         } else {
+            this.setSoulInvisible(0);
+            this.setLastDeathPos(null);
+            this.setPlayerC4Pos(null);
             CommonProxy.getCameraCapOptional(player).ifPresent(cap -> {
-                this.getLastDeathPos().ifPresent(pos -> {
-                    setLastDeathPos(null);
-                });
-                this.getPlayerC4Pos().ifPresent(pos -> this.setPlayerC4Pos(null));
                 player.fallDistance = 0F;
                 player.noPhysics = false;
                 player.setNoGravity(false);
@@ -360,6 +360,10 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     }
     public Optional<Vector3f> getPlayerC4Pos() {
         return this.dataManager.getValue(PLAYER_C4_POS);
+    }
+    public void clearDeathStateData() {
+        this.setLastDeathPos(null);
+        this.setPlayerC4Pos(null);
     }
     public void setRoundKeyboardUnlockGameTime(long roundKeyboardUnlockGameTime) {
         this.roundKeyboardUnlockGameTime = roundKeyboardUnlockGameTime;

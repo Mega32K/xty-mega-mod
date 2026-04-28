@@ -54,17 +54,22 @@ public class GhostCircleOverlay implements IGuiOverlay {
         gui.setupOverlayRenderState(true, false);
         if (Minecraft.getInstance().cameraEntity instanceof AbstractClientPlayer clientPlayer) {
             if (!clientPlayer.isSpectator()) {
-                MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
                 partialTick = TimeContext.safeClientFrameTime();
-                //幽灵
-                if (clientPlayer.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
-                    //渲染隐身状态条
-                    renderInvisibleBar(gui, graphics, partialTick, screenWidth, screenHeight, clientPlayer);
-                } else {
-                    //渲染周遭幽灵环
-                    renderGhostCircle(gui, graphics, partialTick, screenWidth, screenHeight, clientPlayer);
-                }
-                RenderSystem.disableBlend();
+                float finalPartialTick = partialTick;
+                CommonProxy.getMap2Cap(clientPlayer).ifPresent(cap -> {
+                    if (!cap.isXaeroDead()) {
+                        MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
+                        //幽灵
+                        if (clientPlayer.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
+                            //渲染隐身状态条
+                            renderInvisibleBar(gui, graphics, finalPartialTick, screenWidth, screenHeight, clientPlayer);
+                        } else {
+                            //渲染周遭幽灵环
+                            renderGhostCircle(gui, graphics, finalPartialTick, screenWidth, screenHeight, clientPlayer);
+                        }
+                        RenderSystem.disableBlend();
+                    }
+                });
             }
         }
     }

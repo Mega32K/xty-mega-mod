@@ -2186,6 +2186,52 @@
           }
         },
 
+        "weaponWarehouse": {
+          "type": "literal",
+          "children": {
+            "open": {
+              "type": "literal",
+              "children": {
+                "target": {
+                  "type": "argument",
+                  "parser": "minecraft:entity",
+                  "properties": {
+                    "type": "players",
+                    "amount": "single"
+                  },
+                  "executable": true
+                }
+              },
+              "executable": true
+            },
+            "apply": {
+              "type": "literal",
+              "children": {
+                "loadout": {
+                  "type": "argument",
+                  "parser": "brigadier:integer",
+                  "properties": {
+                    "min": 1,
+                    "max": 5
+                  },
+                  "children": {
+                    "target": {
+                      "type": "argument",
+                      "parser": "minecraft:entity",
+                      "properties": {
+                        "type": "players",
+                        "amount": "single"
+                      },
+                      "executable": true
+                    }
+                  },
+                  "executable": true
+                }
+              }
+            }
+          }
+        },
+
         "limbs": {
           "type":"literal",
           "children": {

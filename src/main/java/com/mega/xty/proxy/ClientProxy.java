@@ -13,6 +13,7 @@ import com.mega.xty.client.overlay.map2.*;
 import com.mega.xty.client.renderer.entity.*;
 import com.mega.xty.client.screen.map2.GameStartScreen;
 import com.mega.xty.client.screen.map2.RenameScreen;
+import com.mega.xty.client.screen.warehouse.WeaponWarehouseScreen;
 import com.mega.xty.client.shader.post.GuiRectBlurPostEffect;
 import com.mega.xty.client.shader.post.map2.DeadPostEffect;
 import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
@@ -23,6 +24,7 @@ import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.entity.ShadowPlayerEntity;
 import com.mega.xty.common.init.EntityInit;
 import com.mega.xty.common.init.ParticleInit;
+import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import com.mega.xty.common.particle.Game2HitParticle;
 import com.mega.xty.util.data_expand.ExtraPlayerRenderer;
 import com.mojang.blaze3d.platform.Window;
@@ -201,6 +203,22 @@ public class ClientProxy implements ModProxy {
         mc.execute(() -> {
             if (mc.screen instanceof GameStartScreen || mc.screen instanceof RenameScreen)
                 mc.setScreen(null);
+        });
+    }
+
+    public static void openWeaponWarehouseScreen() {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.player != null) {
+                mc.setScreen(new WeaponWarehouseScreen());
+            }
+        });
+    }
+
+    public static void refreshWeaponWarehouseScreen(WeaponWarehouseSnapshot snapshot) {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            WeaponWarehouseScreen.refreshOpenScreen(snapshot);
         });
     }
 }

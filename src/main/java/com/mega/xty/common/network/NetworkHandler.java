@@ -8,6 +8,8 @@ import com.mega.xty.common.network.c2s.map1.game2.C2SPlayerLaydownPacket;
 import com.mega.xty.common.network.c2s.map1.game2.C2SPlayerSwingHandNoticePacket;
 import com.mega.xty.common.network.c2s.map2.C2SSetNamePacket;
 import com.mega.xty.common.network.c2s.map2.C2SStopJoiningGamePacket;
+import com.mega.xty.common.network.c2s.warehouse.C2SApplyWeaponWarehouseLoadoutPacket;
+import com.mega.xty.common.network.c2s.warehouse.C2SSaveWeaponWarehousePacket;
 import com.mega.xty.common.network.s2c.S2CDisableBIPacket;
 import com.mega.xty.common.network.s2c.S2CPartialTeleportPacket;
 import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
@@ -25,6 +27,8 @@ import com.mega.xty.common.network.s2c.map2.*;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StartEffectPacket;
 import com.mega.xty.common.network.s2c.map2.game1.*;
+import com.mega.xty.common.network.s2c.warehouse.S2COpenWeaponWarehousePacket;
+import com.mega.xty.common.network.s2c.warehouse.S2CSyncWeaponWarehousePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -51,6 +55,8 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), C2SPlayerJumpPacket.class, C2SPlayerJumpPacket::encode, C2SPlayerJumpPacket::decode, C2SPlayerJumpPacket::handle);
         INSTANCE.registerMessage(id(), C2SPlayerSwingHandNoticePacket.class, C2SPlayerSwingHandNoticePacket::encode, C2SPlayerSwingHandNoticePacket::decode, C2SPlayerSwingHandNoticePacket::handle);
         INSTANCE.registerMessage(id(), C2SPlayerLaydownPacket.class, C2SPlayerLaydownPacket::encode, C2SPlayerLaydownPacket::decode, C2SPlayerLaydownPacket::handle);
+        INSTANCE.registerMessage(id(), C2SSaveWeaponWarehousePacket.class, C2SSaveWeaponWarehousePacket::encode, C2SSaveWeaponWarehousePacket::decode, C2SSaveWeaponWarehousePacket::handle);
+        INSTANCE.registerMessage(id(), C2SApplyWeaponWarehouseLoadoutPacket.class, C2SApplyWeaponWarehouseLoadoutPacket::encode, C2SApplyWeaponWarehouseLoadoutPacket::decode, C2SApplyWeaponWarehouseLoadoutPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame2HitEffectPacket.class, S2CGame2HitEffectPacket::encode, S2CGame2HitEffectPacket::decode, S2CGame2HitEffectPacket::handle);
         INSTANCE.registerMessage(id(), S2CDisableBIPacket.class, S2CDisableBIPacket::encode, S2CDisableBIPacket::decode, S2CDisableBIPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame1StatsPacket.class, S2CGame1StatsPacket::encode, S2CGame1StatsPacket::decode, S2CGame1StatsPacket::handle);
@@ -80,6 +86,8 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CRoundStartRenderPacket.class, S2CRoundStartRenderPacket::encode, S2CRoundStartRenderPacket::decode, S2CRoundStartRenderPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame2DeathEffectPacket.class, S2CGame2DeathEffectPacket::encode, S2CGame2DeathEffectPacket::decode, S2CGame2DeathEffectPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame2StartEffectPacket.class, S2CGame2StartEffectPacket::encode, S2CGame2StartEffectPacket::decode, S2CGame2StartEffectPacket::handle);
+        INSTANCE.registerMessage(id(), S2COpenWeaponWarehousePacket.class, S2COpenWeaponWarehousePacket::encode, S2COpenWeaponWarehousePacket::decode, S2COpenWeaponWarehousePacket::handle);
+        INSTANCE.registerMessage(id(), S2CSyncWeaponWarehousePacket.class, S2CSyncWeaponWarehousePacket::encode, S2CSyncWeaponWarehousePacket::decode, S2CSyncWeaponWarehousePacket::handle);
     }
     public static <MSG> void sendToAll(MSG msg) {
         INSTANCE.send(PacketDistributor.ALL.noArg(), msg);

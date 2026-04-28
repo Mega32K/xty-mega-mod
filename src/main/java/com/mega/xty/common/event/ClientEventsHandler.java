@@ -60,6 +60,10 @@ public class ClientEventsHandler {
     }
     @SubscribeEvent
     public static void onPlayerRender(RenderPlayerEvent.Pre event) {
+        if (shouldHideSoulInvisiblePlayer(event.getEntity())) {
+            event.setCanceled(true);
+            return;
+        }
         float partialTicks = event.getPartialTick();
         CommonProxy.getXtyCap(event.getEntity()).ifPresent(capability -> {
             if (capability.canUsePartialTeleportAnim) {
@@ -80,6 +84,10 @@ public class ClientEventsHandler {
     @SubscribeEvent
     public static void renderShadowEvent(RenderShadowEvent event) {
         if (event.getEntity() instanceof AbstractClientPlayer cp) {
+            if (shouldHideSoulInvisiblePlayer(cp)) {
+                event.setCanceled(true);
+                return;
+            }
             if (cp.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
                 CommonProxy.getMap2Cap(cp).ifPresent(cap -> {
                     Player localPlayer = ClientWrapped.clientPlayer();
@@ -93,5 +101,18 @@ public class ClientEventsHandler {
                 });
             }
         }
+    }
+
+    private static boolean shouldHideSoulInvisiblePlayer(Player player) {
+        Player localPlayer = ClientWrapped.clientPlayer();
+        if (localPlayer == null || localPlayer == player) {
+            return false;
+        }
+        if (localPlayer.isCreative() || localPlayer.isSpectator() || localPlayer.isAlliedTo(player)) {
+            return false;
+        }
+        return CommonProxy.getMap2Cap(player)
+                .map(cap -> cap.getSoulInvisible() >= 15)
+                .orElse(false);
     }
 }

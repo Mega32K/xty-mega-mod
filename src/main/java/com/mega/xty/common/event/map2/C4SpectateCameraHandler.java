@@ -14,7 +14,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +36,7 @@ public class C4SpectateCameraHandler {
         active = true;
         cameraPos = new Vec3(pos);
         lookTarget = findLookTarget(minecraft.level, cameraPos);
+        faceLookTarget(minecraft.player);
     }
 
     public static void stop() {
@@ -74,6 +74,7 @@ public class C4SpectateCameraHandler {
                 cameraPos = new Vec3(pos);
                 lookTarget = findLookTarget(minecraft.level, cameraPos);
                 active = true;
+                faceLookTarget(player);
             }, C4SpectateCameraHandler::stop);
         });
     }
@@ -88,10 +89,7 @@ public class C4SpectateCameraHandler {
         event.setZ(cameraPos.z);
     }
 
-    @SubscribeEvent
-    public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
-        if (!active) return;
-        refresh();
+    private static void faceLookTarget(LocalPlayer player) {
         if (!active || lookTarget == null) return;
         Vec3 from = cameraPos;
         Vec3 target = lookTarget;
@@ -101,8 +99,12 @@ public class C4SpectateCameraHandler {
         double horizontal = Math.sqrt(dx * dx + dz * dz);
         float yaw = (float) (Mth.atan2(dz, dx) * 180.0D / Math.PI) - 90.0F;
         float pitch = (float) (-(Mth.atan2(dy, horizontal) * 180.0D / Math.PI));
-        event.setYaw(yaw);
-        event.setPitch(pitch);
+        player.setYRot(yaw);
+        player.setXRot(pitch);
+        player.yRotO = yaw;
+        player.xRotO = pitch;
+        player.setYHeadRot(yaw);
+        player.setYBodyRot(yaw);
     }
 
     @Nullable

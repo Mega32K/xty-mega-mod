@@ -100,7 +100,6 @@ public class XtyModPlayerCapability extends EntitySyncCapabilityBase {
     }
     @Override
     public void readSyncData(CompoundTag compoundTag, Dist dist, CapabilitySyncType capabilitySyncType, Entity entity) {
-
     }
 
     @Override
@@ -110,12 +109,10 @@ public class XtyModPlayerCapability extends EntitySyncCapabilityBase {
 
     @Override
     public void customSerializeNBT(CompoundTag compoundTag) {
-
     }
 
     @Override
     public void customDeserializeNBT(CompoundTag compoundTag) {
-
     }
 
     @Override

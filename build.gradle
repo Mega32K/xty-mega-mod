@@ -198,6 +198,7 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     implementation fg.deobf("curse.maven:TacZ-1028108:7401617")
+    implementation fg.deobf("curse.maven:LesRaisins-1273094:7970303")
     implementation fg.deobf("curse.maven:MouseTweaks-60089:5338457")
     implementation fg.deobf("curse.maven:IMBlocker-483760:4656554")
     implementation fg.deobf("curse.maven:Oculus-581495:5299671")

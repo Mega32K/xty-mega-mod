@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mega.endinglib.client.ClientWrapped;
+import com.mega.endinglib.util.annotation.DeprecatedMixin;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.proxy.CommonProxy;
 import net.minecraft.core.BlockPos;
@@ -26,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nullable;
 
 @Mixin(Entity.class)
+@DeprecatedMixin
 public abstract class EntityMixin {
     @Shadow private Level level;
 

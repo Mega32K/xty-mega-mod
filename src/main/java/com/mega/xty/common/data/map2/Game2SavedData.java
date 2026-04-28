@@ -9,13 +9,16 @@ import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StatsPacket;
 import com.mega.xty.proxy.CommonProxy;
+import com.tacz.guns.api.item.IGun;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +62,14 @@ public class Game2SavedData extends SavedData {
             FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
             EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
             for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
-                CommonProxy.getMap2Cap(serverPlayer).ifPresent(cap -> cap.setXaeroDead(false));
+                CommonProxy.getMap2Cap(serverPlayer).ifPresent(cap -> {
+                    cap.setXaeroDead(false);
+                    cap.clearDeathStateData();
+                });
                 clearRoundControlInputs(elData, serverPlayer);
                 resetPlayerToDefaultMaxHealth(serverPlayer);
                 clearRoundArmor(serverPlayer);
+                clearRoundInventory(serverPlayer);
                 fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
                 fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_GENERAL, KAD.deserialize(0));
             }
@@ -107,5 +114,27 @@ public class Game2SavedData extends SavedData {
         if (team.getColor() == ChatFormatting.RED || team.getColor() == ChatFormatting.BLUE) {
             player.getInventory().armor.replaceAll(itemStack -> ItemStack.EMPTY);
         }
+    }
+
+    private void clearRoundInventory(ServerPlayer player) {
+        if (player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        for (int i = 0; i < player.getInventory().items.size(); i++) {
+            ItemStack stack = player.getInventory().items.get(i);
+            if (shouldClearAfterGame2(stack)) {
+                player.getInventory().items.set(i, ItemStack.EMPTY);
+            }
+        }
+        for (int i = 0; i < player.getInventory().offhand.size(); i++) {
+            ItemStack stack = player.getInventory().offhand.get(i);
+            if (shouldClearAfterGame2(stack)) {
+                player.getInventory().offhand.set(i, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    private boolean shouldClearAfterGame2(ItemStack stack) {
+        return stack.getItem() instanceof IGun || stack.getItem() instanceof SwordItem || stack.getItem() instanceof AxeItem;
     }
 }

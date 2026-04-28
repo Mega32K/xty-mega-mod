@@ -38,10 +38,9 @@ public class TabOverlay implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui) return;
-        if (!ClientGameData.map2Playing()) return;
+        if (ClientGameData.isStopped) return;
         if (((AccessorPlayerTabOverlay)gui.getTabList()).isVisible()) {
             gui.setupOverlayRenderState(true, false);
-            Minecraft mc = Minecraft.getInstance();
             MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
             PoseStack poseStack = graphics.pose();
             poseStack.pushPose();

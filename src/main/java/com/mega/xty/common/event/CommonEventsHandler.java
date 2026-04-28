@@ -3,6 +3,7 @@ package com.mega.xty.common.event;
 import com.mega.xty.common.capability.FpsCapability;
 import com.mega.xty.common.capability.Map2Capability;
 import com.mega.xty.common.data.fps.DeathSourceType;
+import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.map2.Game1SavedData;
 import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
@@ -197,6 +198,9 @@ public class CommonEventsHandler {
             if (!dead) {
                 return;
             }
+        }
+        if (color == ChatFormatting.RED && FpsSavedData.getInstance(server).isBombExist()) {
+            return;
         }
         Map2SavedData.getInstance(server).finish(color == ChatFormatting.BLUE);
     }

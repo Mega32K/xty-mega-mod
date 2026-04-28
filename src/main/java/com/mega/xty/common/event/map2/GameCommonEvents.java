@@ -7,6 +7,7 @@ import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.data.map2.ServerGameData;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.*;
+import com.mega.xty.common.network.s2c.warehouse.S2CSyncWeaponWarehousePacket;
 import com.mega.xty.proxy.CommonProxy;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -34,6 +35,7 @@ public class GameCommonEvents {
             NetworkHandler.sendToPlayer(new S2CMap2ScoreOverlayVisiblePacket(data.isScoreOverlayVisible()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CSyncPointsPacket(data.getPointA(), data.getPointB()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CMap2TextTipPacket(data.getRightTopText() != null, data.getRightTopText()), serverPlayer);
+            CommonProxy.getWeaponWarehouseCap(serverPlayer).ifPresent(cap -> NetworkHandler.sendToPlayer(new S2CSyncWeaponWarehousePacket(cap.getWeaponWarehouse()), serverPlayer));
         }
     }
     @SubscribeEvent

@@ -30,6 +30,7 @@ public class XtyCommands {
                         .then(GameGhostModeCommand.register())
                         .then(DisableInteractBlockCommand.register())
                         .then(FpsCommand.register())
+                        .then(WeaponWarehouseCommand.register())
         );
     }
 }

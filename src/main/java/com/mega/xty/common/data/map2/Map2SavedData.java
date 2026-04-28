@@ -12,6 +12,7 @@ import com.mega.endinglib.common.data.InputOperations;
 import com.mega.xty.common.capability.Map2Capability;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.fps.kad.KAD;
+import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.network.s2c.fps.S2CRoundStartRenderPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StartEffectPacket;
 import com.mega.endinglib.util.mixin.level.ServerEC;
@@ -25,6 +26,9 @@ import com.mega.xty.common.init.ItemInit;
 import com.mega.endinglib.common.network.PacketHandler;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.util.AttachmentDataUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
@@ -541,6 +545,8 @@ public class Map2SavedData extends SavedData {
             resetPlayerForNewRound(player);
         }
         Set<UUID> teleportedPlayers = backToHomeInternal(players);
+        prepareRoundC4(players, teleportedPlayers);
+        prepareBlueRoundItems(players, teleportedPlayers);
         long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
         for (ServerPlayer player : players) {
             NetworkHandler.sendToPlayer(new S2CRoundStartRenderPacket(), player);
@@ -591,6 +597,7 @@ public class Map2SavedData extends SavedData {
                 break;
             }
             BlockPos homePos = homes.get(targetLevel.random.nextInt(homes.size()));
+            CommonProxy.getMap2Cap(player).ifPresent(Map2Capability::clearDeathStateData);
             player.teleportTo(targetLevel, homePos.getX() + 0.5D, homePos.getY(), homePos.getZ() + 0.5D, player.getYRot(), player.getXRot());
             if (teleported != null) {
                 teleported.add(player.getUUID());
@@ -609,7 +616,10 @@ public class Map2SavedData extends SavedData {
 
     private void resetPlayerForNewRound(ServerPlayer player) {
         FpsSavedData.getInstance(player.server).getOrPutKAD(player).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
-        CommonProxy.getMap2Cap(player).ifPresent(cap -> cap.setXaeroDead(false));
+        CommonProxy.getMap2Cap(player).ifPresent(cap -> {
+            cap.setXaeroDead(false);
+            cap.clearDeathStateData();
+        });
         player.removeAllEffects();
         player.clearFire();
         player.setRemainingFireTicks(0);
@@ -659,6 +669,126 @@ public class Map2SavedData extends SavedData {
             this.setDirty();
         }
     }
+
+    private void prepareRoundC4(List<ServerPlayer> players, Set<UUID> teleportedPlayers) {
+        FpsSavedData fpsSavedData = FpsSavedData.getInstance(this.server);
+        fpsSavedData.setBombPosition((byte) 0);
+        fpsSavedData.setBombExist(false);
+        fpsSavedData.setBombCountdownTicks(0);
+        clearWorldC4Entities();
+        clearRoundC4(players);
+        List<ServerPlayer> redPlayers = new ObjectArrayList<>();
+        for (ServerPlayer player : players) {
+            if (!teleportedPlayers.contains(player.getUUID())) {
+                continue;
+            }
+            Team team = player.getTeam();
+            if (team != null && team.getColor() == ChatFormatting.RED) {
+                CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> cap.applySelectedWarehouseMelee(player));
+                redPlayers.add(player);
+            }
+        }
+        if (!redPlayers.isEmpty()) {
+            ServerPlayer c4Player = redPlayers.get(this.server.overworld().random.nextInt(redPlayers.size()));
+            ItemStack c4 = ItemInit.C4_BOMB.get().getDefaultInstance();
+            if (!c4Player.getInventory().add(c4)) {
+                c4Player.drop(c4, false);
+            }
+        }
+    }
+
+    private void clearWorldC4Entities() {
+        for (ServerLevel level : this.server.getAllLevels()) {
+            List<C4Entity> c4Entities = new ObjectArrayList<>();
+            for (var entity : level.getAllEntities()) {
+                if (entity instanceof C4Entity c4Entity) {
+                    c4Entities.add(c4Entity);
+                }
+            }
+            for (C4Entity c4Entity : c4Entities) {
+                c4Entity.discard();
+            }
+        }
+    }
+
+    private void prepareBlueRoundItems(List<ServerPlayer> players, Set<UUID> teleportedPlayers) {
+        for (ServerPlayer player : players) {
+            if (!teleportedPlayers.contains(player.getUUID())) {
+                continue;
+            }
+            Team team = player.getTeam();
+            if (team == null || team.getColor() != ChatFormatting.BLUE) {
+                continue;
+            }
+            CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> cap.applySelectedWarehouseLoadout(player));
+            giveBdkIfMissing(player);
+            fillInventoryGuns(player);
+        }
+    }
+
+    private void giveBdkIfMissing(ServerPlayer player) {
+        if (hasBdk(player.getInventory().items) || hasBdk(player.getInventory().offhand)) {
+            return;
+        }
+        ItemStack bdk = ItemInit.BDK.get().getDefaultInstance();
+        if (!player.getInventory().add(bdk)) {
+            player.drop(bdk, false);
+        }
+    }
+
+    private boolean hasBdk(NonNullList<ItemStack> items) {
+        for (ItemStack stack : items) {
+            if (stack.is(ItemInit.BDK.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void fillInventoryGuns(ServerPlayer player) {
+        fillGunsInItemList(player.getInventory().items);
+        fillGunsInItemList(player.getInventory().offhand);
+    }
+
+    private void fillGunsInItemList(NonNullList<ItemStack> items) {
+        for (ItemStack stack : items) {
+            if (stack.getItem() instanceof IGun gun) {
+                TimelessAPI.getCommonGunIndex(gun.getGunId(stack)).ifPresent(index -> {
+                    int ammoCount = AttachmentDataUtils.getAmmoCountWithAttachment(stack, index.getGunData());
+                    gun.setCurrentAmmoCount(stack, ammoCount);
+                });
+            }
+        }
+    }
+
+    private void clearRoundC4(List<ServerPlayer> players) {
+        for (ServerPlayer player : players) {
+            clearC4FromItemList(player.getInventory().items);
+            clearC4FromItemList(player.getInventory().armor);
+            clearC4FromItemList(player.getInventory().offhand);
+        }
+        boolean changed = false;
+        for (Inventory inventory : this.deadSavedInventory.values()) {
+            changed |= clearC4FromItemList(inventory.items);
+            changed |= clearC4FromItemList(inventory.armor);
+            changed |= clearC4FromItemList(inventory.offhand);
+        }
+        if (changed) {
+            this.setDirty();
+        }
+    }
+
+    private boolean clearC4FromItemList(NonNullList<ItemStack> items) {
+        boolean changed = false;
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).is(ItemInit.C4_BOMB.get())) {
+                items.set(i, ItemStack.EMPTY);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
     private void scheduleRoundKeyboardUnlock(Set<UUID> teleportedPlayers) {
         if (teleportedPlayers.isEmpty()) {
             return;
