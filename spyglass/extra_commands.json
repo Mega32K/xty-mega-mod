@@ -1455,6 +1455,56 @@
               "executable":true
             },
 
+            "warehouseMelee": {
+              "type":"literal",
+              "children": {
+
+                "add": {
+                  "type":"literal",
+                  "children": {
+
+                    "player": {
+                      "type":"argument",
+                      "parser":"minecraft:entity",
+                      "properties": {
+                        "type": "players",
+                        "amount": "single"
+                      },
+                      "executable": true
+                    }
+                  },
+                  "executable": true
+                },
+
+                "remove": {
+                  "type":"literal",
+                  "children": {
+
+                    "player": {
+                      "type":"argument",
+                      "parser":"minecraft:entity",
+                      "properties": {
+                        "type": "players",
+                        "amount": "single"
+                      },
+                      "executable": true
+                    }
+                  },
+                  "executable": true
+                },
+
+                "clear": {
+                  "type":"literal",
+                  "executable": true
+                },
+
+                "get": {
+                  "type":"literal",
+                  "executable": true
+                }
+              }
+            },
+
             "functions": {
               "type":"literal",
               "children": {

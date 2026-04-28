@@ -28,6 +28,7 @@ import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.util.AttachmentDataUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -488,6 +489,7 @@ public class Map2SavedData extends SavedData {
                 return;
             }
             this.game2NextRoundPending = true;
+            clearRoundC4State();
         }
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         if (!players.isEmpty()) {
@@ -671,11 +673,7 @@ public class Map2SavedData extends SavedData {
     }
 
     private void prepareRoundC4(List<ServerPlayer> players, Set<UUID> teleportedPlayers) {
-        FpsSavedData fpsSavedData = FpsSavedData.getInstance(this.server);
-        fpsSavedData.setBombPosition((byte) 0);
-        fpsSavedData.setBombExist(false);
-        fpsSavedData.setBombCountdownTicks(0);
-        clearWorldC4Entities();
+        clearRoundC4State();
         clearRoundC4(players);
         List<ServerPlayer> redPlayers = new ObjectArrayList<>();
         for (ServerPlayer player : players) {
@@ -695,6 +693,14 @@ public class Map2SavedData extends SavedData {
                 c4Player.drop(c4, false);
             }
         }
+    }
+
+    private void clearRoundC4State() {
+        FpsSavedData fpsSavedData = FpsSavedData.getInstance(this.server);
+        fpsSavedData.setBombPosition((byte) 0);
+        fpsSavedData.setBombExist(false);
+        fpsSavedData.setBombCountdownTicks(0);
+        clearWorldC4Entities();
     }
 
     private void clearWorldC4Entities() {
@@ -722,6 +728,7 @@ public class Map2SavedData extends SavedData {
             }
             CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> cap.applySelectedWarehouseLoadout(player));
             giveBdkIfMissing(player);
+            giveAllTypeCreativeAmmoBox(player);
             fillInventoryGuns(player);
         }
     }
@@ -733,6 +740,16 @@ public class Map2SavedData extends SavedData {
         ItemStack bdk = ItemInit.BDK.get().getDefaultInstance();
         if (!player.getInventory().add(bdk)) {
             player.drop(bdk, false);
+        }
+    }
+
+    private void giveAllTypeCreativeAmmoBox(ServerPlayer player) {
+        ItemStack ammoBox = com.tacz.guns.init.ModItems.AMMO_BOX.get().getDefaultInstance();
+        if (ammoBox.getItem() instanceof IAmmoBox taczAmmoBox) {
+            taczAmmoBox.setCreative(ammoBox, true);
+        }
+        if (!player.getInventory().add(ammoBox)) {
+            player.drop(ammoBox, false);
         }
     }
 

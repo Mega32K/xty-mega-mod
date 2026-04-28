@@ -60,6 +60,7 @@ public class GameGhostModeCommand {
                 .then(Commands.literal("startNewRound")
                         .executes(context -> startGame2NewRound(context.getSource()))
                 )
+                .then(Game2WarehouseMeleeCommand.register())
                 .then(Commands.literal("home")
                         .then(Commands.literal("red")
                                 .then(Commands.literal("add")
