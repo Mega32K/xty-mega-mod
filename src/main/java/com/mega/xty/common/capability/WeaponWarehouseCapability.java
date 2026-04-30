@@ -7,6 +7,8 @@ import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseLoadout;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import com.mega.xty.common.warehouse.WeaponWarehouseSlotType;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -47,9 +49,9 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     @Override
     public void readSyncData(CompoundTag compoundTag, Dist dist, CapabilitySyncType capabilitySyncType, Entity entity) {
         if (dist == Dist.DEDICATED_SERVER && capabilitySyncType == CapabilitySyncType.PLAYER_LOGGED_IN) {
-            WeaponWarehouseSnapshot snapshot = readWarehouse(compoundTag);
+            WeaponWarehouseSnapshot snapshot = readWarehouse(compoundTag, false);
             if (snapshot != null) {
-                this.clientWeaponWarehouse = snapshot.copy();
+                setClientWeaponWarehouse(snapshot);
             }
         }
     }
@@ -84,6 +86,12 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
         return this.clientWeaponWarehouse.copy();
     }
 
+    public void setClientWeaponWarehouse(WeaponWarehouseSnapshot snapshot) {
+        WeaponWarehouseSnapshot copy = snapshot.copy();
+        copy.setSelectedLoadout(WeaponWarehouseItems.clampLoadoutIndex(copy.getSelectedLoadout()));
+        this.clientWeaponWarehouse = copy;
+    }
+
     public void setWeaponWarehouse(WeaponWarehouseSnapshot snapshot) {
         WeaponWarehouseSnapshot sanitized = WeaponWarehouseItems.sanitizeSnapshot(snapshot);
         this.weaponWarehouse = sanitized;
@@ -103,14 +111,21 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     public void applySelectedWarehouseLoadout(Player player) {
         WeaponWarehouseLoadout loadout = this.weaponWarehouse.getLoadout(this.weaponWarehouse.getSelectedLoadout());
         Inventory inventory = player.getInventory();
-        inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MAIN_WEAPON.getSlotIndex()).copy());
-        inventory.items.set(1, loadout.getSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON.getSlotIndex()).copy());
-        inventory.items.set(2, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
-        inventory.items.set(3, loadout.getSlot(WeaponWarehouseSlotType.M67_GRENADE.getSlotIndex()).copy());
-        inventory.items.set(4, loadout.getSlot(WeaponWarehouseSlotType.SMOKE_GRENADE.getSlotIndex()).copy());
-        inventory.items.set(5, loadout.getSlot(WeaponWarehouseSlotType.FLASH_GRENADE.getSlotIndex()).copy());
-        inventory.offhand.set(0, ItemStack.EMPTY);
+        clearItemList(inventory.items);
+        clearItemList(inventory.offhand);
+        if (player.getTeam() != null && player.getTeam().getColor() == ChatFormatting.RED && !player.isCreative()) {
+            inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
+        } else {
+            inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MAIN_WEAPON.getSlotIndex()).copy());
+            inventory.items.set(1, loadout.getSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON.getSlotIndex()).copy());
+            inventory.items.set(2, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
+            inventory.items.set(3, loadout.getSlot(WeaponWarehouseSlotType.M67_GRENADE.getSlotIndex()).copy());
+            inventory.items.set(4, loadout.getSlot(WeaponWarehouseSlotType.SMOKE_GRENADE.getSlotIndex()).copy());
+            inventory.items.set(5, loadout.getSlot(WeaponWarehouseSlotType.FLASH_GRENADE.getSlotIndex()).copy());
+        }
+        player.containerMenu.setCarried(ItemStack.EMPTY);
         player.setItemSlot(EquipmentSlot.MAINHAND, inventory.getItem(inventory.selected));
+        inventory.setChanged();
         if (!player.level().isClientSide) {
             player.containerMenu.broadcastChanges();
         }
@@ -119,9 +134,15 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     public void applySelectedWarehouseMelee(Player player) {
         WeaponWarehouseLoadout loadout = this.weaponWarehouse.getLoadout(this.weaponWarehouse.getSelectedLoadout());
         Inventory inventory = player.getInventory();
-        inventory.items.set(2, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
+        inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
         if (!player.level().isClientSide) {
             player.containerMenu.broadcastChanges();
+        }
+    }
+
+    private static void clearItemList(NonNullList<ItemStack> items) {
+        for (int i = 0; i < items.size(); i++) {
+            items.set(i, ItemStack.EMPTY);
         }
     }
 
@@ -130,9 +151,14 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     }
 
     private static WeaponWarehouseSnapshot readWarehouse(CompoundTag compoundTag) {
+        return readWarehouse(compoundTag, true);
+    }
+
+    private static WeaponWarehouseSnapshot readWarehouse(CompoundTag compoundTag, boolean sanitize) {
         if (!compoundTag.contains(WEAPON_WAREHOUSE_KEY, Tag.TAG_COMPOUND)) {
             return null;
         }
-        return WeaponWarehouseItems.sanitizeSnapshot(WeaponWarehouseSnapshot.load(compoundTag.getCompound(WEAPON_WAREHOUSE_KEY)));
+        WeaponWarehouseSnapshot snapshot = WeaponWarehouseSnapshot.load(compoundTag.getCompound(WEAPON_WAREHOUSE_KEY));
+        return sanitize ? WeaponWarehouseItems.sanitizeSnapshot(snapshot) : snapshot;
     }
 }

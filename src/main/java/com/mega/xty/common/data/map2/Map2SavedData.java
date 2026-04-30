@@ -554,6 +554,7 @@ public class Map2SavedData extends SavedData {
             resetPlayerForNewRound(player);
         }
         Set<UUID> teleportedPlayers = backToHomeInternal(players);
+        clearNewRoundInventory(players, teleportedPlayers);
         prepareRoundC4(players, teleportedPlayers);
         prepareBlueRoundItems(players, teleportedPlayers);
         long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
@@ -649,6 +650,26 @@ public class Map2SavedData extends SavedData {
             cap.setGame2MaxHealth(100.0F);
             cap.setGame2Health(100.0F);
         });
+    }
+
+    private void clearNewRoundInventory(List<ServerPlayer> players, Set<UUID> teleportedPlayers) {
+        for (ServerPlayer player : players) {
+            if (!teleportedPlayers.contains(player.getUUID())) {
+                continue;
+            }
+            clearItemList(player.getInventory().items);
+            clearItemList(player.getInventory().armor);
+            clearItemList(player.getInventory().offhand);
+            player.containerMenu.setCarried(ItemStack.EMPTY);
+            player.getInventory().setChanged();
+            player.containerMenu.broadcastChanges();
+        }
+    }
+
+    private void clearItemList(NonNullList<ItemStack> items) {
+        for (int i = 0; i < items.size(); i++) {
+            items.set(i, ItemStack.EMPTY);
+        }
     }
 
     private void clearRoundKeyboardInputs(EndingLibrarySavedData data, ServerPlayer player) {

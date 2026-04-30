@@ -110,7 +110,7 @@ public final class WeaponWarehouseItems {
             return ItemStack.EMPTY;
         }
         ItemStack copy = stack.copy();
-        copy.setCount(Math.min(copy.getCount(), copy.getMaxStackSize()));
+        copy.setCount(1);
         return copy;
     }
 
@@ -204,10 +204,7 @@ public final class WeaponWarehouseItems {
         items.add(ItemStack.EMPTY);
         ItemStack base = createThrowableStack(throwableId, 1);
         if (base.getItem() instanceof IThrowable throwable && throwable.getThrowableIndex(base).isPresent()) {
-            int max = throwable.getThrowableIndex(base).map(index -> Math.max(1, index.getMaxStackSize())).orElse(Math.max(1, base.getMaxStackSize()));
-            for (int i = 1; i <= max; i++) {
-                items.add(createThrowableStack(throwableId, i));
-            }
+            items.add(base);
         }
         return items;
     }

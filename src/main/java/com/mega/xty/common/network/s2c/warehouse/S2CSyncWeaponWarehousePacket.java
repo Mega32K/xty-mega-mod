@@ -1,7 +1,6 @@
 package com.mega.xty.common.network.s2c.warehouse;
 
 import com.mega.xty.client.screen.warehouse.WeaponWarehouseScreen;
-import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -40,7 +39,7 @@ public class S2CSyncWeaponWarehousePacket {
 
     static void handle0(S2CSyncWeaponWarehousePacket packet, Supplier<NetworkEvent.Context> context) {
         if (context.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-            WeaponWarehouseSnapshot snapshot = WeaponWarehouseItems.sanitizeSnapshot(WeaponWarehouseSnapshot.load(packet.snapshotTag));
+            WeaponWarehouseSnapshot snapshot = WeaponWarehouseSnapshot.load(packet.snapshotTag);
             WeaponWarehouseScreen.refreshOpenScreen(snapshot);
         }
     }

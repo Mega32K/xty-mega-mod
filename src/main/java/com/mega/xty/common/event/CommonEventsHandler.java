@@ -206,6 +206,17 @@ public class CommonEventsHandler {
         ServerSynchedKADData killedKAD = fpsSavedData.getOrPutKAD(deathP);
         killedKAD.modifyKAD(KAD.KAD_GENERAL, kad -> kad.deaths(kad.deaths + 1));
         killedKAD.modifyKAD(KAD.KAD_CURRENT, kad -> kad.deaths(kad.deaths + 1));
+        CommonProxy.getFPSCap(deathP).ifPresent(cap -> {
+            Player assister = cap.checkAndGetAssister(deathP.level());
+            if (assister == null || assister.getUUID().equals(deathP.getUUID())) {
+                assister = cap.checkAndGetAssister2(deathP.level());
+            }
+            if (assister != null && !assister.getUUID().equals(deathP.getUUID())) {
+                ServerSynchedKADData assisterKAD = fpsSavedData.getOrPutKAD(assister);
+                assisterKAD.modifyKAD(KAD.KAD_GENERAL, kad -> kad.assists(kad.assists + 1));
+                assisterKAD.modifyKAD(KAD.KAD_CURRENT, kad -> kad.assists(kad.assists + 1));
+            }
+        });
     }
 
     private static boolean isGame2Playing(MinecraftServer server) {

@@ -24,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -34,7 +35,7 @@ import net.minecraftforge.fml.common.Mod;
 public class ClientEventsHandler {
     @SubscribeEvent
     public static void onRenderGuiOverlayPre(RenderGuiOverlayEvent.Pre event) {
-        if (event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id()) && HotbarOverlay.shouldReplaceVanillaHotbar()) {
+        if ((event.getOverlay().id().equals(VanillaGuiOverlay.FOOD_LEVEL.id()) || event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id()) || event.getOverlay().id().equals(VanillaGuiOverlay.EXPERIENCE_BAR.id()) || event.getOverlay().id().equals(VanillaGuiOverlay.PLAYER_HEALTH.id()) || event.getOverlay().id().equals(VanillaGuiOverlay.MOUNT_HEALTH.id()) || event.getOverlay().id().equals(VanillaGuiOverlay.ARMOR_LEVEL.id())) && HotbarOverlay.shouldReplaceVanillaHotbar()) {
             event.setCanceled(true);
         }
     }

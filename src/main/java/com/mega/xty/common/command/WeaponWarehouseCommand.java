@@ -38,14 +38,18 @@ public class WeaponWarehouseCommand {
             return 0;
         }
         ServerPlayer player = sourceStack.getPlayer();
-        NetworkHandler.sendToPlayer(new S2COpenWeaponWarehousePacket(), player);
+        openWarehouse(player);
         return 1;
     }
 
     private static int openTarget(CommandSourceStack sourceStack, ServerPlayer target) {
-        NetworkHandler.sendToPlayer(new S2COpenWeaponWarehousePacket(), target);
+        openWarehouse(target);
         sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.weapon_warehouse.open", target.getDisplayName()), false);
         return 1;
+    }
+
+    private static void openWarehouse(ServerPlayer player) {
+        CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> NetworkHandler.sendToPlayer(new S2COpenWeaponWarehousePacket(cap.getWeaponWarehouse()), player));
     }
 
     private static int applyLoadout(CommandSourceStack sourceStack, int loadout) {

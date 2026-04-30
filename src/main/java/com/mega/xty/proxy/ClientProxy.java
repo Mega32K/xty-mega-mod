@@ -208,9 +208,16 @@ public class ClientProxy implements ModProxy {
     }
 
     public static void openWeaponWarehouseScreen() {
+        openWeaponWarehouseScreen(null);
+    }
+
+    public static void openWeaponWarehouseScreen(WeaponWarehouseSnapshot snapshot) {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
             if (mc.player != null) {
+                if (snapshot != null) {
+                    WeaponWarehouseScreen.refreshOpenScreen(snapshot);
+                }
                 mc.setScreen(new WeaponWarehouseScreen());
             }
         });

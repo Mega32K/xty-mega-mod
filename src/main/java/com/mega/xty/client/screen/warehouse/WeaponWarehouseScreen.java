@@ -2,7 +2,6 @@ package com.mega.xty.client.screen.warehouse;
 
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.common.network.NetworkHandler;
-import com.mega.xty.common.network.c2s.warehouse.C2SApplyWeaponWarehouseLoadoutPacket;
 import com.mega.xty.common.network.c2s.warehouse.C2SSaveWeaponWarehousePacket;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
@@ -29,7 +28,6 @@ public class WeaponWarehouseScreen extends Screen {
     private static final int SCROLL_BAR_HIT_WIDTH = 12;
     private static final int CANDIDATE_SCROLL_GUTTER = 18;
     private static final Component SEARCH_PLACEHOLDER = Component.literal("输入要查找的武器名");
-    private final Minecraft mc = Minecraft.getInstance();
     private WeaponWarehouseSnapshot snapshot;
     private List<ItemStack> visibleCandidates = List.of();
     private WarehouseSearchBox searchBox;
@@ -59,13 +57,15 @@ public class WeaponWarehouseScreen extends Screen {
     }
 
     public static void refreshOpenScreen(WeaponWarehouseSnapshot snapshot) {
-        latestSnapshot = snapshot.copy();
+        WeaponWarehouseSnapshot clientSnapshot = snapshot.copy();
+        clientSnapshot.setSelectedLoadout(WeaponWarehouseItems.clampLoadoutIndex(clientSnapshot.getSelectedLoadout()));
+        latestSnapshot = clientSnapshot.copy();
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof WeaponWarehouseScreen warehouseScreen) {
-            warehouseScreen.replaceSnapshot(snapshot.copy());
+            warehouseScreen.replaceSnapshot(clientSnapshot.copy());
         }
         if (mc.player != null) {
-            CommonProxy.getWeaponWarehouseCap(mc.player).ifPresent(cap -> cap.setWeaponWarehouse(snapshot.copy()));
+            CommonProxy.getWeaponWarehouseCap(mc.player).ifPresent(cap -> cap.setClientWeaponWarehouse(clientSnapshot.copy()));
         }
     }
 
@@ -95,7 +95,6 @@ public class WeaponWarehouseScreen extends Screen {
                 Component.translatable("screen.xtymegamod.weapon_warehouse.apply"), button -> {
             this.snapshot.setSelectedLoadout(this.selectedLoadout);
             NetworkHandler.sendToServer(new C2SSaveWeaponWarehousePacket(this.snapshot.copy(), true));
-            NetworkHandler.sendToServer(new C2SApplyWeaponWarehouseLoadoutPacket(this.selectedLoadout));
         }).setAccent(true));
         this.saveButton = addRenderableWidget(new WeaponWarehouseButton(searchX() + 92, panelY + panelHeight() - 28, 84, 20,
                 Component.translatable("screen.xtymegamod.weapon_warehouse.save"), button -> {
@@ -285,9 +284,6 @@ public class WeaponWarehouseScreen extends Screen {
 
     @Override
     public void onClose() {
-        if (this.mc.player != null) {
-            NetworkHandler.sendToServer(new C2SSaveWeaponWarehousePacket(this.snapshot.copy(), false));
-        }
         super.onClose();
     }
 

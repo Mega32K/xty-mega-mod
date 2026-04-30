@@ -42,9 +42,10 @@ public class TabOverlay implements IGuiOverlay {
         if (((AccessorPlayerTabOverlay)gui.getTabList()).isVisible()) {
             gui.setupOverlayRenderState(true, false);
             MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
+            graphics.bufferSource().endBatch();
             PoseStack poseStack = graphics.pose();
             poseStack.pushPose();
-            poseStack.translate(0, 0, 100);
+            poseStack.translate(0, 0, 400);
             renderBackground(gui, graphics, poseStack, partialTick, screenWidth, screenHeight);
             poseStack.popPose();
         }
@@ -80,14 +81,14 @@ public class TabOverlay implements IGuiOverlay {
         graphics.fill(left, top, left + longestWidth, top + lineHeight, BACKGROUND_DEFAULT_I_COLOR);
         //渲染列名
         for (int l=0;l<=1;l++) {
-            poseStack.translate(l * halfLongestWidth, 0, 0);
+            poseStack.translate(l * halfLongestWidth, 2, 0);
             renderPingIcon(graphics, pingX, top);
             float nameX = textUnitWidth + 2 + graphics.drawString(font, "延迟", Mth.ceil(pingX + 6), (int) (top), 0xFFA0A0A0);
             graphics.drawCenteredString(font, "昵称", (int) nameX, (int) top, 0xFFA0A0A0);
             graphics.drawCenteredString(font, "击杀", (int) killsX, (int) top, 0xFFA0A0A0);
             graphics.drawCenteredString(font, "助攻", (int) assistsX, (int) top, 0xFFA0A0A0);
             graphics.drawCenteredString(font, "死亡", (int) deathsX, (int) top, 0xFFA0A0A0);
-            poseStack.translate(-l * halfLongestWidth, 0, 0);
+            poseStack.translate(-l * halfLongestWidth, -2, 0);
         }
         top += lineHeight + periodOfLine;
         //1~20人大小框
