@@ -9,14 +9,14 @@ import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.overlay.DebugModule;
 import com.mega.xty.client.overlay.DebugOverlays;
+import com.mega.xty.common.component.ComponentInit;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.item.FillFunctionCreatorItem;
-import com.mega.xty.common.item.component.FillCreatorComponent;
+import com.mega.xty.common.component.FillCreatorComponent;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.c2s.debug.C2SDebugUnRedoPacket;
 import com.mega.xty.common.network.c2s.debug.fill_fucntion.C2SClearRecordsPacket;
 import com.mega.xty.common.network.c2s.debug.fill_fucntion.C2SFillMakeLinePacket;
-import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -51,7 +51,7 @@ public class FillFunctionCreatorDebugModule implements DebugModule {
     private final ClickOverlayButton undo =
             new ClickOverlayButton(Component.translatable("ui.xtymegamod.debug.undo"))
                     .setCanUse((stack, player) -> {
-                        FillCreatorComponent component = ItemComponentManager.get(stack, CommonProxy.FILL_CREATOR);
+                        FillCreatorComponent component = ItemComponentManager.get(stack, ComponentInit.FILL_CREATOR);
                         if(component == null) return false;
                         return !component.history().isEmpty();
                     })
@@ -59,7 +59,7 @@ public class FillFunctionCreatorDebugModule implements DebugModule {
     private final ClickOverlayButton redo =
             new ClickOverlayButton(Component.translatable("ui.xtymegamod.debug.redo"))
                     .setCanUse((stack, player) -> {
-                        FillCreatorComponent component = ItemComponentManager.get(stack, CommonProxy.FILL_CREATOR);
+                        FillCreatorComponent component = ItemComponentManager.get(stack, ComponentInit.FILL_CREATOR);
                         if(component == null) return false;
                         return component.history().size() > component.records().size();
                     })
@@ -70,7 +70,7 @@ public class FillFunctionCreatorDebugModule implements DebugModule {
             new ClickOverlayButton(Component.translatable("ui.xtymegamod.debug.line"))
                     .setCanUse((stack, player) -> {
                         CompoundTag nbt = stack.getTag();
-                        FillCreatorComponent component = ItemComponentManager.get(stack, CommonProxy.FILL_CREATOR);
+                        FillCreatorComponent component = ItemComponentManager.get(stack, ComponentInit.FILL_CREATOR);
                         if(component == null) return false;
                         if (nbt != null) {
                             CompoundTag interaction = nbt.getCompound(FillFunctionCreatorItem.INTERACTION);
@@ -87,14 +87,14 @@ public class FillFunctionCreatorDebugModule implements DebugModule {
     private final ClickOverlayButton save =
             new ClickOverlayButton(Component.translatable("ui.xtymegamod.debug.save"))
                     .setCanUse((stack, player) -> {
-                        FillCreatorComponent component = ItemComponentManager.get(stack, CommonProxy.FILL_CREATOR);
+                        FillCreatorComponent component = ItemComponentManager.get(stack, ComponentInit.FILL_CREATOR);
                         if(component == null) return false;
                         return !component.history().isEmpty();
                     })
                     .setConsumer(player -> {
                         NetworkHandler.sendToServer(new C2SClearRecordsPacket());
                         CompletableFuture.runAsync(() -> {
-                            FillCreatorComponent component = ItemComponentManager.get(player.getItemInHand(InteractionHand.MAIN_HAND), CommonProxy.FILL_CREATOR);
+                            FillCreatorComponent component = ItemComponentManager.get(player.getItemInHand(InteractionHand.MAIN_HAND), ComponentInit.FILL_CREATOR);
                             if (component != null && component.use().isPresent()) {
                                 String block = BuiltInRegistries.BLOCK.getKey(component.use().get()).toString();
                                 Set<String> lines = component.records().stream()
@@ -215,14 +215,14 @@ public class FillFunctionCreatorDebugModule implements DebugModule {
     @Override
     public void undo(ServerPlayer player, ItemStack stack) {
         ItemComponentManager manager = ItemComponentManager.get(stack);
-        FillCreatorComponent component = manager.get(CommonProxy.FILL_CREATOR);
+        FillCreatorComponent component = manager.get(ComponentInit.FILL_CREATOR);
         component.undo(stack, player);
     }
 
     @Override
     public void redo(ServerPlayer player, ItemStack stack) {
         ItemComponentManager manager = ItemComponentManager.get(stack);
-        FillCreatorComponent component = manager.get(CommonProxy.FILL_CREATOR);
+        FillCreatorComponent component = manager.get(ComponentInit.FILL_CREATOR);
         component.redo(stack, player);
     }
 }

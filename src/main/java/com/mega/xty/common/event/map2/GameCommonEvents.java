@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -79,6 +80,14 @@ public class GameCommonEvents {
                 }
             } else if (ClientGameData.map2Playing()) {
                 checkLockingPos(event.player);
+            }
+        }
+    }
+    @SubscribeEvent
+    public static void onKnockBack(LivingKnockBackEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            if (!Map2SavedData.getInstance(player.server).isStopped()) {
+                event.setCanceled(true);
             }
         }
     }

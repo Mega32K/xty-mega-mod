@@ -1,8 +1,7 @@
-package com.mega.xty.common.item.component;
+package com.mega.xty.common.component;
 
 import com.mega.endinglib.api.item.component.ComponentChanges;
 import com.mega.endinglib.api.item.component.ItemComponentManager;
-import com.mega.xty.proxy.CommonProxy;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -31,7 +30,7 @@ public record FillCreatorComponent(List<BlockLine> records, List<BlockLine> hist
         history.add(line);
         manager.mergeChangedToNBTAndUpdate(ComponentChanges
                 .builder(stack.getItem())
-                .add(CommonProxy.FILL_CREATOR, new FillCreatorComponent(records, history, this.use))
+                .add(ComponentInit.FILL_CREATOR, new FillCreatorComponent(records, history, this.use))
                 .build());
     }
     public void undo(ItemStack stack, Player player) {
@@ -41,7 +40,7 @@ public record FillCreatorComponent(List<BlockLine> records, List<BlockLine> hist
             records.remove(records.size()-1);
             manager.mergeChangedToNBTAndUpdate(ComponentChanges
                     .builder(stack.getItem())
-                    .add(CommonProxy.FILL_CREATOR, new FillCreatorComponent(records, this.history, this.use))
+                    .add(ComponentInit.FILL_CREATOR, new FillCreatorComponent(records, this.history, this.use))
                     .build());
         }
     }
@@ -52,7 +51,7 @@ public record FillCreatorComponent(List<BlockLine> records, List<BlockLine> hist
             records.add(this.history.get(records.size()));
             manager.mergeChangedToNBTAndUpdate(ComponentChanges
                     .builder(stack.getItem())
-                    .add(CommonProxy.FILL_CREATOR, new FillCreatorComponent(records, this.history, this.use))
+                    .add(ComponentInit.FILL_CREATOR, new FillCreatorComponent(records, this.history, this.use))
                     .build());
         }
     }
@@ -61,7 +60,7 @@ public record FillCreatorComponent(List<BlockLine> records, List<BlockLine> hist
         if (this.use.isEmpty() || !Objects.equals(this.use.get(), block)) {
             manager.mergeChangedToNBTAndUpdate(ComponentChanges
                     .builder(stack.getItem())
-                    .add(CommonProxy.FILL_CREATOR, new FillCreatorComponent(records, this.history, Optional.of(block)))
+                    .add(ComponentInit.FILL_CREATOR, new FillCreatorComponent(records, this.history, Optional.of(block)))
                     .build());
         }
     }
@@ -69,7 +68,7 @@ public record FillCreatorComponent(List<BlockLine> records, List<BlockLine> hist
         ItemComponentManager manager = ItemComponentManager.get(stack);
         manager.mergeChangedToNBTAndUpdate(ComponentChanges
                 .builder(stack.getItem())
-                .add(CommonProxy.FILL_CREATOR, new FillCreatorComponent(List.of(), this.history, this.use))
+                .add(ComponentInit.FILL_CREATOR, new FillCreatorComponent(List.of(), this.history, this.use))
                 .build());
 
     }

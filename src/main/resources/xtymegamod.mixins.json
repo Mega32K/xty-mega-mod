@@ -39,6 +39,7 @@
     "map2.ChatComponentMixin",
     "map2.PlayerRendererMixin",
     "map2.PlayerTabOverlayMixin",
+    "tacz.GunHudOverlayMixin",
     "map2.game2.EntityRenderDispatcherMixin",
     "map2.game2.GameRendererMixin",
     "map2.game2.ItemInHandRendererMixin",

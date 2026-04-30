@@ -129,7 +129,6 @@ public final class WeaponWarehouseItems {
                 .map(index -> !"pistol".equalsIgnoreCase(index.getPojo().getType()))
                 .orElse(false);
     }
-
     public static boolean isSecondaryWeapon(ItemStack stack) {
         if (!(stack.getItem() instanceof IGun gun)) {
             return false;

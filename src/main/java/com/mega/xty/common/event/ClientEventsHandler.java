@@ -10,6 +10,7 @@ import com.mega.xty.common.data.fps.RoundStartData;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.common.data.map2.DeathData;
 import com.mega.xty.common.init.ItemInit;
+import com.mega.xty.client.overlay.fps.HotbarOverlay;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -21,7 +22,9 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -29,6 +32,13 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public class ClientEventsHandler {
+    @SubscribeEvent
+    public static void onRenderGuiOverlayPre(RenderGuiOverlayEvent.Pre event) {
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id()) && HotbarOverlay.shouldReplaceVanillaHotbar()) {
+            event.setCanceled(true);
+        }
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {

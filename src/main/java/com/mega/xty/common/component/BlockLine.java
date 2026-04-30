@@ -1,4 +1,4 @@
-package com.mega.xty.common.item.component;
+package com.mega.xty.common.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

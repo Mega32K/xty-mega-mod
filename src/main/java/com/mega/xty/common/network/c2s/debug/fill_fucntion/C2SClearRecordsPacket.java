@@ -1,9 +1,9 @@
 package com.mega.xty.common.network.c2s.debug.fill_fucntion;
 
 import com.mega.endinglib.api.item.component.ItemComponentManager;
+import com.mega.xty.common.component.ComponentInit;
 import com.mega.xty.common.item.FillFunctionCreatorItem;
-import com.mega.xty.common.item.component.FillCreatorComponent;
-import com.mega.xty.proxy.CommonProxy;
+import com.mega.xty.common.component.FillCreatorComponent;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -38,7 +38,7 @@ public class C2SClearRecordsPacket {
         ItemStack itemStack = player.getItemInHand(InteractionHand.MAIN_HAND);
         Item item = itemStack.getItem();
         if (item instanceof FillFunctionCreatorItem ffc) {
-            FillCreatorComponent component = ItemComponentManager.get(itemStack, CommonProxy.FILL_CREATOR);
+            FillCreatorComponent component = ItemComponentManager.get(itemStack, ComponentInit.FILL_CREATOR);
             if (component != null) {
                 component.clearRecords(itemStack, player);
             }

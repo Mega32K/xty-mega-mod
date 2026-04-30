@@ -62,6 +62,8 @@
   "commands.xtymegamod.message.map2.game2.function.on_player_death.get": "§7游戏二的\"玩家死亡函数\"为 %s",
   "commands.xtymegamod.message.map2.game2.function.start.set": "§7已将游戏二的\"开始调用函数\"设为 %s",
   "commands.xtymegamod.message.map2.game2.function.start.get": "§7游戏二的\"开始调用函数\"为 %s",
+  "commands.xtymegamod.message.map2.game2.function.start_new_round.set": "§7已将游戏二的\"新回合开始函数\"设为 %s",
+  "commands.xtymegamod.message.map2.game2.function.start_new_round.get": "§7游戏二的\"新回合开始函数\"为 %s",
   "commands.xtymegamod.message.map2.game2.function.stop.set": "§7已将游戏二的\"结束调用函数\"设为 %s",
   "commands.xtymegamod.message.map2.game2.function.stop.get": "§7游戏二的\"结束调用函数\"为 %s",
 

@@ -8,13 +8,13 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public class SoundsInit {
-    private static final float C4_SOUND_RANGE = 32.0F;
+    private static final float C4_BEEP_SOUND_RANGE = 32.0F;
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, XtyMegaMod.MODID);
 
-    public static final RegistryObject<SoundEvent> C4_BEEP2 = register("fps.c4.c4_beep2");
-    public static final RegistryObject<SoundEvent> C4_BEEP2_10SEC = register("fps.c4.c4_beep2_10sec");
-    public static final RegistryObject<SoundEvent> C4_BEEP3 = register("fps.c4.c4_beep3");
-    public static final RegistryObject<SoundEvent> C4_BEEP3_10SEC = register("fps.c4.c4_beep3_10sec");
+    public static final RegistryObject<SoundEvent> C4_BEEP2 = registerFixedRange("fps.c4.c4_beep2", C4_BEEP_SOUND_RANGE);
+    public static final RegistryObject<SoundEvent> C4_BEEP2_10SEC = registerFixedRange("fps.c4.c4_beep2_10sec", C4_BEEP_SOUND_RANGE);
+    public static final RegistryObject<SoundEvent> C4_BEEP3 = registerFixedRange("fps.c4.c4_beep3", C4_BEEP_SOUND_RANGE);
+    public static final RegistryObject<SoundEvent> C4_BEEP3_10SEC = registerFixedRange("fps.c4.c4_beep3_10sec", C4_BEEP_SOUND_RANGE);
     public static final RegistryObject<SoundEvent> C4_CLICK = register("fps.c4.c4_click");
     public static final RegistryObject<SoundEvent> C4_DISARMFINISH = register("fps.c4.c4_disarmfinish");
     public static final RegistryObject<SoundEvent> C4_DISARMSTART = register("fps.c4.c4_disarmstart");
@@ -43,6 +43,10 @@ public class SoundsInit {
     public static final RegistryObject<SoundEvent> TERWIN = register("fps.terwin");
 
     private static RegistryObject<SoundEvent> register(String name) {
-        return SOUNDS.register(name, () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, name), C4_SOUND_RANGE));
+        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, name)));
+    }
+
+    private static RegistryObject<SoundEvent> registerFixedRange(String name, float range) {
+        return SOUNDS.register(name, () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, name), range));
     }
 }

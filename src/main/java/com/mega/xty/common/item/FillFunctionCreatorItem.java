@@ -8,8 +8,8 @@ import com.mega.endinglib.api.item.component.*;
 import com.mega.xty.client.overlay.DebugModule;
 import com.mega.xty.client.overlay.DebugModules;
 import com.mega.xty.client.text.ItemDisplayTooltip;
-import com.mega.xty.common.item.component.FillCreatorComponent;
-import com.mega.xty.proxy.CommonProxy;
+import com.mega.xty.common.component.ComponentInit;
+import com.mega.xty.common.component.FillCreatorComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
@@ -96,7 +96,7 @@ public class FillFunctionCreatorItem extends Item implements IInvulnerableItem, 
     @Override
     public boolean overrideOtherStackedOnMe(@NotNull ItemStack self, @NotNull ItemStack other, @NotNull Slot slot, @NotNull ClickAction clickAction, @NotNull Player player, @NotNull SlotAccess slotAccess) {
         if (other.getItem() instanceof BlockItem blockItem) {
-            FillCreatorComponent component = ItemComponentManager.get(self, CommonProxy.FILL_CREATOR);
+            FillCreatorComponent component = ItemComponentManager.get(self, ComponentInit.FILL_CREATOR);
             if (component != null) {
                 component.setUseBlock(self, blockItem.getBlock());
                 return true;
@@ -118,7 +118,7 @@ public class FillFunctionCreatorItem extends Item implements IInvulnerableItem, 
                 if (end != null)
                     lines.add(Component.translatable("item.xtymegamod.fill_function_creator.lore.selected_end", LoreHelper.blockPos(end)).withStyle(ChatFormatting.GRAY));
             }
-            FillCreatorComponent component = ItemComponentManager.get(itemStack, CommonProxy.FILL_CREATOR);
+            FillCreatorComponent component = ItemComponentManager.get(itemStack, ComponentInit.FILL_CREATOR);
             if (component != null) {
                 if (component.use().isEmpty()) {
                     lines.add(Component.translatable("item.xtymegamod.fill_function_creator.lore.use").withStyle(ChatFormatting.GRAY));
@@ -129,7 +129,7 @@ public class FillFunctionCreatorItem extends Item implements IInvulnerableItem, 
 
     @Override
     public @NotNull Optional<TooltipComponent> getTooltipImage(@NotNull ItemStack stack) {
-        FillCreatorComponent component = ItemComponentManager.get(stack, CommonProxy.FILL_CREATOR);
+        FillCreatorComponent component = ItemComponentManager.get(stack, ComponentInit.FILL_CREATOR);
         if (component != null) {
             if (component.use().isPresent()) {
                 return Optional.of(new ItemDisplayTooltip(
@@ -147,7 +147,7 @@ public class FillFunctionCreatorItem extends Item implements IInvulnerableItem, 
 
     @Override
     public void defaultComponents(Item item, ComponentChanges.Builder builder) {
-        builder.add(CommonProxy.FILL_CREATOR, new FillCreatorComponent(List.of(), List.of(), Optional.empty()));
+        builder.add(ComponentInit.FILL_CREATOR, new FillCreatorComponent(List.of(), List.of(), Optional.empty()));
     }
     @Override
     public DebugModule debug() {

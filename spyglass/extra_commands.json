@@ -1505,7 +1505,7 @@
               }
             },
 
-            "functions": {
+            "function": {
               "type":"literal",
               "children": {
 
@@ -1533,6 +1533,29 @@
                 },
 
                 "start": {
+                  "type":"literal",
+                  "children": {
+
+                    "set": {
+                      "type":"literal",
+                      "children": {
+
+                        "function": {
+                          "type":"argument",
+                          "parser":"minecraft:function",
+                          "executable": true
+                        }
+                      }
+                    },
+
+                    "get": {
+                      "type":"literal",
+                      "executable": true
+                    }
+                  }
+                },
+
+                "startNewRound": {
                   "type":"literal",
                   "children": {
 

@@ -50,7 +50,7 @@ public class GhostCircleOverlay implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui) return;
-        if (ClientGameData.isStopped || ClientGame2Data.isStopped) return;
+        if (ClientGame2Data.isStopped) return;
         gui.setupOverlayRenderState(true, false);
         if (Minecraft.getInstance().cameraEntity instanceof AbstractClientPlayer clientPlayer) {
             if (!clientPlayer.isSpectator()) {
@@ -77,29 +77,28 @@ public class GhostCircleOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel clientLevel = mc.level;
         if (player != null && clientLevel != null) {
-            if (!gui.getMinecraft().options.hideGui && gui.shouldDrawSurvivalElements())
-                CommonProxy.getMap2Cap(player).ifPresent(capability -> {
-                    int left = screenWidth / 2 - OUTLINE.width() / 2;
-                    int top = screenHeight - gui.leftHeight + 6;
-                    {
-                        Font font = gui.getFont();
-                        String per = 100 - Math.round((capability.getInvisibleValue(partialTick) / 0.5F * 100)) + "%";
-                        int textWidth = font.width(per);
-                        graphics.drawString(font, per, left - textWidth, top - OUTLINE.height(), 0xA0cccccc);
-                    }
-                    graphics.blit(ClientProxy.ICONS, left, top - OUTLINE.height(), OUTLINE.startX(), OUTLINE.startY(), OUTLINE.width(), OUTLINE.height());
+            CommonProxy.getMap2Cap(player).ifPresent(capability -> {
+                int left = screenWidth / 2 - OUTLINE.width() / 2;
+                int top = screenHeight - gui.leftHeight + 6;
+                {
+                    Font font = gui.getFont();
+                    String per = 100 - Math.round((capability.getInvisibleValue(partialTick) / 0.5F * 100)) + "%";
+                    int textWidth = font.width(per);
+                    graphics.drawString(font, per, left - textWidth, top - OUTLINE.height(), 0xA0cccccc);
+                }
+                graphics.blit(ClientProxy.ICONS, left, top - OUTLINE.height(), OUTLINE.startX(), OUTLINE.startY(), OUTLINE.width(), OUTLINE.height());
 
-                    float progress = capability.getInvisibleValue(partialTick) / 0.5F;
-                    progress = Mth.clamp(progress, 0F, 1F);
-                    float renderWidth = BAR.width() * progress;
-                    graphics.blit(ClientProxy.ICONS,
-                            left + (OUTLINE.width() - BAR.width()) / 2F + BAR.width() / 2F - renderWidth / 2F, top - OUTLINE.height() + (OUTLINE.height() - BAR.height()) / 2F,
-                            renderWidth, BAR.height(),
-                            BAR.startX(), BAR.startY(),
-                            BAR.width() * progress, BAR.height(),
-                            256F, 256F);
-                    gui.leftHeight += 9;
-                });
+                float progress = capability.getInvisibleValue(partialTick) / 0.5F;
+                progress = Mth.clamp(progress, 0F, 1F);
+                float renderWidth = BAR.width() * progress;
+                graphics.blit(ClientProxy.ICONS,
+                        left + (OUTLINE.width() - BAR.width()) / 2F + BAR.width() / 2F - renderWidth / 2F, top - OUTLINE.height() + (OUTLINE.height() - BAR.height()) / 2F,
+                        renderWidth, BAR.height(),
+                        BAR.startX(), BAR.startY(),
+                        BAR.width() * progress, BAR.height(),
+                        256F, 256F);
+                gui.leftHeight += 9;
+            });
         }
     }
     public void renderGhostCircle(ForgeGui gui, MegaGuiGraphics graphics, float partialTick, int screenWidth, int screenHeight, AbstractClientPlayer clientPlayer) {

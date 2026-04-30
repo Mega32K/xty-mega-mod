@@ -1,10 +1,10 @@
 package com.mega.xty.common.network.c2s.debug.fill_fucntion;
 
 import com.mega.endinglib.api.item.component.ItemComponentManager;
+import com.mega.xty.common.component.ComponentInit;
 import com.mega.xty.common.item.FillFunctionCreatorItem;
-import com.mega.xty.common.item.component.BlockLine;
-import com.mega.xty.common.item.component.FillCreatorComponent;
-import com.mega.xty.proxy.CommonProxy;
+import com.mega.xty.common.component.BlockLine;
+import com.mega.xty.common.component.FillCreatorComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -48,7 +48,7 @@ public class C2SFillMakeLinePacket {
                     BlockPos start = FillFunctionCreatorItem.fromArray(interaction.getIntArray("0"));
                     BlockPos end = FillFunctionCreatorItem.fromArray(interaction.getIntArray("1"));
                     if (start != null && end != null) {
-                        FillCreatorComponent component = ItemComponentManager.get(itemStack, CommonProxy.FILL_CREATOR);
+                        FillCreatorComponent component = ItemComponentManager.get(itemStack, ComponentInit.FILL_CREATOR);
                         if (component != null)
                             component.addLine(itemStack, new BlockLine(start, end));
                     }

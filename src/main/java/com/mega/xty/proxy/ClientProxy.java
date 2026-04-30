@@ -6,6 +6,7 @@ import com.mega.endinglib.api.client.shader.post.PostEffectHandler;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.MapLevelEvents;
 import com.mega.xty.client.overlay.DebugOverlays;
+import com.mega.xty.client.overlay.fps.HotbarOverlay;
 import com.mega.xty.client.overlay.fps.RoundStartOverlay;
 import com.mega.xty.client.overlay.loading.MegaStyleLoadingEffect;
 import com.mega.xty.client.overlay.map1.HealthOverlay;
@@ -72,7 +73,6 @@ public class ClientProxy implements ModProxy {
     public static final KeyMapping DEBUG_ITEM_GUI = new KeyMapping("key.xtymegamod.debug_item_gui", GLFW.GLFW_KEY_G | GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.xtymegamod");
     public ClientProxy() {
         IEventBus mBus = this.getModBus();
-        IEventBus fBus = this.getForgeBus();
         mBus.addListener(this::onKeyRegister);
         mBus.addListener(this::clientSetup);
         mBus.addListener(this::onRegisterOverlays);
@@ -142,6 +142,7 @@ public class ClientProxy implements ModProxy {
         event.registerSpriteSet(ParticleInit.GAME2_HIT.get(), Game2HitParticle.Provider::new);
     }
     private void registerOverlay(RegisterGuiOverlaysEvent event) {
+        event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "fps/hotbar", new HotbarOverlay());
         event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "game2_health", new HealthOverlay());
         event.registerAboveAll("map2/health", new com.mega.xty.client.overlay.map2.HealthOverlay());
         event.registerAboveAll("map2/killcount", new KillCountOverlay());

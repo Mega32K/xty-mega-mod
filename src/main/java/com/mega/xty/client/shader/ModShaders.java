@@ -28,6 +28,9 @@ public class ModShaders extends RenderType {
     } 
 
     private static ShaderInstance MODERN_GAUSSIAN_BLUR;
+    private static ShaderInstance GRAY;
+    private static ShaderInstance X_REVERSE;
+
 
     public static ShaderInstance getGray() {
         return GRAY;
@@ -37,7 +40,6 @@ public class ModShaders extends RenderType {
         ModShaders.GRAY = GRAY;
     }
 
-    private static ShaderInstance GRAY;
     public static ShaderInstance getXReverse() {
         return X_REVERSE;
     }
@@ -45,8 +47,6 @@ public class ModShaders extends RenderType {
     public static void setXReverse(ShaderInstance xReverse) {
         X_REVERSE = xReverse;
     }
-
-    private static ShaderInstance X_REVERSE;
 
     public static ShaderInstance getAlphaFilter() {
         return ALPHA_FILTER;

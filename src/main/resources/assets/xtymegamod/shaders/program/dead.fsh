@@ -47,7 +47,7 @@ void main() {
     vec4 currTexel = texture(DiffuseSampler, texCoord);
     float fade = easeOutCubic(TotalTime / 0.45);
     float desaturationFade = smoothstep(0.0, 4.0, TotalTime);
-    float blackProgress = easeInOutSine((TotalTime - 2.0) / 1.0);
+    float blackProgress = easeInOutSine((TotalTime - 1.4) / 1.0);
 
     float saturation = mix(1.0, 0.126, desaturationFade) * mix(1.0, 0.85, fade);
     saturation = mix(saturation, 0.0, blackProgress);

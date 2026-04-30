@@ -32,14 +32,18 @@ import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.util.AttachmentDataUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.xjqsh.lrtactical.entity.GrenadeEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -49,6 +53,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -489,12 +494,12 @@ public class Map2SavedData extends SavedData {
                 return;
             }
             this.game2NextRoundPending = true;
-            clearRoundC4State();
+            clearGame2RoundWorldEntities();
         }
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
-        if (!players.isEmpty()) {
-            SoundEvent sound = redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
-            PacketHandler.playSound(players.get(0), sound, SoundSource.PLAYERS, 1.0F, 1.0F);
+        SoundEvent sound = redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
+        for (ServerPlayer sp : players) {
+            sp.connection.send(new ClientboundSoundEntityPacket(Holder.direct(sound), SoundSource.PLAYERS, sp, 1, 1, sp.getRandom().nextLong()));
         }
         if (redWin) {
             this.setRedWins(this.getRedWins() + 1);
@@ -541,6 +546,8 @@ public class Map2SavedData extends SavedData {
             Game2SavedData.getInstance(this.server).setStopped(true);
             return;
         }
+        runStartNewRoundFunction();
+        clearWorldDroppedItems();
         List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
         EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
         for (ServerPlayer player : players) {
@@ -551,7 +558,6 @@ public class Map2SavedData extends SavedData {
         prepareBlueRoundItems(players, teleportedPlayers);
         long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
         for (ServerPlayer player : players) {
-            NetworkHandler.sendToPlayer(new S2CRoundStartRenderPacket(), player);
             if (teleportedPlayers.contains(player.getUUID())) {
                 equipRoundArmor(player);
                 elData.addDisabledPermission(player, InputOperations.MOVE_FORWARD);
@@ -567,7 +573,18 @@ public class Map2SavedData extends SavedData {
                 NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(0), player);
             }
         }
-        scheduleRoundKeyboardUnlock(teleportedPlayers);
+        for (ServerPlayer player : players) {
+            NetworkHandler.sendToPlayer(new S2CRoundStartRenderPacket(), player);
+        }
+        scheduleRoundKeyboardUnlock(teleportedPlayers, unlockGameTime);
+    }
+
+    private void runStartNewRoundFunction() {
+        String func = Game2SavedData.getInstance(this.server).getGame2Functions().getStartNewRoundFunction();
+        if (func != null && !func.isEmpty()) {
+            CommandSourceStack sourceStack = this.server.createCommandSourceStack().withSuppressedOutput().withMaximumPermission(2);
+            this.server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f -> this.server.getFunctions().execute(f, sourceStack));
+        }
     }
 
     private Set<UUID> backToHomeInternal(List<ServerPlayer> players) {
@@ -703,6 +720,11 @@ public class Map2SavedData extends SavedData {
         clearWorldC4Entities();
     }
 
+    public void clearGame2RoundWorldEntities() {
+        clearRoundC4State();
+        clearWorldGrenadeEntities();
+    }
+
     private void clearWorldC4Entities() {
         for (ServerLevel level : this.server.getAllLevels()) {
             List<C4Entity> c4Entities = new ObjectArrayList<>();
@@ -713,6 +735,34 @@ public class Map2SavedData extends SavedData {
             }
             for (C4Entity c4Entity : c4Entities) {
                 c4Entity.discard();
+            }
+        }
+    }
+
+    private void clearWorldGrenadeEntities() {
+        for (ServerLevel level : this.server.getAllLevels()) {
+            List<GrenadeEntity> grenadeEntities = new ObjectArrayList<>();
+            for (var entity : level.getAllEntities()) {
+                if (entity instanceof GrenadeEntity grenadeEntity) {
+                    grenadeEntities.add(grenadeEntity);
+                }
+            }
+            for (GrenadeEntity grenadeEntity : grenadeEntities) {
+                grenadeEntity.discard();
+            }
+        }
+    }
+
+    private void clearWorldDroppedItems() {
+        for (ServerLevel level : this.server.getAllLevels()) {
+            List<ItemEntity> itemEntities = new ObjectArrayList<>();
+            for (var entity : level.getAllEntities()) {
+                if (entity instanceof ItemEntity itemEntity) {
+                    itemEntities.add(itemEntity);
+                }
+            }
+            for (ItemEntity itemEntity : itemEntities) {
+                itemEntity.discard();
             }
         }
     }
@@ -806,15 +856,12 @@ public class Map2SavedData extends SavedData {
         return changed;
     }
 
-    private void scheduleRoundKeyboardUnlock(Set<UUID> teleportedPlayers) {
+    private void scheduleRoundKeyboardUnlock(Set<UUID> teleportedPlayers, long unlockGameTime) {
         if (teleportedPlayers.isEmpty()) {
             return;
         }
         new LambdaServerTask(new Args(0), task -> {
-            int tick = task.getArgs().get(0);
-            tick++;
-            task.getArgs().set(0, tick);
-            if (tick >= NEW_ROUND_POST_EFFECT_TICKS) {
+            if (shouldUnlockRoundKeyboard(unlockGameTime)) {
                 EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
                 for (UUID uuid : teleportedPlayers) {
                     ServerPlayer player = this.server.getPlayerList().getPlayer(uuid);
@@ -824,7 +871,11 @@ public class Map2SavedData extends SavedData {
                     }
                 }
             }
-        }, task -> ((int) task.getArgs().get(0)) >= NEW_ROUND_POST_EFFECT_TICKS).addToManager();
+        }, task -> shouldUnlockRoundKeyboard(unlockGameTime)).addToManager();
+    }
+
+    private boolean shouldUnlockRoundKeyboard(long unlockGameTime) {
+        return Game2SavedData.getInstance(this.server).isStopped() || this.server.overworld().getGameTime() >= unlockGameTime;
     }
 
     private void scheduleGame2NextRound() {

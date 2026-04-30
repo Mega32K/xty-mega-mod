@@ -8,6 +8,7 @@ import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import com.mega.xty.common.warehouse.WeaponWarehouseSlotType;
 import com.mega.xty.proxy.CommonProxy;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -451,7 +452,11 @@ public class WeaponWarehouseScreen extends Screen {
             if (this.getValue().isEmpty()) {
                 graphics.drawString(this.displayFont, this.placeholder, this.getX() + 2, textY, 0xFF738093);
             }
+            PoseStack poseStack = graphics.pose();
+            poseStack.pushPose();
+            poseStack.translate(2, 0, 0);
             super.renderWidget(graphics, mouseX, mouseY, partialTicks);
+            poseStack.popPose();
             this.setY(originalY);
         }
     }

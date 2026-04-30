@@ -67,7 +67,9 @@ public class DeathData {
         ((AccessorGuiGraphics) graphics).callFlushIfUnmanaged();
 
         int space = graphics.drawString(font, this.killer, 0, 0, 0xFFFFFFFF);
-        renderItemOrGun(graphics, this.weapon, space, -4);
+        if (!this.weapon.isEmpty()) {
+            renderItemOrGun(graphics, this.weapon, space, -4);
+        }
         graphics.drawString(font, this.beKilled, space + getItemDisplayWidth(weapon), 0, 0xFFFFFFFF);
         poseStack.popPose();
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
@@ -76,6 +78,9 @@ public class DeathData {
         return font.width(this.beKilled) + font.width(this.killer) + this.getItemDisplayWidth(itemStack);
     }
     public int getItemDisplayWidth(ItemStack itemStack) {
+        if (itemStack.isEmpty()) {
+            return 0;
+        }
         return itemStack.getItem() instanceof IGun ? 34 : 20;
     }
     private void fillGradient(PoseStack poseStack, VertexConsumer vertexConsumer, float x, float y, float endx, float endy, float depth, float xOffset, int color1, int color2) {

@@ -6,28 +6,40 @@ import com.mega.endinglib.common.data.InputOperations;
 import com.mega.endinglib.util.mixin.level.ServerEC;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.fps.kad.KAD;
+import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StatsPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2WarehouseMeleePacket;
 import com.mega.xty.proxy.CommonProxy;
+import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IGun;
 import com.mega.xty.util.data_expand.SavedDataGetter;
+import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
+import me.xjqsh.lrtactical.api.item.IThrowable;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Game2SavedData extends SavedData {
     private static final String EXTRA_WAREHOUSE_MELEE_KEY = "ExtraWarehouseMelee";
@@ -87,6 +99,8 @@ public class Game2SavedData extends SavedData {
         if (stopped) {
             FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
             EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
+            Map2SavedData map2SavedData = Map2SavedData.getInstance(this.server);
+            map2SavedData.clearGame2RoundWorldEntities();
             for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
                 CommonProxy.getMap2Cap(serverPlayer).ifPresent(cap -> {
                     cap.setXaeroDead(false);
@@ -99,6 +113,8 @@ public class Game2SavedData extends SavedData {
                 fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_CURRENT, KAD.deserialize(0));
                 fpsSavedData.getOrPutKAD(serverPlayer).setKAD(KAD.KAD_GENERAL, KAD.deserialize(0));
             }
+            clearDeadSavedRoundInventories(map2SavedData);
+            teleportPlayersToRespawnPoints(this.server.getPlayerList().getPlayers());
         }
         isStopped = stopped;
     }
@@ -169,22 +185,82 @@ public class Game2SavedData extends SavedData {
         if (player.isCreative() || player.isSpectator()) {
             return;
         }
-        for (int i = 0; i < player.getInventory().items.size(); i++) {
-            ItemStack stack = player.getInventory().items.get(i);
-            if (shouldClearAfterGame2(stack)) {
-                player.getInventory().items.set(i, ItemStack.EMPTY);
-            }
-        }
-        for (int i = 0; i < player.getInventory().offhand.size(); i++) {
-            ItemStack stack = player.getInventory().offhand.get(i);
-            if (shouldClearAfterGame2(stack)) {
-                player.getInventory().offhand.set(i, ItemStack.EMPTY);
-            }
+        boolean changed = false;
+        changed |= clearRoundInventoryList(player.getInventory().items);
+        changed |= clearRoundInventoryList(player.getInventory().offhand);
+        if (changed) {
+            player.getInventory().setChanged();
+            player.containerMenu.broadcastChanges();
         }
     }
 
+    private void clearDeadSavedRoundInventories(Map2SavedData map2SavedData) {
+        boolean changed = false;
+        for (Map2SavedData.Inventory inventory : map2SavedData.getDeadSavedInventory().values()) {
+            changed |= clearRoundInventoryList(inventory.items);
+            changed |= clearRoundInventoryList(inventory.offhand);
+        }
+        if (changed) {
+            map2SavedData.setDirty();
+        }
+    }
+
+    private boolean clearRoundInventoryList(List<ItemStack> items) {
+        boolean changed = false;
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack stack = items.get(i);
+            if (shouldClearAfterGame2(stack)) {
+                items.set(i, ItemStack.EMPTY);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
     private boolean shouldClearAfterGame2(ItemStack stack) {
-        return stack.getItem() instanceof IGun || stack.getItem() instanceof SwordItem || stack.getItem() instanceof AxeItem;
+        if (stack.isEmpty()) {
+            return false;
+        }
+        return stack.is(ItemInit.C4_BOMB.get())
+                || stack.is(ItemInit.BDK.get())
+                || stack.getItem() instanceof IGun
+                || stack.getItem() instanceof IAmmo
+                || stack.getItem() instanceof IAmmoBox
+                || stack.getItem() instanceof IMeleeWeapon
+                || stack.getItem() instanceof IThrowable
+                || stack.getItem() instanceof SwordItem
+                || stack.getItem() instanceof AxeItem
+                || this.extraWarehouseMeleeStacks.stream().anyMatch(melee -> ItemStack.isSameItemSameTags(melee, stack));
+    }
+
+    private void teleportPlayersToRespawnPoints(List<ServerPlayer> players) {
+        for (ServerPlayer player : players) {
+            teleportPlayerToRespawnPoint(player);
+        }
+    }
+
+    private void teleportPlayerToRespawnPoint(ServerPlayer player) {
+        ResourceKey<Level> respawnDimension = player.getRespawnDimension();
+        BlockPos respawnPos = player.getRespawnPosition();
+        float respawnAngle = player.getRespawnAngle();
+        ServerLevel targetLevel = this.server.getLevel(respawnDimension);
+        Optional<Vec3> targetPos = Optional.empty();
+        if (targetLevel != null && respawnPos != null) {
+            targetPos = Player.findRespawnPositionAndUseSpawnBlock(targetLevel, respawnPos, respawnAngle, player.isRespawnForced(), true);
+        }
+        if (targetLevel == null || targetPos.isEmpty()) {
+            targetLevel = this.server.overworld();
+            BlockPos sharedSpawn = targetLevel.getSharedSpawnPos();
+            respawnAngle = targetLevel.getSharedSpawnAngle();
+            targetPos = Optional.of(new Vec3(sharedSpawn.getX() + 0.5D, sharedSpawn.getY(), sharedSpawn.getZ() + 0.5D));
+        }
+        Vec3 pos = targetPos.get();
+        player.teleportTo(targetLevel, pos.x, pos.y, pos.z, respawnAngle, 0.0F);
+        while (!targetLevel.noCollision(player) && player.getY() < (double) targetLevel.getMaxBuildHeight()) {
+            player.setPos(player.getX(), player.getY() + 1.0D, player.getZ());
+        }
+        player.fallDistance = 0.0F;
+        player.setDeltaMovement(Vec3.ZERO);
     }
 
     private static boolean isValidWarehouseMelee(ItemStack stack) {

@@ -56,6 +56,7 @@ import java.util.function.Predicate;
 public class Map2Capability extends EntitySyncCapabilityBase {
     public static final ResourceLocation DEATH_PLAYER_SKIN = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/entity/death.png");
     public static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "mega_map2");
+    private static final ResourceLocation FPS_HOTBAR_OVERLAY = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "fps/hotbar");
     private static final String ROUND_KEYBOARD_UNLOCK_TIME_KEY = "roundKeyboardUnlockGameTime";
     private static final double C4_SITE_SEARCH_RADIUS = 64.0D;
     private static final double C4_SPECTATE_SEARCH_RADIUS = 16.0D;
@@ -299,6 +300,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
+                savedData.addDisabledOverlay(player, FPS_HOTBAR_OVERLAY);
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
                 player.serverLevel().levelEvent(player, 110120, BlockPos.ZERO, MapLevelEvents.FPS_SPECTATE);
             });
@@ -327,6 +329,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 savedData.removeDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
                 savedData.removeDisabledOverlay(player, VanillaGuiOverlay.FOOD_LEVEL.id());
                 savedData.removeDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
+                savedData.removeDisabledOverlay(player, FPS_HOTBAR_OVERLAY);
                 savedData.removeDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
             });
             CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {

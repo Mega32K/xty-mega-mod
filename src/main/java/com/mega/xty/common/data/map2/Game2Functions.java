@@ -12,6 +12,7 @@ public class Game2Functions {
     private final List<FunctionInstance> functionInstances = new ObjectArrayList<>();
     private final FunctionInstance onPlayerDeathFunction = new FunctionInstance("onPlayerDeath", this);
     private final FunctionInstance startFunction = new FunctionInstance("start", this);
+    private final FunctionInstance startNewRoundFunction = new FunctionInstance("startNewRound", this);
     private final FunctionInstance stopFunction = new FunctionInstance("stop", this);
     public Game2Functions(Game2SavedData savedData) {
         this.savedData = savedData;
@@ -43,6 +44,15 @@ public class Game2Functions {
 
     public void setStartFunction(String startFunction) {
         this.startFunction.setFunction(startFunction);
+        this.savedData.setDirty();
+    }
+
+    public @Nullable String getStartNewRoundFunction() {
+        return startNewRoundFunction.getFunction();
+    }
+
+    public void setStartNewRoundFunction(String startNewRoundFunction) {
+        this.startNewRoundFunction.setFunction(startNewRoundFunction);
         this.savedData.setDirty();
     }
 

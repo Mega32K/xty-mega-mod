@@ -3,10 +3,6 @@ package com.mega.xty.proxy;
 import com.mega.endinglib.api.capability.ELCapabilityManager;
 import com.mega.endinglib.api.capability.annotation.AutoCapGetter;
 import com.mega.endinglib.api.capability.annotation.AutoCapManager;
-import com.mega.endinglib.api.data.TagEnum;
-import com.mega.endinglib.api.item.component.ComponentTypeBuilder;
-import com.mega.endinglib.api.item.component.DataComponents;
-import com.mega.endinglib.api.item.component.ItemComponentType;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.capability.FpsCapability;
 import com.mega.xty.common.capability.Map2Capability;
@@ -15,11 +11,9 @@ import com.mega.xty.common.capability.XtyModPlayerCapability;
 import com.mega.xty.common.command.argument.LimbArgumentType;
 import com.mega.xty.common.component.ComponentInit;
 import com.mega.xty.common.init.*;
-import com.mega.xty.common.item.component.FillCreatorComponent;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
@@ -62,16 +56,6 @@ public class CommonProxy implements ModProxy {
                                 );
                     })
                     .build()
-    );
-    public static final ResourceLocation COM_FILL_CREATOR = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "debug/fill_creator");
-    public static final ItemComponentType<FillCreatorComponent> FILL_CREATOR = DataComponents.register(
-            COM_FILL_CREATOR,
-            ComponentTypeBuilder.create(builder -> builder
-                    .registryName(COM_FILL_CREATOR)
-                    .codec(FillCreatorComponent.CODEC)
-                    .rootTagType(TagEnum.LIST)
-                    .build()
-            )
     );
 
     public CommonProxy() {
