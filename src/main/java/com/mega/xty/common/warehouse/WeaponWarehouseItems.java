@@ -2,14 +2,15 @@ package com.mega.xty.common.warehouse;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.mega.xty.common.data.fps.ClientFpsData;
 import me.xjqsh.lrtactical.api.LrTacticalAPI;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import me.xjqsh.lrtactical.api.item.IThrowable;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public final class WeaponWarehouseItems {
@@ -75,20 +77,36 @@ public final class WeaponWarehouseItems {
                 .orElse(ItemStack.EMPTY);
     }
 
+    public static ResourceLocation getGunIdFromMainHand(ServerPlayer player) {
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof IGun gun)) {
+            return null;
+        }
+        return gun.getGunId(stack);
+    }
+
     public static WeaponWarehouseSnapshot sanitizeSnapshot(WeaponWarehouseSnapshot snapshot) {
+        return sanitizeSnapshot(snapshot, Set.of());
+    }
+
+    public static WeaponWarehouseSnapshot sanitizeSnapshot(WeaponWarehouseSnapshot snapshot, Set<ResourceLocation> gunBlacklist) {
         WeaponWarehouseSnapshot sanitized = createDefaultSnapshot();
         sanitized.setSelectedLoadout(clampLoadoutIndex(snapshot.getSelectedLoadout()));
         for (int loadout = 0; loadout < LOADOUT_COUNT; loadout++) {
             WeaponWarehouseLoadout source = snapshot.getLoadout(loadout);
             WeaponWarehouseLoadout target = sanitized.getLoadout(loadout);
             for (WeaponWarehouseSlotType slotType : WeaponWarehouseSlotType.values()) {
-                target.setSlot(slotType.getSlotIndex(), sanitizeSlot(slotType, source.getSlot(slotType.getSlotIndex())));
+                target.setSlot(slotType.getSlotIndex(), sanitizeSlot(slotType, source.getSlot(slotType.getSlotIndex()), gunBlacklist));
             }
         }
         return sanitized;
     }
 
     public static ItemStack sanitizeSlot(WeaponWarehouseSlotType slotType, ItemStack stack) {
+        return sanitizeSlot(slotType, stack, Set.of());
+    }
+
+    public static ItemStack sanitizeSlot(WeaponWarehouseSlotType slotType, ItemStack stack, Set<ResourceLocation> gunBlacklist) {
         if (stack == null || stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
@@ -96,8 +114,8 @@ public final class WeaponWarehouseItems {
         ItemStack copy = stack.copy();
         copy.setCount(Math.max(1, copy.getCount()));
         return switch (slotType) {
-            case MAIN_WEAPON -> isMainWeapon(copy) ? forceSingleCount(copy) : ItemStack.EMPTY;
-            case SECONDARY_WEAPON -> isSecondaryWeapon(copy) ? forceSingleCount(copy) : ItemStack.EMPTY;
+            case MAIN_WEAPON -> isMainWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? forceSingleCount(copy) : ItemStack.EMPTY;
+            case SECONDARY_WEAPON -> isSecondaryWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? forceSingleCount(copy) : ItemStack.EMPTY;
             case MELEE_WEAPON -> forceSingleCount(copy);
             case M67_GRENADE -> sanitizeFixedThrowable(copy, M67_ID);
             case SMOKE_GRENADE -> sanitizeFixedThrowable(copy, SMOKE_ID);
@@ -148,8 +166,8 @@ public final class WeaponWarehouseItems {
 
     public static List<ItemStack> createClientCandidates(WeaponWarehouseSlotType slotType) {
         return switch (slotType) {
-            case MAIN_WEAPON -> createClientGunCandidates(index -> !"pistol".equalsIgnoreCase(index.getType()));
-            case SECONDARY_WEAPON -> createClientGunCandidates(index -> "pistol".equalsIgnoreCase(index.getType()));
+            case MAIN_WEAPON -> createClientGunCandidates(entry -> !"pistol".equalsIgnoreCase(entry.getValue().getType()) && !ClientFpsData.isWarehouseGunBlacklisted(entry.getKey()));
+            case SECONDARY_WEAPON -> createClientGunCandidates(entry -> "pistol".equalsIgnoreCase(entry.getValue().getType()) && !ClientFpsData.isWarehouseGunBlacklisted(entry.getKey()));
             case MELEE_WEAPON -> createClientMeleeCandidates();
             case M67_GRENADE -> createThrowableCountCandidates(M67_ID);
             case SMOKE_GRENADE -> createThrowableCountCandidates(SMOKE_ID);
@@ -157,14 +175,14 @@ public final class WeaponWarehouseItems {
         };
     }
 
-    private static List<ItemStack> createClientGunCandidates(Predicate<com.tacz.guns.client.resource.index.ClientGunIndex> filter) {
+    private static List<ItemStack> createClientGunCandidates(Predicate<Map.Entry<ResourceLocation, com.tacz.guns.client.resource.index.ClientGunIndex>> filter) {
         List<Map.Entry<ResourceLocation, com.tacz.guns.client.resource.index.ClientGunIndex>> entries = new ArrayList<>(TimelessAPI.getAllClientGunIndex());
         entries.sort(RESOURCE_ID_COMPARATOR);
         List<ItemStack> items = new ArrayList<>();
         items.add(ItemStack.EMPTY);
         LinkedHashSet<ResourceLocation> seen = new LinkedHashSet<>();
         for (Map.Entry<ResourceLocation, com.tacz.guns.client.resource.index.ClientGunIndex> entry : entries) {
-            if (filter.test(entry.getValue()) && seen.add(entry.getKey())) {
+            if (filter.test(entry) && seen.add(entry.getKey())) {
                 ItemStack stack = createGunStack(entry.getKey());
                 if (!stack.isEmpty()) {
                     items.add(stack);
@@ -253,5 +271,13 @@ public final class WeaponWarehouseItems {
             return FireMode.BURST;
         }
         return modes.get(0);
+    }
+
+    public static boolean isBlacklistedGun(ItemStack stack, Set<ResourceLocation> gunBlacklist) {
+        if (!(stack.getItem() instanceof IGun gun)) {
+            return false;
+        }
+        ResourceLocation gunId = gun.getGunId(stack);
+        return gunId != null && gunBlacklist.contains(gunId);
     }
 }

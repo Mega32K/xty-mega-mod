@@ -22,7 +22,7 @@ import org.lwjgl.opengl.GL30;
 
 public final class BlurRectRenderer {
     private static final float MAX_BLUR_RADIUS = 32.0F;
-    private static TextureTarget screenCopy;
+    public static TextureTarget screenCopy;
 
     private BlurRectRenderer() {
     }
@@ -90,7 +90,7 @@ public final class BlurRectRenderer {
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 
-    private static void ensureScreenCopy(RenderTarget mainTarget) {
+    public static void ensureScreenCopy(RenderTarget mainTarget) {
         if (screenCopy != null && screenCopy.width == mainTarget.width && screenCopy.height == mainTarget.height) {
             return;
         }
@@ -102,7 +102,7 @@ public final class BlurRectRenderer {
         screenCopy = new TextureTarget(mainTarget.width, mainTarget.height, false, Minecraft.ON_OSX);
     }
 
-    private static void copyMainTarget(RenderTarget mainTarget) {
+    public static void copyMainTarget(RenderTarget mainTarget) {
         GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainTarget.frameBufferId);
         GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, screenCopy.frameBufferId);
         GlStateManager._glBlitFrameBuffer(
@@ -118,5 +118,9 @@ public final class BlurRectRenderer {
                 GL11.GL_NEAREST
         );
         GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, mainTarget.frameBufferId);
+    }
+
+    public static TextureTarget getScreenCopy() {
+        return screenCopy;
     }
 }

@@ -40,6 +40,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -181,6 +182,12 @@ public class ClientProxy implements ModProxy {
         Minecraft mc = Minecraft.getInstance();
         SimpleSoundInstance simplesoundinstance = new SimpleSoundInstance(p_233606_, p_233607_, p_233608_, p_233609_, RandomSource.create(p_233611_), p_233603_, p_233604_, p_233605_);
         mc.getSoundManager().play(simplesoundinstance);
+    }
+
+    public static void playSoundAtCamera(SoundEvent soundEvent, float volume, float pitch, long seed) {
+        Minecraft mc = Minecraft.getInstance();
+        SimpleSoundInstance sound = new SimpleSoundInstance(soundEvent.getLocation(), SoundSource.PLAYERS, volume, pitch, RandomSource.create(seed), false, 0, SoundInstance.Attenuation.NONE, 0.0D, 0.0D, 0.0D, true);
+        mc.getSoundManager().play(sound);
     }
     public static void openRenameScreen(UUID uuid) {
         Minecraft mc = Minecraft.getInstance();

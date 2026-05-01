@@ -1,6 +1,7 @@
 package com.mega.xty.client.overlay.fps;
 
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.client.font.ErrorFont;
 import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.common.data.fps.RoundStartData;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -42,18 +43,26 @@ public class RoundStartOverlay implements IGuiOverlay {
         int textColor = ((int) (alpha * 255.0F) << 24) | 0x00D0D0D0;
         int borderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), textColor);
 
-        graphics.flush();
-        BlurRectRenderer.render(graphics, x - realWidth / 2.0F, y, realWidth, height, ((int)(alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
-        graphics.fill(x - 2.0F - realWidth / 2.0F, y, x - realWidth / 2.0F, y + height, borderColor);
-        graphics.fill(x + realWidth / 2.0F, y, x + realWidth / 2.0F + 2.0F, y + height, borderColor);
+        renderNotificationBackground(graphics, x, y, realWidth, height, alpha, borderColor);
         graphics.enableScissor((int) (x - realWidth / 2.0F), (int) y, (int) (x + realWidth / 2.0F), (int) (y + height));
-        graphics.drawCenteredString(font, text1, (int) x, (int) (y + 4.0F), textColor);
-        graphics.drawCenteredString(font, text2, (int) x, (int) (y + 6.0F + font.lineHeight), textColor);
+        Font renderFont = realWidth < width ? ErrorFont.INSTANCE : font;
+        graphics.drawCenteredString(renderFont, text1, (int) x, (int) (y + 4.0F), textColor);
+        graphics.drawCenteredString(renderFont, text2, (int) x, (int) (y + 6.0F + font.lineHeight), textColor);
         graphics.disableScissor();
-
-        if (RoundStartData.roundStartRenderTimer >= RoundStartData.ROUND_START_PROMPT_DURATION - 10) {
-            graphics.fill(x - realWidth / 2.0F, y, x + realWidth / 2.0F, y + height, ((int)(255.0F - alpha * 255.0F) << 24) | 0x00FFFFFF);
-        }
+        renderWhiteFlash(graphics, x, y, realWidth, height, alpha);
         poseStack.popPose();
+    }
+
+    private static void renderNotificationBackground(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha, int borderColor) {
+        graphics.flush();
+        BlurRectRenderer.render(graphics, centerX - realWidth / 2.0F, y, realWidth, height, ((int)(alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        graphics.fill(centerX - 2.0F - realWidth / 2.0F, y, centerX - realWidth / 2.0F, y + height, borderColor);
+        graphics.fill(centerX + realWidth / 2.0F, y, centerX + realWidth / 2.0F + 2.0F, y + height, borderColor);
+    }
+
+    private static void renderWhiteFlash(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha) {
+        if (RoundStartData.roundStartRenderTimer >= RoundStartData.ROUND_START_PROMPT_DURATION - 10) {
+            graphics.fill(centerX - realWidth / 2.0F, y, centerX + realWidth / 2.0F, y + height, ((int)(255.0F - alpha * 255.0F) << 24) | 0x00FFFFFF);
+        }
     }
 }

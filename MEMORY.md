@@ -648,3 +648,12 @@
 - `clearWorldDroppedItems()` 遍历所有 `ServerLevel` 的实体，收集并 `discard()` 所有 `ItemEntity`。
 - 这样不会删除后续同一回合刚给予玩家、或因背包满而可能掉出的新物品。
 - 已运行 `git diff --check -- src/main/java/com/mega/xty/common/data/map2/Map2SavedData.java`，无空白错误，仅有 Git LF/CRLF 提示。
+## WinOverlay Prompt Baseline
+
+- `com.mega.xty.client.overlay.map2.WinOverlay#renderTitleBox` 鏄綋鍓嶆ā浠?C4Overlay 妯＄硦鎻愮ず妗嗙殑鏂板熀鍑嗐€?
+- 鑳屾櫙缁撴瀯锛?`graphics.flush()` -> `BlurRectRenderer.render(...)` -> 宸﹀彸 2px 杈规锛岃儗鏅鑹蹭负涓€х伆 `0x00303030`锛屾ā绯婂崐寰勪负 `alpha * 8.0F`銆?
+- 瀹藉害灞曞紑锛氭彁绀烘浣跨敤 `realWidth = alpha * width`锛屼粠灞忓箷涓績鍚戜袱渚у睍寮€銆?
+- 鏂囨湰瑁佸壀锛氭枃鏈粯鍒跺墠瑕佷娇鐢?`enableScissor(...)`锛岃鍓寖鍥村拰 `realWidth` 淇濇寔鍚屾銆?
+- 瀛椾綋鍒囨崲锛氬綋 `realWidth < width` 鏃讹紝鏂囨湰浣跨敤 `ErrorFont.INSTANCE`锛涘畬鍏ㄥ睍寮€鍚庡垏鍥炴櫘閫?`Font`銆?
+- 缁撳熬鐧介棯锛氱粨鏉熷墠 10 tick 淇濈暀涓€灞?`((255 - alpha * 255) << 24) | 0x00FFFFFF` 鐨勭櫧鑹查棯灞傘€?
+- 2026-05-01 锛?`RoundStartOverlay` 宸叉寜杩欏鍐欐硶瀵归綈锛?`LoseOverlay` 褰撳墠宸茬粡鍜?`WinOverlay` 淇濇寔涓€鑷淬€?

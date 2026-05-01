@@ -1,11 +1,16 @@
 package com.mega.xty.client.overlay.map2;
 
+import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.client.font.ErrorFont;
 import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.proxy.ClientProxy;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -24,6 +29,8 @@ import net.minecraft.util.FastColor;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import java.util.Optional;
 
@@ -72,7 +79,11 @@ public class WinOverlay implements IGuiOverlay {
         poseStack.pushPose();
         poseStack.translate(centerX - font.width(text), y + (height - font.lineHeight * 2.0F) / 2.0F, 0.0F);
         poseStack.scale(2.0F, 2.0F, 1.0F);
-        graphics.drawString(font, text, 0, 0, textColor, true);
+        if (realWidth < width) {
+            graphics.drawString(ErrorFont.INSTANCE, text, 0, 0, textColor, true);
+        } else {
+            graphics.drawString(font, text, 0, 0, textColor, true);
+        }
         poseStack.popPose();
         graphics.disableScissor();
         renderWhiteFlash(graphics, centerX, y, realWidth, height, alpha);
@@ -110,16 +121,16 @@ public class WinOverlay implements IGuiOverlay {
         graphics.fill(centerX + realWidth / 2.0F, y, centerX + realWidth / 2.0F + 2.0F, y + height, borderColor);
     }
     private static void renderMvpBackground(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha, int borderColor) {
-        final float edgeDarkScale = 0.6F;
+        final float edgeDarkScale = 0.5F;
         ShaderInstance s = ModShaders.getVoronoiFlowBackground();
         graphics.flush();
         float red = FastColor.ARGB32.red(borderColor) / 255.0F;
         float green = FastColor.ARGB32.green(borderColor) / 255.0F;
         float blue = FastColor.ARGB32.blue(borderColor) / 255.0F;
-        ModShaders.voronoiFlowColorA(red * edgeDarkScale, green * edgeDarkScale, blue * edgeDarkScale, 0.4F, s);
-        ModShaders.voronoiFlowColorB(red, green, blue, 0.8F, s);
-        ModShaders.voronoiFlowColorC(red * edgeDarkScale, green * edgeDarkScale, blue * edgeDarkScale, 0.4F, s);
-        ModShaders.voronoiFlowInit(graphics.guiWidth() * 1.25F, graphics.guiHeight() * 1.0F, s);
+        ModShaders.voronoiFlowColorA(red * edgeDarkScale, green * edgeDarkScale, blue * edgeDarkScale, 1F, s);
+        ModShaders.voronoiFlowColorB(red, green, blue, 1F, s);
+        ModShaders.voronoiFlowColorC(red * edgeDarkScale, green * edgeDarkScale, blue * edgeDarkScale, 1F, s);
+        ModShaders.voronoiFlowInit(graphics.guiWidth() * 1.25F, graphics.guiHeight() * 1.15F, s);
         RenderSystem.setShaderTexture(0, ClientProxy.WHITE);
         RenderSystem.setShader(ModShaders::getVoronoiFlowBackground);
         RenderSystem.enableBlend();

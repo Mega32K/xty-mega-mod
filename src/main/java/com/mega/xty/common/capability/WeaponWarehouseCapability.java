@@ -3,10 +3,12 @@ package com.mega.xty.common.capability;
 import com.mega.endinglib.api.capability.CapabilitySyncType;
 import com.mega.endinglib.api.capability.EntitySyncCapabilityBase;
 import com.mega.xty.XtyMegaMod;
+import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseLoadout;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import com.mega.xty.common.warehouse.WeaponWarehouseSlotType;
+import com.tacz.guns.item.AmmoBoxItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
@@ -98,6 +101,12 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
         this.clientWeaponWarehouse = sanitized.copy();
     }
 
+    public void setWeaponWarehouse(WeaponWarehouseSnapshot snapshot, Set<ResourceLocation> gunBlacklist) {
+        WeaponWarehouseSnapshot sanitized = WeaponWarehouseItems.sanitizeSnapshot(snapshot, gunBlacklist);
+        this.weaponWarehouse = sanitized;
+        this.clientWeaponWarehouse = sanitized.copy();
+    }
+
     public int getSelectedWarehouseLoadout() {
         return this.weaponWarehouse.getSelectedLoadout();
     }
@@ -109,19 +118,23 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     }
 
     public void applySelectedWarehouseLoadout(Player player) {
+        applySelectedWarehouseLoadout(player, Set.of());
+    }
+
+    public void applySelectedWarehouseLoadout(Player player, Set<ResourceLocation> gunBlacklist) {
         WeaponWarehouseLoadout loadout = this.weaponWarehouse.getLoadout(this.weaponWarehouse.getSelectedLoadout());
         Inventory inventory = player.getInventory();
         clearItemList(inventory.items);
         clearItemList(inventory.offhand);
         if (player.getTeam() != null && player.getTeam().getColor() == ChatFormatting.RED && !player.isCreative()) {
-            inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
+            giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MELEE_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()), gunBlacklist));
         } else {
-            inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MAIN_WEAPON.getSlotIndex()).copy());
-            inventory.items.set(1, loadout.getSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON.getSlotIndex()).copy());
-            inventory.items.set(2, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
-            inventory.items.set(3, loadout.getSlot(WeaponWarehouseSlotType.M67_GRENADE.getSlotIndex()).copy());
-            inventory.items.set(4, loadout.getSlot(WeaponWarehouseSlotType.SMOKE_GRENADE.getSlotIndex()).copy());
-            inventory.items.set(5, loadout.getSlot(WeaponWarehouseSlotType.FLASH_GRENADE.getSlotIndex()).copy());
+            giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MAIN_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MAIN_WEAPON.getSlotIndex()), gunBlacklist));
+            giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON.getSlotIndex()), gunBlacklist));
+            giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MELEE_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()), gunBlacklist));
+            setOrGiveLoadoutItem(player, 3, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.M67_GRENADE, loadout.getSlot(WeaponWarehouseSlotType.M67_GRENADE.getSlotIndex()), gunBlacklist));
+            setOrGiveLoadoutItem(player, 4, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.SMOKE_GRENADE, loadout.getSlot(WeaponWarehouseSlotType.SMOKE_GRENADE.getSlotIndex()), gunBlacklist));
+            setOrGiveLoadoutItem(player, 5, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.FLASH_GRENADE, loadout.getSlot(WeaponWarehouseSlotType.FLASH_GRENADE.getSlotIndex()), gunBlacklist));
         }
         player.containerMenu.setCarried(ItemStack.EMPTY);
         player.setItemSlot(EquipmentSlot.MAINHAND, inventory.getItem(inventory.selected));
@@ -133,8 +146,7 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
 
     public void applySelectedWarehouseMelee(Player player) {
         WeaponWarehouseLoadout loadout = this.weaponWarehouse.getLoadout(this.weaponWarehouse.getSelectedLoadout());
-        Inventory inventory = player.getInventory();
-        inventory.items.set(0, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()).copy());
+        giveLoadoutItem(player, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()));
         if (!player.level().isClientSide) {
             player.containerMenu.broadcastChanges();
         }
@@ -142,7 +154,32 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
 
     private static void clearItemList(NonNullList<ItemStack> items) {
         for (int i = 0; i < items.size(); i++) {
-            items.set(i, ItemStack.EMPTY);
+            ItemStack stack = items.get(i);
+            if (!stack.is(ItemInit.C4_BOMB.get()) && !stack.is(ItemInit.BDK.get()) && !(stack.getItem() instanceof AmmoBoxItem))
+                items.set(i, ItemStack.EMPTY);
+        }
+    }
+
+    private static void giveLoadoutItem(Player player, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        ItemStack copy = stack.copy();
+        if (!player.getInventory().add(copy)) {
+            player.drop(copy, false);
+        }
+    }
+
+    private static void setOrGiveLoadoutItem(Player player, int slotIndex, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        ItemStack copy = stack.copy();
+        if (inventory.getItem(slotIndex).isEmpty()) {
+            inventory.setItem(slotIndex, copy);
+        } else if (!inventory.add(copy)) {
+            player.drop(copy, false);
         }
     }
 

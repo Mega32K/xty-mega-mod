@@ -509,6 +509,39 @@
               }
             },
 
+            "effect": {
+              "type":"literal",
+              "children": {
+
+                "dead": {
+                  "type":"literal",
+                  "children": {
+
+                    "targets": {
+                      "type":"argument",
+                      "parser":"minecraft:entity",
+                      "properties": {
+                        "amount":"multiple",
+                        "type":"players"
+                      },
+                      "children": {
+
+                        "seconds": {
+                          "type":"argument",
+                          "parser":"brigadier:integer",
+                          "properties": {
+                            "min": 1
+                          },
+                          "executable":true
+                        }
+                      },
+                      "executable":true
+                    }
+                  }
+                }
+              }
+            },
+
             "bomb": {
               "type":"literal",
               "children": {
@@ -2301,6 +2334,50 @@
                   "executable": true
                 }
               }
+            }
+          }
+        },
+
+        "warehouseBlacklist": {
+          "type": "literal",
+          "children": {
+            "add": {
+              "type": "literal",
+              "children": {
+                "player": {
+                  "type": "argument",
+                  "parser": "minecraft:entity",
+                  "properties": {
+                    "amount": "single",
+                    "type": "players"
+                  },
+                  "executable": true
+                }
+              },
+              "executable": true
+            },
+            "remove": {
+              "type": "literal",
+              "children": {
+                "player": {
+                  "type": "argument",
+                  "parser": "minecraft:entity",
+                  "properties": {
+                    "amount": "single",
+                    "type": "players"
+                  },
+                  "executable": true
+                }
+              },
+              "executable": true
+            },
+            "clear": {
+              "type": "literal",
+              "executable": true
+            },
+            "get": {
+              "type": "literal",
+              "executable": true
             }
           }
         },

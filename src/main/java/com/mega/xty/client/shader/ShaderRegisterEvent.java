@@ -26,5 +26,7 @@ public class ShaderRegisterEvent {
         event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "grayscale_position_tex"), DefaultVertexFormat.POSITION_TEX), ModShaders::setGray);
         event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "gui_blur_rect"), DefaultVertexFormat.POSITION_TEX), ModShaders::setGuiBlurRect);
         event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "logo_glitch"), DefaultVertexFormat.POSITION_TEX), ModShaders::setLogoGlitch);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "logo_glitch_position_color_tex_lightmap"), DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP), ModShaders::setLogoGlitchPositionColorTexLightmap);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "logo_glitch_text_intensity_position_color_tex_lightmap"), DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP), ModShaders::setLogoGlitchTextIntensityPositionColorTexLightmap);
     }
 }

@@ -72,9 +72,7 @@ public class C4SpectateCameraHandler {
             }
             cap.getPlayerC4Pos().ifPresentOrElse(pos -> {
                 cameraPos = new Vec3(pos);
-                lookTarget = findLookTarget(minecraft.level, cameraPos);
                 active = true;
-                faceLookTarget(player);
             }, C4SpectateCameraHandler::stop);
         });
     }

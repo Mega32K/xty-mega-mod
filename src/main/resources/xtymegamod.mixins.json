@@ -26,6 +26,9 @@
   ],
   "client": [
     "AccessorPlayerTabOverlay",
+    "client.AccessorEmptyTextureStateShard",
+    "client.AccessorRenderTypeCompositeRenderType",
+    "client.AccessorRenderTypeCompositeState",
     "client.ClientLevelMixin",
     "client.LevelRendererMixin",
     "client.LoadingOverlayAccessor",

@@ -1,8 +1,8 @@
 package com.mega.xty.client.overlay.map2;
 
 import com.mega.endinglib.api.client.Easing;
-import com.mega.endinglib.api.client.screen.BlitInfo;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.client.font.ErrorFont;
 import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
@@ -23,181 +23,202 @@ import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 public class C4Overlay implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
-
         if (gui.getMinecraft().options.hideGui) return;
         if (ClientGame2Data.isStopped) return;
+
         gui.setupOverlayRenderState(true, false);
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            //若已安放炸弹
-            if (ClientFpsData.bombExist) {
-                //若正在拆包
-                float progress = BDKItem.getShearingProgress(mc.player, partialTick);
-                if (progress >= 0.0F) {
-                    renderShearingAnimation(mc.player, gui, MegaGuiGraphics.of(guiGraphics), progress, screenWidth, screenHeight);
-                }
-                if (ClientFpsData.shouldRenderBombCountdown()) {
-                    renderBombCountdown(mc.player, gui, MegaGuiGraphics.of(guiGraphics), ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight, partialTick);
-                }
-            } else {
-                //若正在下包
-                float progress = C4BombItem.getSettingProgress(mc.player, partialTick);
-                if (progress >= 0.0F) {
-                    renderBombSettingAnimation(mc.player, gui, MegaGuiGraphics.of(guiGraphics), progress, screenWidth, screenHeight);
-                }
+        if (mc.player == null) {
+            return;
+        }
+
+        MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
+        if (ClientFpsData.bombExist) {
+            float progress = BDKItem.getShearingProgress(mc.player, partialTick);
+            if (progress >= 0.0F) {
+                renderShearingAnimation(mc.player, gui, graphics, progress, screenWidth, screenHeight);
+            }
+            if (ClientFpsData.shouldRenderBombCountdown()) {
+                renderBombCountdown(mc.player, gui, graphics, ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight, partialTick);
+            }
+        } else {
+            float progress = C4BombItem.getSettingProgress(mc.player, partialTick);
+            if (progress >= 0.0F) {
+                renderBombSettingAnimation(mc.player, gui, graphics, progress, screenWidth, screenHeight);
             }
         }
     }
+
     public void renderBombCountdown(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, int countdownTicks, int screenWidth, int screenHeight, float partialTicks) {
-        //透明度(淡入淡出进度)的设置
-        float alpha = Easing.OUT_CUBIC.calculate(Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer - partialTicks, 10) / 10.0F)) * Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10F));
+        float alpha = Easing.OUT_CUBIC.calculate(Math.min(1.0F, Math.min(ClientFpsData.bombCountdownRenderTimer - partialTicks, 10.0F) / 10.0F))
+                * Easing.OUT_CUBIC.calculate(Math.min(1.0F, (ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - ClientFpsData.bombCountdownRenderTimer + partialTicks) / 10.0F));
+
         PoseStack poseStack = graphics.pose();
-        poseStack.translate(0, 0, 100);
+        poseStack.translate(0.0F, 0.0F, 100.0F);
         poseStack.pushPose();
+
         Font font = gui.getFont();
         String text1 = "炸弹已被安放";
         String text2 = "离被引爆还剩" + ClientFpsData.getDisplayBombSeconds(countdownTicks) + "秒";
-        //长度取所有文本最长者+24
-        float width = Math.max(font.width(text1), font.width(text2)) + 24F;
-        //实际渲染宽度
+        float width = Math.max(font.width(text1), font.width(text2)) + 24.0F;
         float realWidth = alpha * width;
-        float height = font.lineHeight * 2F + 10F;
-        float x = screenWidth / 2F;
+        float height = font.lineHeight * 2.0F + 10.0F;
+        float x = screenWidth / 2.0F;
         float y = screenHeight * 0.62F;
-        int textColor = ((int) (alpha * 255) << 24) | 0x00D0D0D0;
+        int textColor = ((int) (alpha * 255.0F) << 24) | 0x00D0D0D0;
         int borderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), textColor);
-        graphics.flush();
-        BlurRectRenderer.render(graphics, x - realWidth / 2F, y, realWidth, height, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
-        graphics.fill(x - 2 - realWidth / 2F, y, x- realWidth / 2F, y + height, borderColor);
-        graphics.fill(x + realWidth / 2F, y, x + realWidth / 2F + 2, y + height, borderColor);
-        graphics.enableScissor((int) (x - realWidth / 2F), (int) y, (int) (x + realWidth / 2F), (int) (y + height));
-        graphics.drawCenteredString(font, text1, (int) x, (int) (y + 4F), textColor);
-        graphics.drawCenteredString(font, text2, (int) x, (int) (y + 6F + font.lineHeight), textColor);
+
+        renderNotificationBackground(graphics, x, y, realWidth, height, alpha, borderColor);
+        graphics.enableScissor((int) (x - realWidth / 2.0F), (int) y, (int) (x + realWidth / 2.0F), (int) (y + height));
+        Font renderFont = realWidth < width ? ErrorFont.INSTANCE : font;
+        graphics.drawCenteredString(renderFont, text1, (int) x, (int) (y + 4.0F), textColor);
+        graphics.drawCenteredString(renderFont, text2, (int) x, (int) (y + 6.0F + font.lineHeight), textColor);
         graphics.disableScissor();
-        //模仿CS2的白色淡入淡出
-        if (ClientFpsData.bombCountdownRenderTimer >= ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - 10)
-            graphics.fill(x - realWidth / 2F, y, x + realWidth / 2F, y + height, ((int)(255 - alpha * 255) << 24 | 0x00FF0000 | 0x0000FF00 | 0x000000FF));
+        renderWhiteFlash(graphics, x, y, realWidth, height, alpha);
 
         poseStack.popPose();
     }
+
     public void renderBombSettingAnimation(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, float progress, int screenWidth, int screenHeight) {
-        float alpha = 1F - Easing.IN_OUT_CUBIC.calculate((1F - Math.min(1F, progress * 7F)));
+        float alpha = 1.0F - Easing.IN_OUT_CUBIC.calculate(1.0F - Math.min(1.0F, progress * 7.0F));
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
+
         Font font = gui.getFont();
-        int percentColor = ((int)(alpha * 255) << 24) | 0x00A0A0A0;
+        int percentColor = ((int) (alpha * 255.0F) << 24) | 0x00A0A0A0;
         float barWidth = screenWidth * 0.3F;
         float barHeight = barWidth * 0.1F;
         float textBarWidth = barWidth * 0.5F;
-        float x = (screenWidth - barWidth) / 2;
-        float y = screenHeight * 0.75F;
-        y += (-10 * (1F - alpha));
-        float textBarX = (screenWidth - textBarWidth) / 2;
-        float textBarY = y - barHeight - 2;
+        float x = (screenWidth - barWidth) / 2.0F;
+        float y = screenHeight * 0.75F - 10.0F * (1.0F - alpha);
+        float textBarX = (screenWidth - textBarWidth) / 2.0F;
+        float textBarY = y - barHeight - 2.0F;
         int teamColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), percentColor);
-        graphics.flush();
-        //安装提示框
-        BlurRectRenderer.render(graphics, textBarX, textBarY, textBarWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
-        //安装提示词
-        graphics.drawCenteredString(font, "炸弹安装中", (int) (textBarX + textBarWidth / 2F), (int) (textBarY + (barHeight - font.lineHeight) / 2), percentColor);
-        //模糊条
-        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
-        float renderProgress = Math.min(1F, Math.max(0F, progress));
-        float progressBarX = x + 2F;
-        float progressBarY = y + 3F;
-        float progressBarWidth = barWidth - 4F;
-        float progressBarHeight = barHeight - 6F;
+
+        float realTextBarWidth = alpha * textBarWidth;
+        renderNotificationBackground(graphics, textBarX + textBarWidth / 2.0F, textBarY, realTextBarWidth, barHeight, alpha, teamColor);
+        graphics.enableScissor((int) (textBarX + (textBarWidth - realTextBarWidth) / 2.0F), (int) textBarY, (int) (textBarX + (textBarWidth + realTextBarWidth) / 2.0F), (int) (textBarY + barHeight));
+        graphics.drawCenteredString(realTextBarWidth < textBarWidth ? ErrorFont.INSTANCE : font, "炸弹安装中", (int) (textBarX + textBarWidth / 2.0F), (int) (textBarY + (barHeight - font.lineHeight) / 2.0F), percentColor);
+        graphics.disableScissor();
+
+        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        float renderProgress = Math.min(1.0F, Math.max(0.0F, progress));
+        float progressBarX = x + 2.0F;
+        float progressBarY = y + 3.0F;
+        float progressBarWidth = barWidth - 4.0F;
+        float progressBarHeight = barHeight - 6.0F;
         float progressWidth = progressBarWidth * renderProgress;
-        if (progressWidth > 0F) {
-            float whiteProgress = Math.min(1F, Math.max(0F, (renderProgress - 0.8F) / 0.2F));
-            int baseR = FastColor.ARGB32.red(0xFF8b9ea8);
-            int baseG = FastColor.ARGB32.green(0xFF8b9ea8);
-            int baseB = FastColor.ARGB32.blue(0xFF8b9ea8);
-            float r = (baseR + (255 - baseR) * whiteProgress) / 255F;
-            float g = (baseG + (255 - baseG) * whiteProgress) / 255F;
-            float b = (baseB + (255 - baseB) * whiteProgress) / 255F;
+        if (progressWidth > 0.0F) {
+            float whiteProgress = Math.min(1.0F, Math.max(0.0F, (renderProgress - 0.8F) / 0.2F));
+            int baseR = FastColor.ARGB32.red(0xFF8B9EA8);
+            int baseG = FastColor.ARGB32.green(0xFF8B9EA8);
+            int baseB = FastColor.ARGB32.blue(0xFF8B9EA8);
+            float r = (baseR + (255 - baseR) * whiteProgress) / 255.0F;
+            float g = (baseG + (255 - baseG) * whiteProgress) / 255.0F;
+            float b = (baseB + (255 - baseB) * whiteProgress) / 255.0F;
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             graphics.setColor(r, g, b, alpha);
-            ModShaders.logoGlitch((player.tickCount + Minecraft.getInstance().getPartialTick()) / 20F, 0.7F + renderProgress * 0.8F);
-            graphics.blit(ClientProxy.FPS_UI_ICONS_LOCATION,
-                    progressBarX, progressBarY,
-                    progressWidth, progressBarHeight,
-                    34F, 1F,
-                    1F, 1F,
-                    512F, 384F,
+            ModShaders.logoGlitch((player.tickCount + Minecraft.getInstance().getPartialTick()) / 20.0F, 0.7F + renderProgress * 0.8F);
+            graphics.blit(
+                    ClientProxy.FPS_UI_ICONS_LOCATION,
+                    progressBarX,
+                    progressBarY,
+                    progressWidth,
+                    progressBarHeight,
+                    34.0F,
+                    1.0F,
+                    1.0F,
+                    1.0F,
+                    512.0F,
+                    384.0F,
                     ModShaders::getLogoGlitch
             );
-            graphics.setColor(1F, 1F, 1F, 1F);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
-        //安装提示框左右边框
-        graphics.fill(textBarX - 2, textBarY, textBarX, textBarY + barHeight, teamColor);
-        graphics.fill(textBarX + textBarWidth, textBarY, textBarX + textBarWidth + 2, textBarY + barHeight, teamColor);
-        //模糊条左右边框
-        graphics.fill(x - 2, y, x, y + barHeight, teamColor);
-        graphics.fill(x + barWidth, y, x + barWidth + 2, y + barHeight, teamColor);
-        String percentText = Math.round(renderProgress * 100F) + "%";
-        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1F, progressBarY + (progressBarHeight - font.lineHeight) / 2F, percentColor, true);
+
+        graphics.fill(x - 2.0F, y, x, y + barHeight, teamColor);
+        graphics.fill(x + barWidth, y, x + barWidth + 2.0F, y + barHeight, teamColor);
+        String percentText = Math.round(renderProgress * 100.0F) + "%";
+        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1.0F, progressBarY + (progressBarHeight - font.lineHeight) / 2.0F, percentColor, true);
         poseStack.popPose();
     }
+
     public void renderShearingAnimation(LocalPlayer player, ForgeGui gui, MegaGuiGraphics graphics, float progress, int screenWidth, int screenHeight) {
-        float alpha = 1F - Easing.IN_OUT_CUBIC.calculate((1F - Math.min(1F, progress * 7F)));
+        float alpha = 1.0F - Easing.IN_OUT_CUBIC.calculate(1.0F - Math.min(1.0F, progress * 7.0F));
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
+
         Font font = gui.getFont();
-        int percentColor = ((int)(alpha * 255) << 24) | 0x00A0A0A0;
+        int percentColor = ((int) (alpha * 255.0F) << 24) | 0x00A0A0A0;
         float barWidth = screenWidth * 0.3F;
         float barHeight = barWidth * 0.1F;
         float textBarWidth = barWidth * 0.5F;
-        float x = (screenWidth - barWidth) / 2;
-        float y = screenHeight * 0.75F;
-        y += (-10 * (1F - alpha));
-        float textBarX = (screenWidth - textBarWidth) / 2;
-        float textBarY = y - barHeight - 2;
+        float x = (screenWidth - barWidth) / 2.0F;
+        float y = screenHeight * 0.75F - 10.0F * (1.0F - alpha);
+        float textBarX = (screenWidth - textBarWidth) / 2.0F;
+        float textBarY = y - barHeight - 2.0F;
         int teamColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), percentColor);
-        graphics.flush();
-        //拆除提示框
-        BlurRectRenderer.render(graphics, textBarX, textBarY, textBarWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
-        //拆除提示词
-        graphics.drawCenteredString(font, "炸弹拆除中", (int) (textBarX + textBarWidth / 2F), (int) (textBarY + (barHeight - font.lineHeight) / 2), percentColor);
-        //模糊条
-        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int)(alpha * 80 + 1) << 24 | 0x00300000 | 0x00003000 | 0x00000030), alpha * 8.0F);
-        float renderProgress = Math.min(1F, Math.max(0F, progress));
-        float progressBarX = x + 2F;
-        float progressBarY = y + 3F;
-        float progressBarWidth = barWidth - 4F;
-        float progressBarHeight = barHeight - 6F;
+
+        float realTextBarWidth = alpha * textBarWidth;
+        renderNotificationBackground(graphics, textBarX + textBarWidth / 2.0F, textBarY, realTextBarWidth, barHeight, alpha, teamColor);
+        graphics.enableScissor((int) (textBarX + (textBarWidth - realTextBarWidth) / 2.0F), (int) textBarY, (int) (textBarX + (textBarWidth + realTextBarWidth) / 2.0F), (int) (textBarY + barHeight));
+        graphics.drawCenteredString(realTextBarWidth < textBarWidth ? ErrorFont.INSTANCE : font, "炸弹拆除中", (int) (textBarX + textBarWidth / 2.0F), (int) (textBarY + (barHeight - font.lineHeight) / 2.0F), percentColor);
+        graphics.disableScissor();
+
+        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        float renderProgress = Math.min(1.0F, Math.max(0.0F, progress));
+        float progressBarX = x + 2.0F;
+        float progressBarY = y + 3.0F;
+        float progressBarWidth = barWidth - 4.0F;
+        float progressBarHeight = barHeight - 6.0F;
         float progressWidth = progressBarWidth * renderProgress;
-        if (progressWidth > 0F) {
-            float whiteProgress = Math.min(1F, Math.max(0F, (renderProgress - 0.8F) / 0.2F));
-            int baseR = FastColor.ARGB32.red(0xFF8b9ea8);
-            int baseG = FastColor.ARGB32.green(0xFF8b9ea8);
-            int baseB = FastColor.ARGB32.blue(0xFF8b9ea8);
-            float r = (baseR + (255 - baseR) * whiteProgress) / 255F;
-            float g = (baseG + (255 - baseG) * whiteProgress) / 255F;
-            float b = (baseB + (255 - baseB) * whiteProgress) / 255F;
+        if (progressWidth > 0.0F) {
+            float whiteProgress = Math.min(1.0F, Math.max(0.0F, (renderProgress - 0.8F) / 0.2F));
+            int baseR = FastColor.ARGB32.red(0xFF8B9EA8);
+            int baseG = FastColor.ARGB32.green(0xFF8B9EA8);
+            int baseB = FastColor.ARGB32.blue(0xFF8B9EA8);
+            float r = (baseR + (255 - baseR) * whiteProgress) / 255.0F;
+            float g = (baseG + (255 - baseG) * whiteProgress) / 255.0F;
+            float b = (baseB + (255 - baseB) * whiteProgress) / 255.0F;
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
             graphics.setColor(r, g, b, alpha);
-            ModShaders.logoGlitch((player.tickCount + Minecraft.getInstance().getPartialTick()) / 20F, 0.7F + renderProgress * 0.8F);
-            graphics.blit(ClientProxy.FPS_UI_ICONS_LOCATION,
-                    progressBarX, progressBarY,
-                    progressWidth, progressBarHeight,
-                    34F, 1F,
-                    1F, 1F,
-                    512F, 384F,
+            ModShaders.logoGlitch((player.tickCount + Minecraft.getInstance().getPartialTick()) / 20.0F, 0.7F + renderProgress * 0.8F);
+            graphics.blit(
+                    ClientProxy.FPS_UI_ICONS_LOCATION,
+                    progressBarX,
+                    progressBarY,
+                    progressWidth,
+                    progressBarHeight,
+                    34.0F,
+                    1.0F,
+                    1.0F,
+                    1.0F,
+                    512.0F,
+                    384.0F,
                     ModShaders::getLogoGlitch
             );
-            graphics.setColor(1F, 1F, 1F, 1F);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
-        //拆除提示框左右边框
-        graphics.fill(textBarX - 2, textBarY, textBarX, textBarY + barHeight, teamColor);
-        graphics.fill(textBarX + textBarWidth, textBarY, textBarX + textBarWidth + 2, textBarY + barHeight, teamColor);
-        //模糊条左右边框
-        graphics.fill(x - 2, y, x, y + barHeight, teamColor);
-        graphics.fill(x + barWidth, y, x + barWidth + 2, y + barHeight, teamColor);
-        String percentText = Math.round(renderProgress * 100F) + "%";
-        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1F, progressBarY + (progressBarHeight - font.lineHeight) / 2F, percentColor, false);
+
+        graphics.fill(x - 2.0F, y, x, y + barHeight, teamColor);
+        graphics.fill(x + barWidth, y, x + barWidth + 2.0F, y + barHeight, teamColor);
+        String percentText = Math.round(renderProgress * 100.0F) + "%";
+        graphics.drawString(font, percentText, progressBarX + progressBarWidth - font.width(percentText) - 1.0F, progressBarY + (progressBarHeight - font.lineHeight) / 2.0F, percentColor, false);
         poseStack.popPose();
+    }
+
+    private static void renderNotificationBackground(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha, int borderColor) {
+        graphics.flush();
+        BlurRectRenderer.render(graphics, centerX - realWidth / 2.0F, y, realWidth, height, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        graphics.fill(centerX - 2.0F - realWidth / 2.0F, y, centerX - realWidth / 2.0F, y + height, borderColor);
+        graphics.fill(centerX + realWidth / 2.0F, y, centerX + realWidth / 2.0F + 2.0F, y + height, borderColor);
+    }
+
+    private static void renderWhiteFlash(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha) {
+        if (ClientFpsData.bombCountdownRenderTimer >= ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - 10) {
+            graphics.fill(centerX - realWidth / 2.0F, y, centerX + realWidth / 2.0F, y + height, ((int) (255.0F - alpha * 255.0F) << 24) | 0x00FFFFFF);
+        }
     }
 }

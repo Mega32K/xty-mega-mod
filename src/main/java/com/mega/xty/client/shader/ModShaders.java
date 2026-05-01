@@ -22,6 +22,8 @@ public class ModShaders extends RenderType {
     private static ShaderInstance VORONOI_FLOW_BACKGROUND;
     private static ShaderInstance GUI_BLUR_RECT;
     private static ShaderInstance LOGO_GLITCH;
+    private static ShaderInstance LOGO_GLITCH_POSITION_COLOR_TEX_LIGHTMAP;
+    private static ShaderInstance LOGO_GLITCH_TEXT_INTENSITY_POSITION_COLOR_TEX_LIGHTMAP;
 
     public ModShaders(String p_173178_, VertexFormat p_173179_, VertexFormat.Mode p_173180_, int p_173181_, boolean p_173182_, boolean p_173183_, Runnable p_173184_, Runnable p_173185_) {
         super(p_173178_, p_173179_, p_173180_, p_173181_, p_173182_, p_173183_, p_173184_, p_173185_);
@@ -30,7 +32,6 @@ public class ModShaders extends RenderType {
     private static ShaderInstance MODERN_GAUSSIAN_BLUR;
     private static ShaderInstance GRAY;
     private static ShaderInstance X_REVERSE;
-
 
     public static ShaderInstance getGray() {
         return GRAY;
@@ -109,6 +110,18 @@ public class ModShaders extends RenderType {
     public static void setLogoGlitch(ShaderInstance logoGlitch) {
         LOGO_GLITCH = logoGlitch;
     }
+    public static ShaderInstance getLogoGlitchPositionColorTexLightmap() {
+        return LOGO_GLITCH_POSITION_COLOR_TEX_LIGHTMAP;
+    }
+    public static void setLogoGlitchPositionColorTexLightmap(ShaderInstance logoGlitchPositionColorTexLightmap) {
+        LOGO_GLITCH_POSITION_COLOR_TEX_LIGHTMAP = logoGlitchPositionColorTexLightmap;
+    }
+    public static ShaderInstance getLogoGlitchTextIntensityPositionColorTexLightmap() {
+        return LOGO_GLITCH_TEXT_INTENSITY_POSITION_COLOR_TEX_LIGHTMAP;
+    }
+    public static void setLogoGlitchTextIntensityPositionColorTexLightmap(ShaderInstance shaderInstance) {
+        LOGO_GLITCH_TEXT_INTENSITY_POSITION_COLOR_TEX_LIGHTMAP = shaderInstance;
+    }
     public static ShaderInstance getVoronoiFlowBackground() {
         return VORONOI_FLOW_BACKGROUND;
     }
@@ -151,6 +164,13 @@ public class ModShaders extends RenderType {
     }
     public static void logoGlitch(float time, float glitchStrength) {
         ShaderInstance shaderInstance = getLogoGlitch();
+        logoGlitch(time, glitchStrength, shaderInstance);
+    }
+    public static void logoGlitchPositionColorTexLightmap(float time, float glitchStrength) {
+        ShaderInstance shaderInstance = getLogoGlitchPositionColorTexLightmap();
+        logoGlitch(time, glitchStrength, shaderInstance);
+    }
+    public static void logoGlitch(float time, float glitchStrength, ShaderInstance shaderInstance) {
         if (shaderInstance == null) {
             return;
         }

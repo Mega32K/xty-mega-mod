@@ -6,6 +6,8 @@ import com.mega.xty.common.data.fps.kad.ServerSynchedKADData;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
 import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
+import com.mega.xty.common.network.s2c.fps.S2CWeaponWarehouseBlacklistPacket;
+import com.mega.xty.common.network.s2c.warehouse.S2CSyncWeaponWarehousePacket;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.common.network.NetworkHandler;
@@ -20,6 +22,8 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -31,12 +35,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +58,7 @@ public class FpsSavedData extends SavedData {
     private Map<UUID, ServerSynchedKADData> kadData;
     private boolean playerNamesDirty = false;
     private Map<UUID, TabData> playerTabData;
+    private Set<ResourceLocation> warehouseGunBlacklist = new LinkedHashSet<>();
 
 
     public MinecraftServer server;
@@ -64,6 +69,7 @@ public class FpsSavedData extends SavedData {
             FpsSavedData sd = new FpsSavedData();
             sd.setKadData(new Object2ObjectOpenHashMap<>());
             sd.setPlayerTabData(new Object2ObjectOpenHashMap<>());
+            sd.warehouseGunBlacklist = new LinkedHashSet<>();
             return sd;
         }, "xty_fps_saved_data");
         data.server = server;
@@ -76,6 +82,17 @@ public class FpsSavedData extends SavedData {
         FpsSavedData data = new FpsSavedData();
         data.setPlayerTabData(CompoundTagUtils.getMap(tag, "PlayerTabData", CompoundTag::getUUID, TabData.NBT_READER));
         data.setKadData(CompoundTagUtils.getMap(tag, "KAD", CompoundTag::getUUID, ServerSynchedKADData.NBT_READER.apply(data)));
+        if (tag.contains("WarehouseGunBlacklist", Tag.TAG_LIST)) {
+            ListTag listTag = tag.getList("WarehouseGunBlacklist", Tag.TAG_STRING);
+            Set<ResourceLocation> blacklist = new LinkedHashSet<>();
+            for (int i = 0; i < listTag.size(); i++) {
+                ResourceLocation id = ResourceLocation.tryParse(listTag.getString(i));
+                if (id != null) {
+                    blacklist.add(id);
+                }
+            }
+            data.warehouseGunBlacklist = blacklist;
+        }
         data.enableKAD = tag.getBoolean("enableKAD");
         data.bombExist = tag.getBoolean("bombExist");
         data.bombPosition = tag.getByte("bombPosition");
@@ -182,6 +199,13 @@ public class FpsSavedData extends SavedData {
     public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag) {
         CompoundTagUtils.putMap(compoundTag, "PlayerTabData", playerTabData, CompoundTag::putUUID, TabData.NBT_WRITER);
         CompoundTagUtils.putMap(compoundTag, "KAD", kadData, CompoundTag::putUUID, ServerSynchedKADData.NBT_WRITER);
+        if (!this.warehouseGunBlacklist.isEmpty()) {
+            ListTag listTag = new ListTag();
+            for (ResourceLocation id : this.warehouseGunBlacklist) {
+                listTag.add(net.minecraft.nbt.StringTag.valueOf(id.toString()));
+            }
+            compoundTag.put("WarehouseGunBlacklist", listTag);
+        }
         compoundTag.putBoolean("enableKAD", this.enableKAD);
         compoundTag.putBoolean("bombExist", this.bombExist);
         compoundTag.putByte("bombPosition", this.bombPosition);
@@ -273,8 +297,79 @@ public class FpsSavedData extends SavedData {
         for (var entry : playerTabData.entrySet())
             if (entry.getValue().isDirty()) {
                 map.put(entry.getKey(), entry.getValue());
-            }
+        }
         this.setPlayerNamesDirty(false);
         return map;
+    }
+
+    public Set<ResourceLocation> getWarehouseGunBlacklist() {
+        return Collections.unmodifiableSet(this.warehouseGunBlacklist);
+    }
+
+    public boolean isWarehouseGunBlacklisted(ResourceLocation id) {
+        return id != null && this.warehouseGunBlacklist.contains(id);
+    }
+
+    public void setWarehouseGunBlacklist(Collection<ResourceLocation> blacklist) {
+        Set<ResourceLocation> cleaned = new LinkedHashSet<>();
+        for (ResourceLocation id : blacklist) {
+            if (id != null) {
+                cleaned.add(id);
+            }
+        }
+        if (!this.warehouseGunBlacklist.equals(cleaned)) {
+            this.warehouseGunBlacklist = cleaned;
+            this.setDirty();
+            syncWarehouseGunBlacklist();
+            sanitizeWeaponWarehouses();
+        }
+    }
+
+    public boolean addWarehouseGunBlacklist(ResourceLocation id) {
+        if (id == null || this.warehouseGunBlacklist.contains(id)) {
+            return false;
+        }
+        Set<ResourceLocation> updated = new LinkedHashSet<>(this.warehouseGunBlacklist);
+        updated.add(id);
+        setWarehouseGunBlacklist(updated);
+        return true;
+    }
+
+    public boolean removeWarehouseGunBlacklist(ResourceLocation id) {
+        if (id == null || !this.warehouseGunBlacklist.contains(id)) {
+            return false;
+        }
+        Set<ResourceLocation> updated = new LinkedHashSet<>(this.warehouseGunBlacklist);
+        updated.remove(id);
+        setWarehouseGunBlacklist(updated);
+        return true;
+    }
+
+    public void clearWarehouseGunBlacklist() {
+        if (!this.warehouseGunBlacklist.isEmpty()) {
+            setWarehouseGunBlacklist(Collections.emptySet());
+        }
+    }
+
+    private void syncWarehouseGunBlacklist() {
+        if (this.server == null) {
+            return;
+        }
+        for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
+            NetworkHandler.sendToPlayer(new S2CWeaponWarehouseBlacklistPacket(this.warehouseGunBlacklist), serverPlayer);
+        }
+    }
+
+    private void sanitizeWeaponWarehouses() {
+        if (this.server == null) {
+            return;
+        }
+        for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
+            CommonProxy.getWeaponWarehouseCap(serverPlayer).ifPresent(cap -> {
+                var sanitized = com.mega.xty.common.warehouse.WeaponWarehouseItems.sanitizeSnapshot(cap.getWeaponWarehouse(), this.warehouseGunBlacklist);
+                cap.setWeaponWarehouse(sanitized);
+                NetworkHandler.sendToPlayer(new S2CSyncWeaponWarehousePacket(cap.getWeaponWarehouse()), serverPlayer);
+            });
+        }
     }
 }

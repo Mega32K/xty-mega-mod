@@ -35,7 +35,7 @@ mat4 saturationMatrix(float saturation) {
 void main() {
     vec4 currTexel = texture(DiffuseSampler, texCoord);
     vec3 filterColor = vec3(0.85, 0.85, 1.1);
-    float filterAlpha = clamp(1.0 - TotalTime / 10.0, 0.0, 1.0);
+    float filterAlpha = clamp(2.0 - TotalTime / 5.0, 0.0, 1.0);
 
     fragColor = saturationMatrix(clamp(3.2 - filterAlpha * 3.2, 0.2, 1.0)) * currTexel * vec4(mix(vec3(1.0), filterColor, filterAlpha), 1.0);
 }

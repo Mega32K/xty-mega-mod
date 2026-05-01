@@ -64,6 +64,7 @@ public class GameCommonEvents {
                                 server.getFunctions().get(ResourceLocation.parse(functionS)).ifPresent(commandFunction -> server.getFunctions().execute(commandFunction, player.createCommandSourceStack().withMaximumPermission(2).withSuppressedOutput()));
                             }
                         }
+                        data.finish(false);
                     }
                 }
             }

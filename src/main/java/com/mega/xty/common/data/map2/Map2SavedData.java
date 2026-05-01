@@ -21,7 +21,6 @@ import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.fps.S2CRoundLoseRenderPacket;
 import com.mega.xty.common.network.s2c.fps.S2CRoundWinRenderPacket;
 import com.mega.xty.common.network.s2c.map2.*;
-import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.endinglib.common.network.PacketHandler;
 import com.mega.xty.proxy.CommonProxy;
@@ -33,9 +32,9 @@ import com.tacz.guns.util.AttachmentDataUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.xjqsh.lrtactical.entity.GrenadeEntity;
+import me.xjqsh.lrtactical.entity.ThrowableItemEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -43,14 +42,11 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -497,9 +493,8 @@ public class Map2SavedData extends SavedData {
             clearGame2RoundWorldEntities();
         }
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
-        SoundEvent sound = redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
         for (ServerPlayer sp : players) {
-            sp.connection.send(new ClientboundSoundEntityPacket(Holder.direct(sound), SoundSource.PLAYERS, sp, 1, 1, sp.getRandom().nextLong()));
+            NetworkHandler.sendToPlayer(new S2CRoundWinSoundPacket(redWin), sp);
         }
         if (redWin) {
             this.setRedWins(this.getRedWins() + 1);
@@ -762,14 +757,10 @@ public class Map2SavedData extends SavedData {
 
     private void clearWorldGrenadeEntities() {
         for (ServerLevel level : this.server.getAllLevels()) {
-            List<GrenadeEntity> grenadeEntities = new ObjectArrayList<>();
             for (var entity : level.getAllEntities()) {
-                if (entity instanceof GrenadeEntity grenadeEntity) {
-                    grenadeEntities.add(grenadeEntity);
+                if (entity instanceof ThrowableItemEntity) {
+                    entity.discard();
                 }
-            }
-            for (GrenadeEntity grenadeEntity : grenadeEntities) {
-                grenadeEntity.discard();
             }
         }
     }
@@ -797,7 +788,8 @@ public class Map2SavedData extends SavedData {
             if (team == null || team.getColor() != ChatFormatting.BLUE) {
                 continue;
             }
-            CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> cap.applySelectedWarehouseLoadout(player));
+            FpsSavedData fpsSavedData = FpsSavedData.getInstance(this.server);
+            CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> cap.applySelectedWarehouseLoadout(player, fpsSavedData.getWarehouseGunBlacklist()));
             giveBdkIfMissing(player);
             giveAllTypeCreativeAmmoBox(player);
             fillInventoryGuns(player);

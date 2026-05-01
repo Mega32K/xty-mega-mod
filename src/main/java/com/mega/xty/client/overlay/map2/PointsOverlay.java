@@ -42,7 +42,7 @@ public class PointsOverlay implements IGuiOverlay {
                     String text1 = Math.round((float) pPos.distanceTo(pa.getCenter())) + "m";
                     String text2 = "A";
                     poseStack.pushPose();
-                    poseStack.translate(screenPos.x, screenPos.y, 1000);
+                    poseStack.translate(screenPos.x, screenPos.y, 0);
                     guiGraphics.drawCenteredString(font, text1, 0, 0, 0xA0FFFFFF);
                     font.drawInBatch8xOutline(FormattedCharSequence.forward(text2, Style.EMPTY),
                             -font.width(text2) / 2F, font.lineHeight,
@@ -58,7 +58,7 @@ public class PointsOverlay implements IGuiOverlay {
                     String text1 = Math.round((float) pPos.distanceTo(pb.getCenter())) + "m";
                     String text2 = "B";
                     poseStack.pushPose();
-                    poseStack.translate(screenPos.x, screenPos.y, 1000);
+                    poseStack.translate(screenPos.x, screenPos.y, 0);
                     guiGraphics.drawCenteredString(font, text1, 0, 0, 0xA0FFFFFF);
                     font.drawInBatch8xOutline(FormattedCharSequence.forward(text2, Style.EMPTY),
                             -font.width(text2) / 2F, font.lineHeight,

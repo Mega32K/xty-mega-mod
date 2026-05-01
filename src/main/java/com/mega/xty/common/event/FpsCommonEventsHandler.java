@@ -8,6 +8,7 @@ import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.fps.S2CBombDataPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerKADPacket;
 import com.mega.xty.common.network.s2c.fps.S2CPlayerNamePacket;
+import com.mega.xty.common.network.s2c.fps.S2CWeaponWarehouseBlacklistPacket;
 import com.mega.xty.common.network.s2c.fps.S2CUsingKADPacket;
 import com.mega.xty.proxy.CommonProxy;
 import net.minecraft.server.MinecraftServer;
@@ -33,6 +34,7 @@ public class FpsCommonEventsHandler {
             if (data.isEnableKAD()) {
                 NetworkHandler.sendToPlayer(new S2CPlayerKADPacket(true, data.getKadData()), serverPlayer);
             }
+            NetworkHandler.sendToPlayer(new S2CWeaponWarehouseBlacklistPacket(data.getWarehouseGunBlacklist()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CBombDataPacket(data.isBombExist(), data.getBombPosition(), data.getBombCountdownTicks()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CPlayerNamePacket(true, data.getPlayerTabData()), serverPlayer);
         }

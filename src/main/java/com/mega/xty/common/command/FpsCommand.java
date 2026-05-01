@@ -3,6 +3,9 @@ package com.mega.xty.common.command;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
+import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.network.s2c.map2.game2.S2CDeadPostEffectPacket;
+import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -16,6 +19,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collection;
@@ -24,6 +28,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class FpsCommand {
+    private static final int DEFAULT_DEAD_POST_EFFECT_SECONDS = 3;
+
     private static final SuggestionProvider<CommandSourceStack> KAD_DEFAULT_KEY_PROVIDER = new SuggestionProvider<CommandSourceStack>() {
         @Override
         public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
@@ -108,6 +114,34 @@ public class FpsCommand {
                                                 )
                                         )
                                 )
+                        )
+                )
+                .then(Commands.literal("effect")
+                        .then(Commands.literal("dead")
+                                .then(Commands.argument("targets", EntityArgument.players())
+                                        .executes(context -> startDeadPostEffect(context.getSource(), EntityArgument.getPlayers(context, "targets"), DEFAULT_DEAD_POST_EFFECT_SECONDS))
+                                        .then(Commands.argument("seconds", IntegerArgumentType.integer(1))
+                                                .executes(context -> startDeadPostEffect(context.getSource(), EntityArgument.getPlayers(context, "targets"), IntegerArgumentType.getInteger(context, "seconds")))
+                                        )
+                                )
+                        )
+                )
+                .then(Commands.literal("warehouseBlacklist")
+                        .then(Commands.literal("add")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(context -> addWarehouseGunBlacklist(context.getSource(), EntityArgument.getPlayer(context, "player")))
+                                )
+                        )
+                        .then(Commands.literal("remove")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(context -> removeWarehouseGunBlacklist(context.getSource(), EntityArgument.getPlayer(context, "player")))
+                                )
+                        )
+                        .then(Commands.literal("clear")
+                                .executes(context -> clearWarehouseGunBlacklist(context.getSource()))
+                        )
+                        .then(Commands.literal("get")
+                                .executes(context -> getWarehouseGunBlacklist(context.getSource()))
                         )
                 )
                 .then(Commands.literal("bomb")
@@ -238,5 +272,51 @@ public class FpsCommand {
         FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
         sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.bomb.countdown.get", savedData.getBombCountdownTicks()), false);
         return savedData.getBombCountdownTicks();
+    }
+
+    private static int startDeadPostEffect(CommandSourceStack sourceStack, Collection<? extends ServerPlayer> players, int seconds) {
+        int durationTicks = seconds * 20;
+        for (ServerPlayer player : players) {
+            NetworkHandler.sendToPlayer(new S2CDeadPostEffectPacket(durationTicks), player);
+        }
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.effect.dead.start", players.size(), seconds), false);
+        return players.size();
+    }
+
+    private static int addWarehouseGunBlacklist(CommandSourceStack sourceStack, ServerPlayer player) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        ResourceLocation gunId = WeaponWarehouseItems.getGunIdFromMainHand(player);
+        if (gunId == null) {
+            sourceStack.sendFailure(Component.translatable("commands.xtymegamod.message.fps.warehouse_blacklist.invalid"));
+            return 0;
+        }
+        boolean added = savedData.addWarehouseGunBlacklist(gunId);
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.warehouse_blacklist.add", gunId.toString(), added), false);
+        return added ? 1 : 0;
+    }
+
+    private static int removeWarehouseGunBlacklist(CommandSourceStack sourceStack, ServerPlayer player) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        ResourceLocation gunId = WeaponWarehouseItems.getGunIdFromMainHand(player);
+        if (gunId == null) {
+            sourceStack.sendFailure(Component.translatable("commands.xtymegamod.message.fps.warehouse_blacklist.invalid"));
+            return 0;
+        }
+        boolean removed = savedData.removeWarehouseGunBlacklist(gunId);
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.warehouse_blacklist.remove", gunId.toString(), removed), false);
+        return removed ? 1 : 0;
+    }
+
+    private static int clearWarehouseGunBlacklist(CommandSourceStack sourceStack) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        savedData.clearWarehouseGunBlacklist();
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.warehouse_blacklist.clear"), false);
+        return 0;
+    }
+
+    private static int getWarehouseGunBlacklist(CommandSourceStack sourceStack) {
+        FpsSavedData savedData = FpsSavedData.getInstance(sourceStack.getServer());
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.warehouse_blacklist.get", savedData.getWarehouseGunBlacklist().size()), false);
+        return savedData.getWarehouseGunBlacklist().size();
     }
 }

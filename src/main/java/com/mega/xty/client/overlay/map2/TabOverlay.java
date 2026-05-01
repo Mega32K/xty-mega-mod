@@ -45,7 +45,7 @@ public class TabOverlay implements IGuiOverlay {
             graphics.bufferSource().endBatch();
             PoseStack poseStack = graphics.pose();
             poseStack.pushPose();
-            poseStack.translate(0, 0, 400);
+            poseStack.translate(0, 0, 1000);
             renderBackground(gui, graphics, poseStack, partialTick, screenWidth, screenHeight);
             poseStack.popPose();
         }

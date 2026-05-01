@@ -2,6 +2,7 @@ package com.mega.xty.common.command;
 
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.warehouse.S2COpenWeaponWarehousePacket;
+import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.proxy.CommonProxy;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -49,7 +50,11 @@ public class WeaponWarehouseCommand {
     }
 
     private static void openWarehouse(ServerPlayer player) {
-        CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> NetworkHandler.sendToPlayer(new S2COpenWeaponWarehousePacket(cap.getWeaponWarehouse()), player));
+        FpsSavedData fpsSavedData = FpsSavedData.getInstance(player.server);
+        CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> NetworkHandler.sendToPlayer(
+                new S2COpenWeaponWarehousePacket(WeaponWarehouseItems.sanitizeSnapshot(cap.getWeaponWarehouse(), fpsSavedData.getWarehouseGunBlacklist())),
+                player
+        ));
     }
 
     private static int applyLoadout(CommandSourceStack sourceStack, int loadout) {
@@ -60,9 +65,10 @@ public class WeaponWarehouseCommand {
     }
 
     private static int applyLoadout(ServerPlayer player, int loadout) {
+        FpsSavedData fpsSavedData = FpsSavedData.getInstance(player.server);
         CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> {
             cap.setSelectedWarehouseLoadout(loadout - 1);
-            cap.applySelectedWarehouseLoadout(player);
+            cap.applySelectedWarehouseLoadout(player, fpsSavedData.getWarehouseGunBlacklist());
         });
         return 1;
     }

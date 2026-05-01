@@ -94,6 +94,12 @@
   "commands.xtymegamod.message.fps.bomb.exist.get": "§7炸弹是否已安放为 %s",
   "commands.xtymegamod.message.fps.bomb.position.get": "§7炸弹安放点位为 %s",
   "commands.xtymegamod.message.fps.bomb.countdown.get": "§7炸弹倒计时为 %s tick",
+  "commands.xtymegamod.message.fps.effect.dead.start": "§7已向 %s 名玩家应用死亡屏幕效果，持续 %s 秒",
+  "commands.xtymegamod.message.fps.warehouse_blacklist.invalid": "§7请先手持一把枪械",
+  "commands.xtymegamod.message.fps.warehouse_blacklist.add": "§7已将 %s 加入武器仓库黑名单",
+  "commands.xtymegamod.message.fps.warehouse_blacklist.remove": "§7已将 %s 从武器仓库黑名单移除",
+  "commands.xtymegamod.message.fps.warehouse_blacklist.clear": "§7已清空武器仓库黑名单",
+  "commands.xtymegamod.message.fps.warehouse_blacklist.get": "§7武器仓库黑名单数量: %s",
 
   "commands.xtymegamod.message.weapon_warehouse.open": "§7已向 %s 打开武器仓库",
   "screen.xtymegamod.weapon_warehouse.title": "武器仓库",
