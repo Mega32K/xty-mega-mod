@@ -166,6 +166,7 @@ public class Game2SavedData extends SavedData {
         data.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
         data.removeDisabledPermission(player, InputOperations.JUMP);
         data.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+        data.removeDisabledPermission(player, InputOperations.MOUSE_USE);
     }
 
     private void clearRoundArmor(ServerPlayer player) {

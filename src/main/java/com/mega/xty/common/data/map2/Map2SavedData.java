@@ -543,6 +543,7 @@ public class Map2SavedData extends SavedData {
         }
         runStartNewRoundFunction();
         clearWorldDroppedItems();
+        clearGame2RoundWorldEntities();
         List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
         EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
         for (ServerPlayer player : players) {
@@ -562,6 +563,7 @@ public class Map2SavedData extends SavedData {
                 elData.addDisabledPermission(player, InputOperations.MOVE_RIGHT);
                 elData.addDisabledPermission(player, InputOperations.JUMP);
                 elData.addDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+                elData.addDisabledPermission(player, InputOperations.MOUSE_USE);
                 CommonProxy.getMap2Cap(player).ifPresent(cap -> cap.setRoundKeyboardUnlockGameTime(unlockGameTime));
                 NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(NEW_ROUND_POST_EFFECT_TICKS), player);
             } else {
@@ -674,6 +676,7 @@ public class Map2SavedData extends SavedData {
         data.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
         data.removeDisabledPermission(player, InputOperations.JUMP);
         data.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+        data.removeDisabledPermission(player, InputOperations.MOUSE_USE);
     }
     private void equipRoundArmor(ServerPlayer player) {
         Team team = player.getTeam();

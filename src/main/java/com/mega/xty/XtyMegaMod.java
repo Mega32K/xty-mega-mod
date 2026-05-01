@@ -1,8 +1,8 @@
 package com.mega.xty;
 
 import com.mega.xty.common.config.CommonConfig;
-import com.mega.xty.common.event.map1.Game2TaczEvents;
 import com.mega.xty.common.event.map1.TaczCommonEvents;
+import com.mega.xty.common.event.map2.Game2TaczEvents;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.proxy.CommonProxy;

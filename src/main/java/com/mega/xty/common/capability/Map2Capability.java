@@ -569,6 +569,8 @@ public class Map2Capability extends EntitySyncCapabilityBase {
             savedData.removeDisabledPermission(player, InputOperations.MOVE_LEFT);
             savedData.removeDisabledPermission(player, InputOperations.MOVE_RIGHT);
             savedData.removeDisabledPermission(player, InputOperations.JUMP);
+            savedData.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
+            savedData.removeDisabledPermission(player, InputOperations.MOUSE_USE);
             this.clearRoundKeyboardUnlockGameTime();
         }
     }

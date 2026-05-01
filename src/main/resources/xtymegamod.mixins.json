@@ -14,6 +14,7 @@
     "endinglib.ServerExpandedContextMixin",
     "gd656killicon.Gd656killiconMixin",
     "limbs.LivingEntityMixin",
+    "lrtactical.ConsumableDataMixin",
     "map1.game_2.EntityMixin",
     "map1.game_2.Spider1Mixin",
     "map2.game2.EntityMixin",
@@ -42,12 +43,12 @@
     "map2.ChatComponentMixin",
     "map2.PlayerRendererMixin",
     "map2.PlayerTabOverlayMixin",
-    "tacz.GunHudOverlayMixin",
     "map2.game2.EntityRenderDispatcherMixin",
     "map2.game2.GameRendererMixin",
     "map2.game2.ItemInHandRendererMixin",
     "map2.game2.LivingEntityRendererMixin",
-    "map2.game2.PlayerItemInHandLayerMixin"
+    "map2.game2.PlayerItemInHandLayerMixin",
+    "tacz.GunHudOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 1
