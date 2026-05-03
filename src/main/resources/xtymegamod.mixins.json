@@ -41,6 +41,7 @@
     "map1.game_2.PlayerRendererMixin",
     "map1.game_2.scene_changing.ParticleEngeneMixin",
     "map2.ChatComponentMixin",
+    "map2.LocalPlayerMixin",
     "map2.PlayerRendererMixin",
     "map2.PlayerTabOverlayMixin",
     "map2.game2.EntityRenderDispatcherMixin",

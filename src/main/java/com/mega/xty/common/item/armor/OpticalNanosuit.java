@@ -119,7 +119,7 @@ public class OpticalNanosuit extends ArmorItem implements IDragonLightRendererIt
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         if (slot == EquipmentSlot.CHEST) {
             ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-            builder.put(Attributes.MOVEMENT_SPEED, new AttributeModifier(UUID.fromString("578d8d44-37ab-4f63-9486-d02073aa8e1d"), "", 0.2, AttributeModifier.Operation.MULTIPLY_BASE));
+            builder.put(Attributes.MOVEMENT_SPEED, new AttributeModifier(UUID.fromString("578d8d44-37ab-4f63-9486-d02073aa8e1d"), "", 0.1, AttributeModifier.Operation.MULTIPLY_BASE));
             return builder.build();
         }
         return super.getAttributeModifiers(slot, stack);

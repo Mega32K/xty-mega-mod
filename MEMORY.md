@@ -657,3 +657,43 @@
 - 瀛椾綋鍒囨崲锛氬綋 `realWidth < width` 鏃讹紝鏂囨湰浣跨敤 `ErrorFont.INSTANCE`锛涘畬鍏ㄥ睍寮€鍚庡垏鍥炴櫘閫?`Font`銆?
 - 缁撳熬鐧介棯锛氱粨鏉熷墠 10 tick 淇濈暀涓€灞?`((255 - alpha * 255) << 24) | 0x00FFFFFF` 鐨勭櫧鑹查棯灞傘€?
 - 2026-05-01 锛?`RoundStartOverlay` 宸叉寜杩欏鍐欐硶瀵归綈锛?`LoseOverlay` 褰撳墠宸茬粡鍜?`WinOverlay` 淇濇寔涓€鑷淬€?
+
+## 15. 2026-05-02 至 2026-05-03 简要补充
+
+本节只记录上次记忆文件更新后的新增工程约定，不包含 2026-05-04 当天关于 TACZ 枪包伤害数据学习、批量调参、单枪回滚与数值修改的对话。
+
+### 15.1 game2 枪械开火拦截
+
+- game2 新回合开始阶段禁止枪械开火，确认使用的事件为 `com.tacz.guns.api.event.common.GunFireEvent`。
+- 用户明确要求不要复用 `map1` 区域现成类来承接这段逻辑，因此应在 `map2` 下单独处理。
+- 当前做法是新增 `com.mega.xty.common.event.map2.Game2TaczEvents`：
+  - 服务端在 game2 正在进行且玩家仍处于回合开始锁定期时取消开火。
+  - 服务端对 `xaero dead` 玩家同样取消开火。
+  - 客户端只拦截本地玩家自己的开火事件，避免误伤其他实体的事件流。
+- `XtyMegaMod` 入口在 TACZ 已加载时注册 `Game2TaczEvents`，而 `TaczCommonEvents` 仍保留给通用枪械组件逻辑使用。
+
+### 15.2 回合开始输入恢复
+
+- `Map2Capability#tryClearPendingRoundKeyboardUnlock` 曾漏掉鼠标输入恢复。
+- 现在当回合开始 10 秒锁定期结束，或玩家登录同步到期后自动清理时，除了前后左右和跳跃，还要同时移除：
+  - `InputOperations.MOUSE_ATTACK`
+  - `InputOperations.MOUSE_USE`
+- 这样可以避免玩家在退出重进后残留“不能开火/不能右键”的状态。
+
+### 15.3 语言文件拆分
+
+- `src/main/resources/assets/xtymegamod/lang/en_us.json` 不再保留中文文案，已整体翻译为英文。
+- 从原 `en_us.json` 复制出新的 `zh_cn.json`，用来保留简体中文文案。
+- 这次语言文件调整后的稳定约定：
+  - `zh_cn.json` 作为中文主文案来源。
+  - `en_us.json` 保持纯英文，不混入中文条目。
+  - 两个文件都已经验证为有效 UTF-8 JSON。
+
+### 15.4 BlurRectRenderer 说明结论
+
+- `com.mega.xty.client.renderer.BlurRectRenderer` 的核心职责可以固定理解为：
+  - 先复制主 `framebuffer` 到临时 `TextureTarget`
+  - 再让 shader 采样这份屏幕副本
+  - 最后把模糊矩形绘回主画面
+- 这套实现的关键目的，是避免一边读取主 `framebuffer` 一边写回主 `framebuffer` 的未定义行为。
+- 以后若继续扩展模糊提示框渲染，优先沿用这套“先复制屏幕再局部采样”的结构。

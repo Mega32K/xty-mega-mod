@@ -26,7 +26,7 @@ public class XtyCommands {
                         .then(NoPhysicsCommand.register())
                         .then(Game2Command.register())
                         .then(Map2Command.register(event.getDispatcher()))
-                        .then(GameGunEvolutionCommand.register())
+                        //.then(GameGunEvolutionCommand.register())
                         .then(GameGhostModeCommand.register())
                         .then(DisableInteractBlockCommand.register())
                         .then(FpsCommand.register())

@@ -8,6 +8,7 @@ import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.map2.ClientGame1Data;
+import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.proxy.CommonProxy;
@@ -50,7 +51,7 @@ public class KillCountOverlay implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui || !ClientGameData.scoreOverlayVisible) return;
-        if (ClientGameData.isStopped) return;
+        if (!ClientGameData.map2Playing()) return;
         float game1OverlayOffset = 0F;
         Minecraft mc = gui.getMinecraft();
         int redColor = ChatFormatting.RED.getColor();
@@ -117,20 +118,38 @@ public class KillCountOverlay implements IGuiOverlay {
         } else {
             if (player != null) {
                 Font font = gui.getFont();
-                MutableComponent left = Component.literal("")
-                        .withStyle(ChatFormatting.WHITE)
-                        .append(Component.literal("红队: ").withStyle(ChatFormatting.RED))
-                        .append(Component.literal("%s".formatted(ClientGameData.redTeamKillcount)).withStyle(ChatFormatting.GRAY));
-                MutableComponent mid = Component.literal("")
-                        .withStyle(ChatFormatting.WHITE)
-                        .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
-                        .append(Component.literal(ClientGame1Data.formatTime()).withStyle(ChatFormatting.GOLD))
-                        .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
-                MutableComponent right = Component.literal("")
-                        .withStyle(ChatFormatting.WHITE)
-                        .append(Component.literal("蓝队: ").withStyle(style -> style.withColor(0x649ee8)))
-                        .append(Component.literal("%s".formatted(ClientGameData.blueTeamKillcount)).withStyle(ChatFormatting.GRAY));
-                int width1 = font.width(left);
+                MutableComponent left = null;MutableComponent mid = null;
+
+                MutableComponent right = null;
+                if (ClientGame1Data.playing()) {
+                    right = Component.literal("")
+                            .withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal("蓝队: ").withStyle(style -> style.withColor(0x649ee8)))
+                            .append(Component.literal("%s".formatted(ClientGameData.blueTeamKillcount)).withStyle(ChatFormatting.GRAY));
+                    mid = Component.literal("")
+                            .withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
+                            .append(Component.literal(ClientGame1Data.formatTime()).withStyle(ChatFormatting.GOLD))
+                            .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+                    left = Component.literal("")
+                            .withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal("红队: ").withStyle(ChatFormatting.RED))
+                            .append(Component.literal("%s".formatted(ClientGameData.redTeamKillcount)).withStyle(ChatFormatting.GRAY));
+                } else if (ClientGame2Data.playing()) {
+                    right = Component.literal("")
+                            .withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal("蓝队 ").withStyle(style -> style.withColor(0x649ee8)));
+                    mid = Component.literal("")
+                            .withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
+                            .append(Component.literal(ClientGame1Data.formatTime()).withStyle(ChatFormatting.GOLD))
+                            .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+                    left = Component.literal("")
+                            .withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal(" 红队").withStyle(ChatFormatting.RED));
+                }
+
+                    int width1 = font.width(left);
                 int width2 = font.width(mid);
                 int width3 = font.width(right);
                 if (player.getTeamColor() == blueColor) {

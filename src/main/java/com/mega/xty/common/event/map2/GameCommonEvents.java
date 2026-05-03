@@ -46,25 +46,27 @@ public class GameCommonEvents {
             if (!data.isStopped()) {
                 MinecraftServer server = event.getServer();
                 FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
-                if (!Game2SavedData.getInstance(server).isStopped() && fpsSavedData.isBombExist()) {
-                    if (data.getCountdown() != 0) {
-                        data.setCountdown(0);
-                        NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
-                    }
-                } else if (data.getCountdown() > 0) {
-                    data.setCountdown(data.getCountdown() - 1);
-                    if (data.getCountdown() % 20 == 0) {
-                        NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
-                    }
-                    if (data.getCountdown() == 0) {
-                        String functionS = data.getMap2Functions().getCountdownStopFunction();
-                        if (functionS != null && !functionS.isEmpty()) {
-                            if (!server.getPlayerList().getPlayers().isEmpty()) {
-                                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
-                                server.getFunctions().get(ResourceLocation.parse(functionS)).ifPresent(commandFunction -> server.getFunctions().execute(commandFunction, player.createCommandSourceStack().withMaximumPermission(2).withSuppressedOutput()));
-                            }
+                if (!Game2SavedData.getInstance(server).isStopped()) {
+                    if (fpsSavedData.isBombExist()) {
+                        if (data.getCountdown() != 0) {
+                            data.setCountdown(0);
+                            NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
                         }
-                        data.finish(false);
+                    } else if (data.getCountdown() > 0) {
+                        data.setCountdown(data.getCountdown() - 1);
+                        if (data.getCountdown() % 20 == 0) {
+                            NetworkHandler.sendToAll(new S2CMap2CountdownPacket(data.getCountdown()));
+                        }
+                        if (data.getCountdown() == 0) {
+                            String functionS = data.getMap2Functions().getCountdownStopFunction();
+                            if (functionS != null && !functionS.isEmpty()) {
+                                if (!server.getPlayerList().getPlayers().isEmpty()) {
+                                    ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                                    server.getFunctions().get(ResourceLocation.parse(functionS)).ifPresent(commandFunction -> server.getFunctions().execute(commandFunction, player.createCommandSourceStack().withMaximumPermission(2).withSuppressedOutput()));
+                                }
+                            }
+                            data.finish(false);
+                        }
                     }
                 }
             }

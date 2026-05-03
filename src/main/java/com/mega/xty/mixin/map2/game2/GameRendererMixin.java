@@ -64,8 +64,4 @@ public abstract class GameRendererMixin {
         }
     }
      */
-    @WrapWithCondition(method = "renderItemInHand", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderHandsWithItems(FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/player/LocalPlayer;I)V"))
-    private boolean disableVanillaHandsRendering(ItemInHandRenderer instance, float f5, PoseStack f6, MultiBufferSource.BufferSource f7, LocalPlayer localPlayer, int p_109315_) {
-        return !localPlayer.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get());
-    }
 }
