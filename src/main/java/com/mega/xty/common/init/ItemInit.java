@@ -5,8 +5,10 @@ import com.mega.xty.common.block.IItemBlock;
 import com.mega.xty.common.item.FillFunctionCreatorItem;
 import com.mega.xty.common.item.armor.OpticalNanosuit;
 import com.mega.xty.common.item.armor.WineBottleHat;
+import com.mega.xty.common.item.fps.AdminRenameCardItem;
 import com.mega.xty.common.item.fps.BDKItem;
 import com.mega.xty.common.item.fps.C4BombItem;
+import com.mega.xty.common.item.fps.RenameCardItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -21,6 +23,8 @@ public class ItemInit {
     public static final RegistryObject<Item> OPTICAL_NANOSUIT = ITEMS.register("optical_nanosuit", OpticalNanosuit::new);
     public static final RegistryObject<Item> C4_BOMB = ITEMS.register("c4_bomb", C4BombItem::new);
     public static final RegistryObject<Item> BDK = ITEMS.register("bdk", BDKItem::new);
+    public static final RegistryObject<Item> RENAME_CARD = ITEMS.register("rename_card", () -> new RenameCardItem(new Item.Properties()));
+    public static final RegistryObject<Item> ADMIN_RENAME_CARD = ITEMS.register("admin_rename_card", () -> new AdminRenameCardItem(new Item.Properties()));
     static {
         BlockInit.BLOCKS.getEntries().forEach(ro -> ITEMS.register(ro.getId().getPath(), ()-> {
             Block block = ro.get();

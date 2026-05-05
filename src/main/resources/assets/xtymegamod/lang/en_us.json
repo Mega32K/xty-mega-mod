@@ -19,6 +19,8 @@
   "item.xtymegamod.optical_nanosuit" : "Optical Nanosuit",
   "item.xtymegamod.c4_bomb" : "C4",
   "item.xtymegamod.bdk" : "C4 Defuse Kit",
+  "item.xtymegamod.rename_card" : "Rename Card",
+  "item.xtymegamod.admin_rename_card" : "Admin Rename Card",
 
   "creative_mode_tab.main.name" : "Mega Map Making",
 

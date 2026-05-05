@@ -74,20 +74,25 @@ public final class BlurRectRenderer {
         });
         shader.safeGetUniform("BlurRadius").set(Mth.clamp(blurRadius, 0.0F, MAX_BLUR_RADIUS));
 
-        RenderSystem.disableDepthTest();
+        RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(ModShaders::getGuiBlurRect);
-        RenderSystem.setShaderTexture(0, screenCopy.getColorTextureId());
+        try {
+            RenderSystem.setShader(ModShaders::getGuiBlurRect);
+            RenderSystem.setShaderTexture(0, screenCopy.getColorTextureId());
 
-        Matrix4f matrix4f = graphics.pose().last().pose();
-        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.vertex(matrix4f, x, y, 0.0F).uv(u0, v0).endVertex();
-        bufferBuilder.vertex(matrix4f, x, y + height, 0.0F).uv(u0, v1).endVertex();
-        bufferBuilder.vertex(matrix4f, x + width, y + height, 0.0F).uv(u1, v1).endVertex();
-        bufferBuilder.vertex(matrix4f, x + width, y, 0.0F).uv(u1, v0).endVertex();
-        BufferUploader.drawWithShader(bufferBuilder.end());
+            Matrix4f matrix4f = graphics.pose().last().pose();
+            BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+            bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            bufferBuilder.vertex(matrix4f, x, y, 0.0F).uv(u0, v0).endVertex();
+            bufferBuilder.vertex(matrix4f, x, y + height, 0.0F).uv(u0, v1).endVertex();
+            bufferBuilder.vertex(matrix4f, x + width, y + height, 0.0F).uv(u1, v1).endVertex();
+            bufferBuilder.vertex(matrix4f, x + width, y, 0.0F).uv(u1, v0).endVertex();
+            BufferUploader.drawWithShader(bufferBuilder.end());
+        } finally {
+            RenderSystem.enableDepthTest();
+            RenderSystem.disableBlend();
+        }
     }
 
     public static void ensureScreenCopy(RenderTarget mainTarget) {

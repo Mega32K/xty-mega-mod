@@ -1,12 +1,8 @@
 package com.mega.xty.common.network.c2s.map2;
 
 import com.mega.endinglib.proxy.CommonProxy;
-import com.mega.xty.common.data.map1.Game2SavedData;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -40,7 +36,9 @@ public class C2SSetNamePacket {
         ServerPlayer player = context.get().getSender();
         if (player == null) return;
         CommonProxy.getCameraCapOptional(player).ifPresent(capability -> {
-            capability.setDisplayNameOpt(Optional.of(Component.literal(packet.name)));
+            if (packet.name.isEmpty())
+                capability.setDisplayNameOpt(Optional.empty());
+            else capability.setDisplayNameOpt(Optional.of(Component.literal(packet.name)));
         });
     }
 }

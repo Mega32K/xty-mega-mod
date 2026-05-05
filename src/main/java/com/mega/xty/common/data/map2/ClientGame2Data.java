@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.gui.widget.ForgeSlider;
 
 import java.util.List;
 import java.util.function.Consumer;

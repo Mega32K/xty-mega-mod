@@ -63,12 +63,12 @@ public class RenameScreen extends Screen {
         poseStack.popPose();
         //渲染提示
         if (isNameNotAllowed) {
-            guiGraphics.drawCenteredString(font, editedName.isEmpty() ? "名字不可为空" :"名字中存在不合法字符",
+            guiGraphics.drawCenteredString(font, "名字中存在不合法字符",
                     this.input.getX() + this.input.getWidth() / 2,
                     this.input.getY() + this.input.getHeight() + 4,
                     0xFFFF0000);
         } else {
-            guiGraphics.drawCenteredString(font, "点击确认名字\ue010",
+            guiGraphics.drawCenteredString(font, editedName.isEmpty() ? "应用玩家初始名\ue010" : "点击确认名字\ue010",
                     this.input.getX() + this.input.getWidth() / 2,
                     this.input.getY() + this.input.getHeight() + 4,
                     0xFF00FF00);
@@ -134,7 +134,7 @@ public class RenameScreen extends Screen {
                 break;
             } else reader.skip();
         }
-        if (StringUtils.isBlank(text)) isNameNotAllowed = true;
+        if (StringUtils.isBlank(text) && !text.isEmpty()) isNameNotAllowed = true;
     }
 
     @Override

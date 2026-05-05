@@ -19,6 +19,8 @@
   "item.xtymegamod.optical_nanosuit" : "光学纳米服",
   "item.xtymegamod.c4_bomb" : "C4",
   "item.xtymegamod.bdk" : "C4钳",
+  "item.xtymegamod.rename_card" : "改名卡",
+  "item.xtymegamod.admin_rename_card" : "管理员改名卡",
 
   "creative_mode_tab.main.name" : "Mega地图制作",
 
