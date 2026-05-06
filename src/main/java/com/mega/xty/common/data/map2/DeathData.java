@@ -3,6 +3,7 @@ package com.mega.xty.common.data.map2;
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.mixin.accessor.AccessorGuiGraphics;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.client.shader.ModShaders;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -24,12 +25,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class DeathData {
     public final UUID id = UUID.randomUUID();
@@ -50,29 +53,34 @@ public class DeathData {
     }
     public void tick() {
         tickCount++;
-        if (this.tickCount > 120)
+        if (this.tickCount >= 130)
             ClientGameData.toRemoveDeathData.add(this);
     }
     @OnlyIn(Dist.CLIENT)
-    public void render(MegaGuiGraphics graphics, PoseStack poseStack, Font font, float partialTicks) {
-        float alpha = Easing.OUT_CUBIC.calculate(Math.min((this.tickCount + partialTicks) / 10F, 1.0F));
-        int width = getWidth(font, weapon);
-        RenderSystem.setShaderColor(alpha, alpha, alpha, alpha);
-        poseStack.pushPose();
-        poseStack.translate(width * (1F-alpha), 0, 0);
-        //背景
-        VertexConsumer vertexConsumer = graphics.bufferSource().getBuffer(RenderType.gui());
-        fillGradient(poseStack, vertexConsumer,  -4, -1F, width + 1, 10.5F, 0, 4, 0x7C666666, 0x10666666);
-        fillGradient(poseStack, vertexConsumer, -4, -1F, width + 1, 10.5F, 0, 4, 0x453a5595, 0x453a5595);
-        ((AccessorGuiGraphics) graphics).callFlushIfUnmanaged();
+    public Consumer<PoseStack> render(MegaGuiGraphics graphics, PoseStack poseStack, Font font, float partialTicks) {
+        if (tickCount <= 120) {
+            float appearProgress = Easing.OUT_CUBIC.calculate(Math.min((this.tickCount + partialTicks) / 15F, 1.0F));
+            float disappearProgress = this.tickCount > 120 || this.tickCount < 105 ? 0F : Easing.IN_OUT_SINE.calculate(Math.min((tickCount - 105 + partialTicks), 15F) / 15F);
+            float mixedAlpha = Mth.clamp(appearProgress * (1F - disappearProgress), 0F, 1F);
+            int width = getWidth(font, weapon);
+            poseStack.pushPose();
+            poseStack.translate(width * (1F-appearProgress), 0, 0);
+            //背景
+            BlurRectRenderer.render(graphics, -4, -1, width + 5, 11.5F, ((int) (mixedAlpha * 100)) << 24 | 0x00303030, 4);
+            RenderSystem.setShaderColor(1F, 1F, 1F, mixedAlpha);
 
-        int space = graphics.drawString(font, this.killer, 0, 0, 0xFFFFFFFF);
-        if (!this.weapon.isEmpty()) {
-            renderItemOrGun(graphics, this.weapon, space, -4);
+            int space = graphics.drawString(font, this.killer, 0, 0, 0xFFFFFFFF);
+            if (!this.weapon.isEmpty()) {
+                RenderSystem.enableBlend();
+                RenderSystem.defaultBlendFunc();
+                renderItemOrGun(graphics, this.weapon, space, -4);
+            }
+            graphics.drawString(font, this.beKilled, space + getItemDisplayWidth(weapon), 0, ((int) (mixedAlpha * 255F)) << 24 | 0x00FFFFFF);
+            poseStack.popPose();
+            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         }
-        graphics.drawString(font, this.beKilled, space + getItemDisplayWidth(weapon), 0, 0xFFFFFFFF);
-        poseStack.popPose();
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        float disappearTranslationProgress = this.tickCount > 130 || this.tickCount < 120 ? 0F : Easing.IN_OUT_SINE.calculate(Math.min((tickCount - 120 + partialTicks), 10F) / 10F);
+        return (ps) -> ps.translate(0, 13F * (1-disappearTranslationProgress), 0F);
     }
     public int getWidth(Font font, ItemStack itemStack) {
         return font.width(this.beKilled) + font.width(this.killer) + this.getItemDisplayWidth(itemStack);
@@ -82,13 +90,6 @@ public class DeathData {
             return 0;
         }
         return itemStack.getItem() instanceof IGun ? 34 : 20;
-    }
-    private void fillGradient(PoseStack poseStack, VertexConsumer vertexConsumer, float x, float y, float endx, float endy, float depth, float xOffset, int color1, int color2) {
-        Matrix4f matrix4f = poseStack.last().pose();
-        vertexConsumer.vertex(matrix4f, x, y, depth).color(color1).endVertex();
-        vertexConsumer.vertex(matrix4f, x + xOffset, endy, depth).color(color2).endVertex();
-        vertexConsumer.vertex(matrix4f, endx, endy, depth).color(color2).endVertex();
-        vertexConsumer.vertex(matrix4f, endx, y, depth).color(color1).endVertex();
     }
     @Override
     public boolean equals(Object o) {

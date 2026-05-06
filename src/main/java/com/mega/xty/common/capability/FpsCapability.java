@@ -3,6 +3,7 @@ package com.mega.xty.common.capability;
 import com.mega.endinglib.api.capability.CapabilityEntityData;
 import com.mega.endinglib.api.capability.CapabilitySyncType;
 import com.mega.endinglib.api.capability.EntitySyncCapabilityBase;
+import com.mega.endinglib.api.capability.syncher.CapabilityDataSerializers;
 import com.mega.endinglib.api.data.CompoundTagUtils;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.data.fps.DeathSourceType;
@@ -32,6 +33,7 @@ import java.util.function.Predicate;
 
 public class FpsCapability extends EntitySyncCapabilityBase {
     public static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "fps");
+    public final CapabilityEntityData<Boolean> ASPECT_43 = this.dataManager.define(0, "aspect43", false, CapabilityDataSerializers.BOOLEAN);
     @Nullable
     private UUID assisterID;
     /**
@@ -209,5 +211,13 @@ public class FpsCapability extends EntitySyncCapabilityBase {
         public void setKilledWeapon(@NotNull ItemStack killedWeapon) {
             this.killedWeapon = killedWeapon;
         }
+    }
+
+    public boolean isAspect43() {
+        return this.dataManager.getValue(ASPECT_43);
+    }
+
+    public void setAspect43(boolean enabled) {
+        this.dataManager.setValue(ASPECT_43, enabled);
     }
 }

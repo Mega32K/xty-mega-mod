@@ -5,6 +5,7 @@ import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.game2.S2CDeadPostEffectPacket;
+import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -117,6 +118,18 @@ public class FpsCommand {
                         )
                 )
                 .then(Commands.literal("effect")
+                        .then(Commands.literal("aspect43")
+                                .then(Commands.argument("targets", EntityArgument.players())
+                                        .executes(context -> setAspect43Effect(context.getSource(), EntityArgument.getPlayers(context, "targets"), true))
+                                        .then(Commands.argument("enabled", BoolArgumentType.bool())
+                                                .executes(context -> setAspect43Effect(
+                                                        context.getSource(),
+                                                        EntityArgument.getPlayers(context, "targets"),
+                                                        BoolArgumentType.getBool(context, "enabled")
+                                                ))
+                                        )
+                                )
+                        )
                         .then(Commands.literal("dead")
                                 .then(Commands.argument("targets", EntityArgument.players())
                                         .executes(context -> startDeadPostEffect(context.getSource(), EntityArgument.getPlayers(context, "targets"), DEFAULT_DEAD_POST_EFFECT_SECONDS))
@@ -280,6 +293,14 @@ public class FpsCommand {
             NetworkHandler.sendToPlayer(new S2CDeadPostEffectPacket(durationTicks), player);
         }
         sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.effect.dead.start", players.size(), seconds), false);
+        return players.size();
+    }
+
+    private static int setAspect43Effect(CommandSourceStack sourceStack, Collection<? extends ServerPlayer> players, boolean enabled) {
+        for (ServerPlayer player : players) {
+            CommonProxy.getFPSCap(player).ifPresent(cap -> cap.setAspect43(enabled));
+        }
+        sourceStack.sendSuccess(() -> Component.translatable("commands.xtymegamod.message.fps.effect.aspect43.set", players.size(), enabled), false);
         return players.size();
     }
 

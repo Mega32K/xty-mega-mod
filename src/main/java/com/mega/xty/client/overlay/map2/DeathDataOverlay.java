@@ -24,14 +24,15 @@ public class DeathDataOverlay implements IGuiOverlay {
         Font font = gui.getFont();
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
-        poseStack.translate(0, graphics.guiHeight() * 0.1F, 0);
+        poseStack.translate(0, graphics.guiHeight() * 0.1F + 13F, 0);
+        graphics.flush();
         for (int i=0;i<ClientGameData.deathDataList.size();i++) {
             DeathData data = ClientGameData.deathDataList.get(i);
-            poseStack.translate(0, 13F, 0);
             poseStack.pushPose();
             poseStack.translate(guiWidth - data.getWidth(font, data.weapon) - 4, 0, 0);
-            data.render(graphics, poseStack, font, partialTick);
+            var consumer = data.render(graphics, poseStack, font, partialTick);
             poseStack.popPose();
+            consumer.accept(poseStack);
         }
         poseStack.popPose();
 

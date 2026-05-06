@@ -1,6 +1,7 @@
 package com.mega.xty.common.event.map2;
 
 import com.mega.xty.client.shader.ModShaders;
+import com.mega.xty.client.shader.post.fps.Aspect43PostEffect;
 import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
 import com.mega.xty.common.data.fps.RoundStartData;
 import com.mega.xty.common.data.map2.ClientGame2Data;

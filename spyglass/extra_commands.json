@@ -513,6 +513,30 @@
               "type":"literal",
               "children": {
 
+                "aspect43": {
+                  "type":"literal",
+                  "children": {
+
+                    "targets": {
+                      "type":"argument",
+                      "parser":"minecraft:entity",
+                      "properties": {
+                        "amount":"multiple",
+                        "type":"players"
+                      },
+                      "children": {
+
+                        "enabled": {
+                          "type":"argument",
+                          "parser":"brigadier:bool",
+                          "executable":true
+                        }
+                      },
+                      "executable":true
+                    }
+                  }
+                },
+
                 "dead": {
                   "type":"literal",
                   "children": {

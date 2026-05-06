@@ -96,6 +96,7 @@
   "commands.xtymegamod.message.fps.bomb.exist.get": "§7Bomb planted: %s",
   "commands.xtymegamod.message.fps.bomb.position.get": "§7Bomb site position: %s",
   "commands.xtymegamod.message.fps.bomb.countdown.get": "§7Bomb countdown: %s ticks",
+  "commands.xtymegamod.message.fps.effect.aspect43.set": "§7Set the 4:3 stretched screen effect for %s players to %s",
   "commands.xtymegamod.message.fps.effect.dead.start": "§7Applied the death screen effect to %s players for %s seconds",
   "commands.xtymegamod.message.fps.warehouse_blacklist.invalid": "§7Please hold a gun first",
   "commands.xtymegamod.message.fps.warehouse_blacklist.add": "§7Added %s to the weapon warehouse blacklist",

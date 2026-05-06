@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -54,14 +55,25 @@ public final class BlurRectRenderer {
         float guiHeight = (float) graphics.guiHeight();
         float scaleX = (float) mainTarget.viewWidth / guiWidth;
         float scaleY = (float) mainTarget.viewHeight / guiHeight;
-        float u0 = x * scaleX / (float) mainTarget.width;
-        float u1 = (x + width) * scaleX / (float) mainTarget.width;
-        float v0 = 1.0F - y * scaleY / (float) mainTarget.height;
-        float v1 = 1.0F - (y + height) * scaleY / (float) mainTarget.height;
-        float rectMinU = Math.min(u0, u1);
-        float rectMaxU = Math.max(u0, u1);
-        float rectMinV = Math.min(v0, v1);
-        float rectMaxV = Math.max(v0, v1);
+        Matrix4f matrix4f = graphics.pose().last().pose();
+        Vector4f topLeft = transformCorner(matrix4f, x, y, 0.0F);
+        Vector4f bottomLeft = transformCorner(matrix4f, x, y + height, 0.0F);
+        Vector4f bottomRight = transformCorner(matrix4f, x + width, y + height, 0.0F);
+        Vector4f topRight = transformCorner(matrix4f, x + width, y, 0.0F);
+
+        float topLeftU = topLeft.x() * scaleX / (float) mainTarget.width;
+        float bottomLeftU = bottomLeft.x() * scaleX / (float) mainTarget.width;
+        float bottomRightU = bottomRight.x() * scaleX / (float) mainTarget.width;
+        float topRightU = topRight.x() * scaleX / (float) mainTarget.width;
+        float topLeftV = 1.0F - topLeft.y() * scaleY / (float) mainTarget.height;
+        float bottomLeftV = 1.0F - bottomLeft.y() * scaleY / (float) mainTarget.height;
+        float bottomRightV = 1.0F - bottomRight.y() * scaleY / (float) mainTarget.height;
+        float topRightV = 1.0F - topRight.y() * scaleY / (float) mainTarget.height;
+
+        float rectMinU = Math.min(Math.min(topLeftU, bottomLeftU), Math.min(bottomRightU, topRightU));
+        float rectMaxU = Math.max(Math.max(topLeftU, bottomLeftU), Math.max(bottomRightU, topRightU));
+        float rectMinV = Math.min(Math.min(topLeftV, bottomLeftV), Math.min(bottomRightV, topRightV));
+        float rectMaxV = Math.max(Math.max(topLeftV, bottomLeftV), Math.max(bottomRightV, topRightV));
 
         shader.safeGetUniform("TextureSize").set(new float[]{mainTarget.width, mainTarget.height});
         shader.safeGetUniform("RectMin").set(new float[]{rectMinU, rectMinV});
@@ -74,23 +86,20 @@ public final class BlurRectRenderer {
         });
         shader.safeGetUniform("BlurRadius").set(Mth.clamp(blurRadius, 0.0F, MAX_BLUR_RADIUS));
 
-        RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         try {
             RenderSystem.setShader(ModShaders::getGuiBlurRect);
             RenderSystem.setShaderTexture(0, screenCopy.getColorTextureId());
 
-            Matrix4f matrix4f = graphics.pose().last().pose();
             BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
             bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-            bufferBuilder.vertex(matrix4f, x, y, 0.0F).uv(u0, v0).endVertex();
-            bufferBuilder.vertex(matrix4f, x, y + height, 0.0F).uv(u0, v1).endVertex();
-            bufferBuilder.vertex(matrix4f, x + width, y + height, 0.0F).uv(u1, v1).endVertex();
-            bufferBuilder.vertex(matrix4f, x + width, y, 0.0F).uv(u1, v0).endVertex();
+            bufferBuilder.vertex(matrix4f, x, y, 0.0F).uv(topLeftU, topLeftV).endVertex();
+            bufferBuilder.vertex(matrix4f, x, y + height, 0.0F).uv(bottomLeftU, bottomLeftV).endVertex();
+            bufferBuilder.vertex(matrix4f, x + width, y + height, 0.0F).uv(bottomRightU, bottomRightV).endVertex();
+            bufferBuilder.vertex(matrix4f, x + width, y, 0.0F).uv(topRightU, topRightV).endVertex();
             BufferUploader.drawWithShader(bufferBuilder.end());
         } finally {
-            RenderSystem.enableDepthTest();
             RenderSystem.disableBlend();
         }
     }
@@ -127,5 +136,13 @@ public final class BlurRectRenderer {
 
     public static TextureTarget getScreenCopy() {
         return screenCopy;
+    }
+
+    private static Vector4f transformCorner(Matrix4f matrix4f, float x, float y, float z) {
+        Vector4f vector4f = new Vector4f(x, y, z, 1.0F).mul(matrix4f);
+        if (vector4f.w() != 0.0F && vector4f.w() != 1.0F) {
+            vector4f.div(vector4f.w());
+        }
+        return vector4f;
     }
 }

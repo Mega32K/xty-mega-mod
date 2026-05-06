@@ -1,9 +1,16 @@
 package com.mega.xty.common.warehouse;
 
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.GunTabType;
+import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.mega.xty.common.data.fps.ClientFpsData;
+import com.tacz.guns.init.ModItems;
+import com.tacz.guns.item.AttachmentItem;
+import com.tacz.guns.util.AttachmentDataUtils;
 import me.xjqsh.lrtactical.api.LrTacticalAPI;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import me.xjqsh.lrtactical.api.item.IThrowable;
@@ -114,7 +121,7 @@ public final class WeaponWarehouseItems {
         ItemStack copy = stack.copy();
         copy.setCount(Math.max(1, copy.getCount()));
         return switch (slotType) {
-            case MAIN_WEAPON -> isMainWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? forceSingleCount(copy) : ItemStack.EMPTY;
+            case MAIN_WEAPON -> isMainWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? putScope(forceSingleCount(copy)) : ItemStack.EMPTY;
             case SECONDARY_WEAPON -> isSecondaryWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? forceSingleCount(copy) : ItemStack.EMPTY;
             case MELEE_WEAPON -> forceSingleCount(copy);
             case M67_GRENADE -> sanitizeFixedThrowable(copy, M67_ID);
@@ -250,13 +257,29 @@ public final class WeaponWarehouseItems {
         }
         return stack.getHoverName().getString();
     }
-
     private static ItemStack forceSingleCount(ItemStack stack) {
         ItemStack copy = stack.copy();
         copy.setCount(1);
         return copy;
     }
-
+    private static ItemStack putScope(ItemStack stack) {
+        if (stack.getItem() instanceof AbstractGunItem gun) {
+            ItemStack gunItem = stack.copy();
+            if (TimelessAPI.getCommonGunIndex(gun.getGunId(gunItem)).map(index -> index.getType().equals(GunTabType.SNIPER.toString().toLowerCase(Locale.US))).orElse(false)
+                    && gun.allowAttachmentType(gunItem, AttachmentType.SCOPE)) {
+                ItemStack attachment = new ItemStack(ModItems.ATTACHMENT.get());
+                if (attachment.getItem() instanceof IAttachment iAttachment) {
+                    iAttachment.setAttachmentId(attachment, ResourceLocation.parse("tacz:scope_lpvo_1_6"));
+                    iAttachment.setZoomNumber(attachment, 4);
+                }
+                if (gun.allowAttachment(gunItem, attachment)) {
+                    gun.installAttachment(gunItem, attachment);
+                    return gunItem;
+                }
+            }
+        }
+        return stack;
+    }
     private static FireMode resolveDefaultFireMode(List<FireMode> modes) {
         if (modes == null || modes.isEmpty()) {
             return FireMode.SEMI;
