@@ -697,3 +697,147 @@
   - 最后把模糊矩形绘回主画面
 - 这套实现的关键目的，是避免一边读取主 `framebuffer` 一边写回主 `framebuffer` 的未定义行为。
 - 以后若继续扩展模糊提示框渲染，优先沿用这套“先复制屏幕再局部采样”的结构。
+
+## 16. 2026-05-04 至 2026-05-09 补充记忆
+
+本节记录 2026-05-04 之后至当前的新工程结论。和 2026-05-04 当天 TACZ 枪包伤害调参相关的大量临时数值对话一样，这一节不保存那些具体枪械伤害批量调整历史，只保留对工作区后续开发稳定有价值的实现约定与源码状态。
+
+### 16.1 物品注册：改名卡
+
+- 物品类 `com.mega.xty.common.item.fps.RenameCardItem` 与 `com.mega.xty.common.item.fps.AdminRenameCardItem` 已补充正式物品注册。
+- 注册位置：
+  - `com.mega.xty.common.init.ItemInit`
+- 当前注册名：
+  - `rename_card`
+  - `admin_rename_card`
+- 两者都使用普通 `new Item.Properties()` 进行注册，没有额外栈大小或耐久配置。
+- 相关语言键已补齐：
+  - `item.xtymegamod.rename_card`
+  - `item.xtymegamod.admin_rename_card`
+- 已同时补齐中英文语言文件：
+  - `src/main/resources/assets/xtymegamod/lang/zh_cn.json`
+  - `src/main/resources/assets/xtymegamod/lang/en_us.json`
+- 纹理与模型：
+  - 纹理文件已存在于 `assets/xtymegamod/textures/item/`
+    - `rename_card.png`
+    - `admin_rename_card.png`
+  - 已新增基于 `item/generated` 的模型：
+    - `models/item/rename_card.json`
+    - `models/item/admin_rename_card.json`
+
+### 16.2 BlurRectRenderer：矩阵感知模糊矩形
+
+- `com.mega.xty.client.renderer.BlurRectRenderer#render(MegaGuiGraphics, float, float, float, float, int, float)` 在这一阶段被继续修正，目标是让模糊采样区域真正跟随 `graphics.pose().last().pose()` 的矩阵变换。
+- 当前稳定理解：
+  - 顶点位置仍使用局部 GUI 坐标 `x / y / x + width / y + height`，并在 `bufferBuilder.vertex(matrix4f, ...)` 时统一乘 `PoseStack` 顶矩阵。
+  - 但四个角的 UV 不再偷懒共用一套矩形包围盒 UV，而是：
+    - 先把四个角点通过 `transformCorner(matrix4f, ...)` 变换到最终屏幕空间
+    - 再分别计算 `topLeftU/V`、`bottomLeftU/V`、`bottomRightU/V`、`topRightU/V`
+    - 提交四个顶点时每个角使用自己的 UV
+- `RectMin` / `RectMax` uniform 的计算逻辑也已经收敛到以四个角自身 UV 为准：
+  - `rectMinU / rectMaxU` 从四个角 U 取最小/最大值
+  - `rectMinV / rectMaxV` 从四个角 V 取最小/最大值
+- 这样可以避免之前出现过的几个问题：
+  - 顶点位置被矩阵变换，但采样区域仍按原始 `x/y` 计算，造成模糊内容与框体错位
+  - 将变换后的坐标再次喂给 `vertex(matrix4f, ...)` 导致二次变换
+  - y 轴 UV 被压缩、近似相等，导致模糊纹理在竖直方向看起来异常
+- 当前 `BlurRectRenderer` 还保留“只管理混合状态、不主动关闭深度测试”的要求：
+  - 使用外部当前深度状态
+  - 自身只做 `RenderSystem.enableBlend()` / `defaultBlendFunc()`，结束后 `disableBlend()`
+
+### 16.3 4:3 后处理着色器
+
+- 已新增一个“把画面向 x 轴拉伸为 4:3 观感”的后处理着色器。
+- 资源文件：
+  - `src/main/resources/assets/xtymegamod/shaders/post/aspect_4_3.json`
+  - `src/main/resources/assets/xtymegamod/shaders/program/aspect_4_3.json`
+  - `src/main/resources/assets/xtymegamod/shaders/program/aspect_4_3.fsh`
+- 当前实现逻辑：
+  - 在 fragment shader 中读取 `InSize`
+  - 以当前输入画面的宽高比和目标 `4.0 / 3.0` 的比值计算 `horizontalScale`
+  - 围绕屏幕中心对 `texCoord.x` 做拉伸采样
+  - 再 `clamp` 到 `[0, 1]`
+- 这不是黑边 letterbox，而是纯粹的横向拉伸视觉效果。
+
+### 16.4 4:3 效果类与注册链路
+
+- 已新增客户端后处理类：
+  - `com.mega.xty.client.shader.post.fps.Aspect43PostEffect`
+- 该类实现 `CustomScreenEffect`，当前行为约定：
+  - `getName()` 返回 `aspect_4_3`
+  - `getShaderLocation()` 指向 `shaders/post/aspect_4_3.json`
+  - `onRenderTick()` 为空
+  - `canUse()` 不再依赖本地静态布尔值，而是读取本地玩家 `FpsCapability` 的同步字段
+- 在客户端注册位置：
+  - `com.mega.xty.proxy.ClientProxy#clientSetup`
+  - 通过 `PostEffectHandler.registerEffect(Aspect43PostEffect::new)` 注册
+- 客户端断线时：
+  - `com.mega.xty.common.event.map2.GameClientEvents#onDisconnected`
+  - 会调用 `Aspect43PostEffect.stop()`
+  - 目前这个 `stop()` 方法本身为空实现，因为真正的开关已迁移到玩家能力字段；它保留下来主要是为了接口一致性和后续扩展。
+
+### 16.5 4:3 效果启用方式：玩家能力字段
+
+- 用户后来要求将 4:3 效果的启用判断写入玩家能力，而不是继续单独依赖一个包驱动的本地静态状态。
+- 当前做法：
+  - 在 `com.mega.xty.common.capability.FpsCapability` 中新增同步数据字段
+    - `CapabilityEntityData<Boolean> ASPECT_43`
+    - 数据名为 `"aspect43"`
+    - 默认值为 `false`
+    - 使用 `CapabilityDataSerializers.BOOLEAN`
+  - 提供方法：
+    - `boolean isAspect43()`
+    - `void setAspect43(boolean enabled)`
+- `Aspect43PostEffect#canUse()` 当前直接读取：
+  - `CommonProxy.getFPSCap(ClientWrapped.clientPlayer()).map(FpsCapability::isAspect43).orElse(false)`
+- 原本为 4:3 效果单独创建的 S2C 包链路已经移除：
+  - `S2CAspect43PostEffectPacket` 已删除
+  - `NetworkHandler` 中已移除其注册
+- 以后若要控制这类纯客户端画面开关，优先考虑直接走同步能力字段，而不是重复创建一条单独的“仅设置本地静态变量”的网络包链路。
+
+### 16.6 4:3 效果命令
+
+- 4:3 效果要求只能通过命令开启/关闭。
+- 当前命令写在：
+  - `endinglib:xty fps`
+- 具体子命令结构：
+  - `endinglib:xty fps effect aspect43 <targets>`
+  - `endinglib:xty fps effect aspect43 <targets> <enabled>`
+- 行为约定：
+  - 省略 `<enabled>` 时默认按 `true` 处理
+  - 显式传 `false` 时关闭目标玩家的 4:3 效果
+- 服务端命令实现位于：
+  - `com.mega.xty.common.command.FpsCommand`
+- 当前不是发送专门的效果包，而是直接：
+  - `CommonProxy.getFPSCap(player).ifPresent(cap -> cap.setAspect43(enabled));`
+- 对应语言键已补齐：
+  - `commands.xtymegamod.message.fps.effect.aspect43.set`
+- `spyglass/extra_commands.json` 也已补上该命令的 JSON 结构。
+
+### 16.7 TACZ 标靶车静音：最终方案
+
+- 需求：禁用 TACZ 模组中 `com.tacz.guns.entity.TargetMinecart`（标靶车）在铁轨移动时发出的声音。
+- 这项需求一开始尝试过“直接对 `TargetMinecart` 做 Mixin 覆写声音接口”的思路，但后来用户要求换思路实现。
+- 当前最终保留方案是：
+  - 通过 Mixin 客户端类 `net.minecraft.client.resources.sounds.MinecartSoundInstance`
+  - 在其 `tick()` 结束后判断当前绑定的 `minecart`
+  - 若 `minecart instanceof TargetMinecart`，则把该声音实例的：
+    - `volume = 0.0F`
+    - `pitch = 0.0F`
+- 当前实现类：
+  - `com.mega.xty.mixin.tacz.MinecartSoundInstanceMixin`
+- Mixin 注册位置：
+  - `xtymegamod.mixins.json` 的 `client` 列表
+- 为什么选这个方案：
+  - `MinecartSoundInstance` 正是原版矿车持续滚动音的客户端实例
+  - `TargetMinecart` 命中时的提示音不是走这个类，而是走 `level.playSound(...)`
+  - 所以静音 `MinecartSoundInstance` 中绑定到 `TargetMinecart` 的实例，不会误伤标靶命中音
+- 已删除旧方案文件：
+  - `src/main/java/com/mega/xty/mixin/tacz/TargetMinecartMixin.java`
+
+### 16.8 协作提醒补充
+
+- 用户在 2026-05-07 时专门提醒过：继续在 `XtyMegaMod` 里做非微小任务时，不要忘记前置步骤
+  - 先读工作区 `MEMORY.md`
+  - 先遵守 `xty-mega-mod-forge-1201` workspace skill
+- 这不是新功能约定，但属于明确指出过的流程要求，后续继续在本工作区协作时应主动执行。
