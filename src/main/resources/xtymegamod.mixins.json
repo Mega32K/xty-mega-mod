@@ -22,6 +22,7 @@
     "map2.game2.PlayerMixin",
     "tacz.LivingEntityShootMixin",
     "tacz.LocalPlayerShootMixin",
+    "xaero.HudRendererMixin",
     "xaero.PlayerTrackerIconRendererMixin",
     "xaero.PlayerTrackerMinimapElementRendererMixin"
   ],
@@ -49,6 +50,7 @@
     "map2.game2.ItemInHandRendererMixin",
     "map2.game2.LivingEntityRendererMixin",
     "map2.game2.PlayerItemInHandLayerMixin",
+    "tacz.MinecartSoundInstanceMixin",
     "tacz.GunHudOverlayMixin"
   ],
   "injectors": {
