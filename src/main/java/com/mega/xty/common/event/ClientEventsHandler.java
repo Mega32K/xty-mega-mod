@@ -8,6 +8,7 @@ import com.mega.xty.common.event.map2.DeathCameraEffectHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.RoundStartData;
 import com.mega.xty.common.data.map2.ClientGameData;
+import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.DeathData;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.client.overlay.fps.HotbarOverlay;
@@ -51,6 +52,7 @@ public class ClientEventsHandler {
                 if (!mc.isPaused()) {
                     RoundStartData.tick();
                     ClientFpsData.tick();
+                    ClientGame2Data.tick(clientLevel);
                 }
                 if (!ClientGameData.map2Playing()) {
                     if (!ClientGameData.toAddDeathData.isEmpty()) ClientGameData.toAddDeathData.clear();

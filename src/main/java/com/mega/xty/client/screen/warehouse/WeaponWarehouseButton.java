@@ -1,12 +1,18 @@
 package com.mega.xty.client.screen.warehouse;
 
+import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.XtyMegaMod;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 public class WeaponWarehouseButton extends Button {
+    private static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/gui_icons.png");
     private boolean accent;
 
     public WeaponWarehouseButton(int x, int y, int width, int height, Component message, OnPress onPress) {
@@ -20,33 +26,35 @@ public class WeaponWarehouseButton extends Button {
 
     @Override
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        int x = getX();
-        int y = getY();
-        int width = getWidth();
-        int height = getHeight();
-        boolean hovered = isHoveredOrFocused();
-        int fill = this.accent ? 0xCC21415D : 0xCC171D28;
-        int border = this.accent ? 0xFF8AD8FF : 0xFF4E5F73;
-        int text = this.active ? 0xFFEAF3FF : 0xFF748293;
-        if (hovered) {
-            fill = this.accent ? 0xDD2A567D : 0xDD202A36;
-            border = this.accent ? 0xFFA9E6FF : 0xFF6C8199;
-        }
-        graphics.fill(x, y, x + width, y + height, fill);
-        graphics.fill(x, y + height - 1, x + width, y + height, border);
-        graphics.renderOutline(x, y, width, height, 0x332A3A4D);
+        int text = this.active ? (this.accent ? 0xFFF4D75E : 0xFFEAF3FF) : 0xFF748293;
+        graphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+        RenderSystem.enableBlend();
+        RenderSystem.enableDepthTest();
+        graphics.blitNineSliced(ICONS, this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, this.getTextureY());
+        graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
         renderString(graphics, text);
     }
+    private int getTextureY() {
+        int i = 1;
+        if (!this.active) {
+            i = 0;
+        } else if (this.isHoveredOrFocused()) {
+            i = 2;
+        }
 
+        return 96 + i * 20;
+    }
     private void renderString(GuiGraphics graphics, int color) {
         Font font = net.minecraft.client.Minecraft.getInstance().font;
-        int available = Math.max(1, getWidth() - 8);
+        int leftPadding = this.active ? 4 : 22;
+        int available = Math.max(1, getWidth() - leftPadding - 4);
         String text = getMessage().getString();
         int width = font.width(text);
         float scale = width > available ? Math.max(0.65F, (float) available / (float) width) : 1.0F;
         var pose = graphics.pose();
         pose.pushPose();
-        pose.translate(getX() + getWidth() / 2F, getY() + (getHeight() - font.lineHeight * scale) / 2F, 0.0F);
+        pose.translate(getX() + leftPadding + available / 2F, getY() + (getHeight() - font.lineHeight * scale) / 2F, 0.0F);
         pose.scale(scale, scale, 1.0F);
         graphics.drawCenteredString(font, text, 0, 0, color | Mth.ceil(this.alpha * 255.0F) << 24);
         pose.popPose();

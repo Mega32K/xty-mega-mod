@@ -2,6 +2,7 @@ package com.mega.xty.common.network.s2c.map2;
 
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.proxy.ClientProxy;
+import com.mega.xty.proxy.CommonProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundEvent;
@@ -36,6 +37,9 @@ public class S2CRoundWinSoundPacket {
 
     static void handle0(S2CRoundWinSoundPacket packet, Supplier<NetworkEvent.Context> context) {
         if (context.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
+            if (Minecraft.getInstance().player != null && !CommonProxy.getFPSCap(Minecraft.getInstance().player).map(cap -> cap.getGame2ClientOptions().audio().playRoundResultSound()).orElse(true)) {
+                return;
+            }
             SoundEvent sound = packet.redWin ? SoundsInit.TERWIN.get() : SoundsInit.CTWIN.get();
             ClientProxy.playSoundAtCamera(sound, 1.0F, 1.0F, Minecraft.getInstance().level != null ? Minecraft.getInstance().level.random.nextLong() : 0L);
         }

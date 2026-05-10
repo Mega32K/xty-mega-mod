@@ -3,6 +3,7 @@ package com.mega.xty.common.event.map2;
 import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StatsPacket;
+import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2ServerOptionsPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2WarehouseMeleePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +20,7 @@ public class Game2CommonEvents {
             Game2SavedData data = Game2SavedData.getInstance(server);
             NetworkHandler.sendToPlayer(new S2CGame2StatsPacket(data.isStopped()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CSyncGame2WarehouseMeleePacket(data.getExtraWarehouseMeleeStacks()), serverPlayer);
+            NetworkHandler.sendToPlayer(new S2CSyncGame2ServerOptionsPacket(data.getServerOptions()), serverPlayer);
         }
     }
 }

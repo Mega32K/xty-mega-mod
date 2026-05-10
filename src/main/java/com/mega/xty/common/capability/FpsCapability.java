@@ -9,6 +9,7 @@ import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.data.fps.DeathSourceType;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.options.map2game2.Game2ClientOptions;
 import com.mega.xty.common.network.s2c.map2.S2CAddDeathDataPacket;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -34,6 +35,18 @@ import java.util.function.Predicate;
 public class FpsCapability extends EntitySyncCapabilityBase {
     public static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "fps");
     public final CapabilityEntityData<Boolean> ASPECT_43 = this.dataManager.define(0, "aspect43", false, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> HUD_BOMB_COUNTDOWN_PROMPT = this.dataManager.define(1, "hudBombCountdownPrompt", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> HUD_BOMB_PROGRESS_BAR = this.dataManager.define(2, "hudBombProgressBar", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> HUD_ROUND_START_PROMPT = this.dataManager.define(3, "hudRoundStartPrompt", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> HUD_ROUND_RESULT_OVERLAY = this.dataManager.define(4, "hudRoundResultOverlay", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> HUD_ROUND_MVP_OVERLAY = this.dataManager.define(5, "hudRoundMvpOverlay", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> VISUAL_ROUND_START_POST_EFFECT = this.dataManager.define(6, "visualRoundStartPostEffect", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> VISUAL_DEAD_POST_EFFECT = this.dataManager.define(7, "visualDeadPostEffect", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> VISUAL_DEATH_CAMERA = this.dataManager.define(8, "visualDeathCamera", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> VISUAL_C4_SPECTATE_CAMERA = this.dataManager.define(9, "visualC4SpectateCamera", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> AUDIO_BOMB_BEEP = this.dataManager.define(10, "audioBombBeep", true, CapabilityDataSerializers.BOOLEAN);
+    public final CapabilityEntityData<Boolean> AUDIO_ROUND_RESULT_SOUND = this.dataManager.define(11, "audioRoundResultSound", true, CapabilityDataSerializers.BOOLEAN);
+    private final Game2ClientOptions game2ClientOptions = new Game2ClientOptions(this);
     @Nullable
     private UUID assisterID;
     /**
@@ -219,5 +232,97 @@ public class FpsCapability extends EntitySyncCapabilityBase {
 
     public void setAspect43(boolean enabled) {
         this.dataManager.setValue(ASPECT_43, enabled);
+    }
+
+    public boolean isHudBombCountdownPromptEnabled() {
+        return this.dataManager.getValue(HUD_BOMB_COUNTDOWN_PROMPT);
+    }
+
+    public void setHudBombCountdownPromptEnabled(boolean enabled) {
+        this.dataManager.setValue(HUD_BOMB_COUNTDOWN_PROMPT, enabled);
+    }
+
+    public boolean isHudBombProgressBarEnabled() {
+        return this.dataManager.getValue(HUD_BOMB_PROGRESS_BAR);
+    }
+
+    public void setHudBombProgressBarEnabled(boolean enabled) {
+        this.dataManager.setValue(HUD_BOMB_PROGRESS_BAR, enabled);
+    }
+
+    public boolean isHudRoundStartPromptEnabled() {
+        return this.dataManager.getValue(HUD_ROUND_START_PROMPT);
+    }
+
+    public void setHudRoundStartPromptEnabled(boolean enabled) {
+        this.dataManager.setValue(HUD_ROUND_START_PROMPT, enabled);
+    }
+
+    public boolean isHudRoundResultOverlayEnabled() {
+        return this.dataManager.getValue(HUD_ROUND_RESULT_OVERLAY);
+    }
+
+    public void setHudRoundResultOverlayEnabled(boolean enabled) {
+        this.dataManager.setValue(HUD_ROUND_RESULT_OVERLAY, enabled);
+    }
+
+    public boolean isHudRoundMvpOverlayEnabled() {
+        return this.dataManager.getValue(HUD_ROUND_MVP_OVERLAY);
+    }
+
+    public void setHudRoundMvpOverlayEnabled(boolean enabled) {
+        this.dataManager.setValue(HUD_ROUND_MVP_OVERLAY, enabled);
+    }
+
+    public boolean isVisualRoundStartPostEffectEnabled() {
+        return this.dataManager.getValue(VISUAL_ROUND_START_POST_EFFECT);
+    }
+
+    public void setVisualRoundStartPostEffectEnabled(boolean enabled) {
+        this.dataManager.setValue(VISUAL_ROUND_START_POST_EFFECT, enabled);
+    }
+
+    public boolean isVisualDeadPostEffectEnabled() {
+        return this.dataManager.getValue(VISUAL_DEAD_POST_EFFECT);
+    }
+
+    public void setVisualDeadPostEffectEnabled(boolean enabled) {
+        this.dataManager.setValue(VISUAL_DEAD_POST_EFFECT, enabled);
+    }
+
+    public boolean isVisualDeathCameraEnabled() {
+        return this.dataManager.getValue(VISUAL_DEATH_CAMERA);
+    }
+
+    public void setVisualDeathCameraEnabled(boolean enabled) {
+        this.dataManager.setValue(VISUAL_DEATH_CAMERA, enabled);
+    }
+
+    public boolean isVisualC4SpectateCameraEnabled() {
+        return this.dataManager.getValue(VISUAL_C4_SPECTATE_CAMERA);
+    }
+
+    public void setVisualC4SpectateCameraEnabled(boolean enabled) {
+        this.dataManager.setValue(VISUAL_C4_SPECTATE_CAMERA, enabled);
+    }
+
+    public boolean isAudioBombBeepEnabled() {
+        return this.dataManager.getValue(AUDIO_BOMB_BEEP);
+    }
+
+    public void setAudioBombBeepEnabled(boolean enabled) {
+        this.dataManager.setValue(AUDIO_BOMB_BEEP, enabled);
+    }
+
+    public boolean isAudioRoundResultSoundEnabled() {
+        return this.dataManager.getValue(AUDIO_ROUND_RESULT_SOUND);
+    }
+
+    public void setAudioRoundResultSoundEnabled(boolean enabled) {
+        this.dataManager.setValue(AUDIO_ROUND_RESULT_SOUND, enabled);
+    }
+
+    public Game2ClientOptions getGame2ClientOptions() {
+        return this.game2ClientOptions;
     }
 }

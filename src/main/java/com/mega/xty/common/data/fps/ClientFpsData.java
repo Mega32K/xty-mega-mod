@@ -1,9 +1,12 @@
 package com.mega.xty.common.data.fps;
 
 import com.mega.endinglib.api.client.Easing;
+import com.mega.endinglib.client.ClientWrapped;
+import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.proxy.ClientProxy;
+import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.data.fps.kad.SynchedKADData;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -31,7 +34,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ClientFpsData {
-    public static final int BOMB_COUNTDOWN_TOTAL_TICKS = 40 * 20;
     public static final int BOMB_COUNTDOWN_REQUEST_INTERVAL = 15 * 20;
     public static final int BOMB_COUNTDOWN_PROMPT_DURATION = 60;
     public static final int ROUND_WIN_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION + 4 * 20;
@@ -89,7 +91,7 @@ public class ClientFpsData {
         ClientFpsData.bombExist = bombExist;
         ClientFpsData.bombPosition = bombPos <= 0 ? "" : bombPos == 1 ? "A点" : "B点";
         ClientFpsData.bombCountdownTicks = Math.max(0, bombCountdownTicks);
-        bombPlantedTickCount = Math.max(0, BOMB_COUNTDOWN_TOTAL_TICKS - ClientFpsData.bombCountdownTicks);
+        bombPlantedTickCount = Math.max(0, ClientGame2Data.SERVER_OPTIONS.getBomb().getCountdownTicks() - ClientFpsData.bombCountdownTicks);
         if (bombExist && ClientFpsData.bombCountdownTicks > 0) {
             requestBombCountdownRender(ClientFpsData.bombCountdownTicks);
         } else {
@@ -110,7 +112,7 @@ public class ClientFpsData {
         if (!bombExist || bombCountdownTicks <= 0) {
             return;
         }
-        if (shouldPlayBombBeep(bombCountdownTicks)) {
+        if (isBombBeepEnabled() && shouldPlayBombBeep(bombCountdownTicks)) {
             playBombBeep();
         }
         bombCountdownTicks--;
@@ -134,6 +136,10 @@ public class ClientFpsData {
         return roundWinRenderTimer > 0;
     }
     public static void requestRoundWinRender() {
+        if (!isRoundResultOverlayEnabled()) {
+            roundWinRenderTimer = 0;
+            return;
+        }
         roundWinRenderTimer = ROUND_WIN_PROMPT_DURATION;
     }
     public static float getRoundWinNotificationAlpha(float partialTicks) {
@@ -148,6 +154,10 @@ public class ClientFpsData {
         return roundLoseRenderTimer > 0;
     }
     public static void requestRoundLoseRender() {
+        if (!isRoundResultOverlayEnabled()) {
+            roundLoseRenderTimer = 0;
+            return;
+        }
         roundLoseRenderTimer = ROUND_LOSE_PROMPT_DURATION;
     }
     public static float getRoundLoseNotificationAlpha(float partialTicks) {
@@ -209,5 +219,23 @@ public class ClientFpsData {
         float fadeIn = Math.min(1.0F, (elapsed - ROUND_RESULT_MVP_DELAY) / 10.0F);
         float fadeOut = Math.min(1.0F, (timer - partialTicks) / 10.0F);
         return Easing.OUT_CUBIC.calculate(fadeIn) * Easing.OUT_CUBIC.calculate(fadeOut);
+    }
+
+    private static boolean isBombBeepEnabled() {
+        if (ClientWrapped.clientPlayer() == null) {
+            return true;
+        }
+        return CommonProxy.getFPSCap(ClientWrapped.clientPlayer())
+                .map(cap -> cap.getGame2ClientOptions().audio().playBombBeep())
+                .orElse(true);
+    }
+
+    private static boolean isRoundResultOverlayEnabled() {
+        if (ClientWrapped.clientPlayer() == null) {
+            return true;
+        }
+        return CommonProxy.getFPSCap(ClientWrapped.clientPlayer())
+                .map(cap -> cap.getGame2ClientOptions().hud().showRoundResultOverlay())
+                .orElse(true);
     }
 }

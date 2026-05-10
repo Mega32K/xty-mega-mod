@@ -23,6 +23,7 @@ import com.mega.xty.common.network.s2c.fps.S2CRoundWinRenderPacket;
 import com.mega.xty.common.network.s2c.map2.*;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.endinglib.common.network.PacketHandler;
+import com.mega.xty.common.options.map2game2.Game2ServerOptions;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import com.tacz.guns.api.TimelessAPI;
@@ -87,8 +88,6 @@ public class Map2SavedData extends SavedData {
     private ResourceKey<Level> game2Dimension;
     private Map2Functions map2Functions = new Map2Functions(this);
     private static final int HOME_MAX_SIZE = 10;
-    private static final int NEW_ROUND_POST_EFFECT_TICKS = 10 * 20;
-    private static final int NEXT_ROUND_DELAY_TICKS = 7 * 20;
     private boolean game2NextRoundPending;
     public static Map2SavedData readOrCreate(MinecraftServer server) {
         Map2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Map2SavedData::new, "xty_map2");
@@ -335,9 +334,23 @@ public class Map2SavedData extends SavedData {
             NetworkHandler.sendToPlayer(new S2CSyncTeamWinsPacket(this.redWins, blueWins), serverPlayer);
     }
     public int getMaxWins() {
+        if (this.server != null) {
+            Game2SavedData game2SavedData = Game2SavedData.getInstance(this.server);
+            if (game2SavedData.getServerOptions().getMatch().hasLoadedMaxWins()) {
+                return game2SavedData.getServerOptions().getMatch().getMaxWins();
+            }
+        }
         return maxWins;
     }
     public void setMaxWins(int maxWins) {
+        if (this.server != null) {
+            Game2SavedData game2SavedData = Game2SavedData.getInstance(this.server);
+            game2SavedData.getServerOptions().getMatch().setMaxWins(maxWins);
+            game2SavedData.onServerOptionsUpdated();
+            this.maxWins = game2SavedData.getServerOptions().getMatch().getMaxWins();
+            this.setDirty();
+            return;
+        }
         if (this.maxWins != maxWins) {
             this.maxWins = maxWins;
             this.setDirty();
@@ -351,6 +364,13 @@ public class Map2SavedData extends SavedData {
         this.setDirty();
         for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers())
             NetworkHandler.sendToPlayer(new S2CPlayerCountNeedPacket(this.playerCountNeed), serverPlayer);
+    }
+
+    public void syncLegacyMaxWinsFromOptions(int maxWins) {
+        if (this.maxWins != maxWins) {
+            this.maxWins = maxWins;
+            this.setDirty();
+        }
     }
 
     @Nullable
@@ -535,14 +555,18 @@ public class Map2SavedData extends SavedData {
     }
     public void startGame2NewRound() {
         this.game2NextRoundPending = false;
-        if (this.maxWins > 0 && (this.redWins >= this.maxWins || this.blueWins >= this.maxWins)) {
+        Game2ServerOptions.Match matchOptions = Game2SavedData.getInstance(this.server).getServerOptions().getMatch();
+        int maxWins = this.getMaxWins();
+        if (maxWins > 0 && (this.redWins >= maxWins || this.blueWins >= maxWins)) {
             this.setRedWins(0);
             this.setBlueWins(0);
             Game2SavedData.getInstance(this.server).setStopped(true);
             return;
         }
         runStartNewRoundFunction();
-        clearWorldDroppedItems();
+        if (Game2SavedData.getInstance(this.server).getServerOptions().getLoadout().isClearDroppedItemsOnNewRound()) {
+            clearWorldDroppedItems();
+        }
         clearGame2RoundWorldEntities();
         List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
         EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
@@ -553,7 +577,8 @@ public class Map2SavedData extends SavedData {
         clearNewRoundInventory(players, teleportedPlayers);
         prepareRoundC4(players, teleportedPlayers);
         prepareBlueRoundItems(players, teleportedPlayers);
-        long unlockGameTime = this.server.overworld().getGameTime() + NEW_ROUND_POST_EFFECT_TICKS;
+        int roundStartLockTicks = matchOptions.getRoundStartLockTicks();
+        long unlockGameTime = this.server.overworld().getGameTime() + roundStartLockTicks;
         for (ServerPlayer player : players) {
             if (teleportedPlayers.contains(player.getUUID())) {
                 equipRoundArmor(player);
@@ -565,7 +590,7 @@ public class Map2SavedData extends SavedData {
                 elData.addDisabledPermission(player, InputOperations.MOUSE_ATTACK);
                 elData.addDisabledPermission(player, InputOperations.MOUSE_USE);
                 CommonProxy.getMap2Cap(player).ifPresent(cap -> cap.setRoundKeyboardUnlockGameTime(unlockGameTime));
-                NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(NEW_ROUND_POST_EFFECT_TICKS), player);
+                NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(roundStartLockTicks), player);
             } else {
                 CommonProxy.getMap2Cap(player).ifPresent(Map2Capability::clearRoundKeyboardUnlockGameTime);
                 NetworkHandler.sendToPlayer(new S2CGame2StartEffectPacket(0), player);
@@ -640,12 +665,13 @@ public class Map2SavedData extends SavedData {
         player.removeAllEffects();
         player.clearFire();
         player.setRemainingFireTicks(0);
-        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100.0D);
-        player.setHealth(100.0F);
+        int roundStartHealth = Game2SavedData.getInstance(player.server).getServerOptions().getMatch().getRoundStartHealth();
+        player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(roundStartHealth);
+        player.setHealth(roundStartHealth);
         player.getFoodData().setFoodLevel(20);
         CommonProxy.getXtyCap(player).ifPresent(cap -> {
-            cap.setGame2MaxHealth(100.0F);
-            cap.setGame2Health(100.0F);
+            cap.setGame2MaxHealth(roundStartHealth);
+            cap.setGame2Health(roundStartHealth);
         });
     }
 
@@ -683,13 +709,16 @@ public class Map2SavedData extends SavedData {
         if (team == null) {
             return;
         }
+        Game2ServerOptions.Loadout loadoutOptions = Game2SavedData.getInstance(player.server).getServerOptions().getLoadout();
         if (team.getColor() == ChatFormatting.RED) {
-            player.setItemSlot(EquipmentSlot.CHEST, ItemInit.OPTICAL_NANOSUIT.get().getDefaultInstance());
+            if (loadoutOptions.isEquipRedNanosuit()) {
+                player.setItemSlot(EquipmentSlot.CHEST, ItemInit.OPTICAL_NANOSUIT.get().getDefaultInstance());
+            }
         } else if (team.getColor() == ChatFormatting.BLUE) {
             ItemStack chestplate = Items.CHAINMAIL_CHESTPLATE.getDefaultInstance();
             ItemComponentManager.get(chestplate).mergeChangedToNBTAndUpdate(ComponentChanges
                     .builder(chestplate.getItem())
-                    .add(DataComponents.MAX_DAMAGE, 10)
+                    .add(DataComponents.MAX_DAMAGE, loadoutOptions.getBlueArmorDurability())
                     .build());
             chestplate.setDamageValue(0);
             player.setItemSlot(EquipmentSlot.CHEST, chestplate);
@@ -711,6 +740,7 @@ public class Map2SavedData extends SavedData {
     private void prepareRoundC4(List<ServerPlayer> players, Set<UUID> teleportedPlayers) {
         clearRoundC4State();
         clearRoundC4(players);
+        Game2ServerOptions.Loadout loadoutOptions = Game2SavedData.getInstance(this.server).getServerOptions().getLoadout();
         List<ServerPlayer> redPlayers = new ObjectArrayList<>();
         for (ServerPlayer player : players) {
             if (!teleportedPlayers.contains(player.getUUID())) {
@@ -722,7 +752,7 @@ public class Map2SavedData extends SavedData {
                 redPlayers.add(player);
             }
         }
-        if (!redPlayers.isEmpty()) {
+        if (loadoutOptions.isGiveRedBomb() && !redPlayers.isEmpty()) {
             ServerPlayer c4Player = redPlayers.get(this.server.overworld().random.nextInt(redPlayers.size()));
             ItemStack c4 = ItemInit.C4_BOMB.get().getDefaultInstance();
             if (!c4Player.getInventory().add(c4)) {
@@ -783,6 +813,7 @@ public class Map2SavedData extends SavedData {
     }
 
     private void prepareBlueRoundItems(List<ServerPlayer> players, Set<UUID> teleportedPlayers) {
+        Game2ServerOptions.Loadout loadoutOptions = Game2SavedData.getInstance(this.server).getServerOptions().getLoadout();
         for (ServerPlayer player : players) {
             if (!teleportedPlayers.contains(player.getUUID())) {
                 continue;
@@ -793,9 +824,15 @@ public class Map2SavedData extends SavedData {
             }
             FpsSavedData fpsSavedData = FpsSavedData.getInstance(this.server);
             CommonProxy.getWeaponWarehouseCap(player).ifPresent(cap -> cap.applySelectedWarehouseLoadout(player, fpsSavedData.getWarehouseGunBlacklist()));
-            giveBdkIfMissing(player);
-            giveAllTypeCreativeAmmoBox(player);
-            fillInventoryGuns(player);
+            if (loadoutOptions.isGiveBlueDefuseKit()) {
+                giveBdkIfMissing(player);
+            }
+            if (loadoutOptions.isGiveBlueCreativeAmmoBox()) {
+                giveAllTypeCreativeAmmoBox(player);
+            }
+            if (loadoutOptions.isFillBlueGunAmmo()) {
+                fillInventoryGuns(player);
+            }
         }
     }
 
@@ -895,16 +932,17 @@ public class Map2SavedData extends SavedData {
     }
 
     private void scheduleGame2NextRound() {
+        int delayTicks = Game2SavedData.getInstance(this.server).getServerOptions().getMatch().getNextRoundDelayTicks();
         new LambdaServerTask(new Args(0), task -> {
             int tick = task.getArgs().get(0);
             tick++;
             task.getArgs().set(0, tick);
-            if (tick >= NEXT_ROUND_DELAY_TICKS && this.game2NextRoundPending) {
+            if (tick >= delayTicks && this.game2NextRoundPending) {
                 this.game2NextRoundPending = false;
                 if (!this.isStopped() && !Game2SavedData.getInstance(this.server).isStopped()) {
                     this.startGame2NewRound();
                 }
             }
-        }, task -> ((int) task.getArgs().get(0)) >= NEXT_ROUND_DELAY_TICKS).addToManager();
+        }, task -> ((int) task.getArgs().get(0)) >= delayTicks).addToManager();
     }
 }

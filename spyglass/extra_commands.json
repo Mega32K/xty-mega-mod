@@ -1497,6 +1497,854 @@
           "type": "literal",
           "children": {
 
+            "options": {
+              "type": "literal",
+              "children": {
+                "server": {
+                  "type": "literal",
+                  "children": {
+                    "match": {
+                      "type": "literal",
+                      "children": {
+                        "maxWins": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 0
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "roundStartLockSeconds": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 1
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "nextRoundDelaySeconds": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 1
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "roundStartHealth": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 1
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "bomb": {
+                      "type": "literal",
+                      "children": {
+                        "countdownSeconds": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 1
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "plantSeconds": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 1
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "defuseSeconds": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 1
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "plantSiteDistance": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:double",
+                                  "properties": {
+                                    "min": 0.0
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "defuseDistance": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:double",
+                                  "properties": {
+                                    "min": 0.0
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "loadout": {
+                      "type": "literal",
+                      "children": {
+                        "clearDroppedItemsOnNewRound": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:bool",
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "giveBlueDefuseKit": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:bool",
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "giveBlueCreativeAmmoBox": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:bool",
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "fillBlueGunAmmo": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:bool",
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "giveRedBomb": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:bool",
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "equipRedNanosuit": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:bool",
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        },
+                        "blueArmorDurability": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "value": {
+                                  "type": "argument",
+                                  "parser": "brigadier:integer",
+                                  "properties": {
+                                    "min": 0
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "executable": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "client": {
+                  "type": "literal",
+                  "children": {
+                    "hud": {
+                      "type": "literal",
+                      "children": {
+                        "bombCountdownPrompt": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "bombProgressBar": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "roundStartPrompt": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "roundResultOverlay": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "roundMvpOverlay": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "visual": {
+                      "type": "literal",
+                      "children": {
+                        "aspect43": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "roundStartPostEffect": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "deadPostEffect": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "deathCamera": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "c4SpectateCamera": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "audio": {
+                      "type": "literal",
+                      "children": {
+                        "bombBeep": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "roundResultSound": {
+                          "type": "literal",
+                          "children": {
+                            "set": {
+                              "type": "literal",
+                              "children": {
+                                "targets": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "multiple",
+                                    "type": "players"
+                                  },
+                                  "children": {
+                                    "value": {
+                                      "type": "argument",
+                                      "parser": "brigadier:bool",
+                                      "executable": true
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "get": {
+                              "type": "literal",
+                              "children": {
+                                "target": {
+                                  "type": "argument",
+                                  "parser": "minecraft:entity",
+                                  "properties": {
+                                    "amount": "single",
+                                    "type": "players"
+                                  },
+                                  "executable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+
             "start": {
               "type" : "literal",
               "executable":true

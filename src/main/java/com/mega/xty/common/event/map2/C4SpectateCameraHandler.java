@@ -33,6 +33,10 @@ public class C4SpectateCameraHandler {
     public static void start(Vector3f pos) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) return;
+        if (!CommonProxy.getFPSCap(minecraft.player).map(cap -> cap.getGame2ClientOptions().visual().useC4SpectateCamera()).orElse(true)) {
+            stop();
+            return;
+        }
         active = true;
         cameraPos = new Vec3(pos);
         lookTarget = findLookTarget(minecraft.level, cameraPos);

@@ -9,7 +9,10 @@ import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StatsPacket;
+import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2ServerOptionsPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2WarehouseMeleePacket;
+import com.mega.xty.common.options.map2game2.Game2ServerOptions;
+import com.mega.xty.common.options.map2game2.Game2ServerOptionsCache;
 import com.mega.xty.proxy.CommonProxy;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAmmoBox;
@@ -43,10 +46,12 @@ import java.util.Optional;
 
 public class Game2SavedData extends SavedData {
     private static final String EXTRA_WAREHOUSE_MELEE_KEY = "ExtraWarehouseMelee";
+    private static final String SERVER_OPTIONS_KEY = "ServerOptions";
     public MinecraftServer server;
     private boolean isStopped = true;
     private Game2Functions game2Functions = new Game2Functions(this);
     private List<ItemStack> extraWarehouseMeleeStacks = new ArrayList<>();
+    private final Game2ServerOptions serverOptions = new Game2ServerOptions();
     public static Game2SavedData readOrCreate(MinecraftServer server) {
         Game2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Game2SavedData::new, "xty_map2_game_2");
         data.server = server;
@@ -70,6 +75,10 @@ public class Game2SavedData extends SavedData {
                 }
             }
         }
+        if (tag.contains(SERVER_OPTIONS_KEY, Tag.TAG_COMPOUND)) {
+            data.serverOptions.load(tag.getCompound(SERVER_OPTIONS_KEY));
+        }
+        Game2ServerOptionsCache.updateFrom(data.serverOptions);
         return data;
     }
     @Override
@@ -85,6 +94,7 @@ public class Game2SavedData extends SavedData {
             }
             tag.put(EXTRA_WAREHOUSE_MELEE_KEY, listTag);
         }
+        tag.put(SERVER_OPTIONS_KEY, this.serverOptions.save(new CompoundTag()));
         return tag;
     }
 
@@ -94,6 +104,7 @@ public class Game2SavedData extends SavedData {
             for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
                 NetworkHandler.sendToPlayer(new S2CGame2StatsPacket(stopped), serverPlayer);
                 NetworkHandler.sendToPlayer(new S2CSyncGame2WarehouseMeleePacket(this.extraWarehouseMeleeStacks), serverPlayer);
+                NetworkHandler.sendToPlayer(new S2CSyncGame2ServerOptionsPacket(this.serverOptions), serverPlayer);
             }
         }
         if (stopped) {
@@ -123,6 +134,19 @@ public class Game2SavedData extends SavedData {
     }
     public Game2Functions getGame2Functions() {
         return game2Functions;
+    }
+
+    public Game2ServerOptions getServerOptions() {
+        return this.serverOptions;
+    }
+
+    public void onServerOptionsUpdated() {
+        Game2ServerOptionsCache.updateFrom(this.serverOptions);
+        Map2SavedData.getInstance(this.server).syncLegacyMaxWinsFromOptions(this.serverOptions.getMatch().getMaxWins());
+        this.setDirty();
+        for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
+            NetworkHandler.sendToPlayer(new S2CSyncGame2ServerOptionsPacket(this.serverOptions), serverPlayer);
+        }
     }
 
     public List<ItemStack> getExtraWarehouseMeleeStacks() {

@@ -4,6 +4,7 @@ import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.client.font.ErrorFont;
 import com.mega.xty.client.renderer.BlurRectRenderer;
 import com.mega.xty.common.data.fps.RoundStartData;
+import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -22,6 +23,7 @@ public class RoundStartOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) return;
+        if (!CommonProxy.getFPSCap(player).map(cap -> cap.getGame2ClientOptions().hud().showRoundStartPrompt()).orElse(true)) return;
 
         gui.setupOverlayRenderState(true, false);
         renderRoundStart(gui, MegaGuiGraphics.of(guiGraphics), player, screenWidth, screenHeight, partialTick);

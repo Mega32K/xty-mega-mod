@@ -10,6 +10,7 @@ import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.item.fps.BDKItem;
 import com.mega.xty.common.item.fps.C4BombItem;
 import com.mega.xty.proxy.ClientProxy;
+import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -35,15 +36,15 @@ public class C4Overlay implements IGuiOverlay {
         MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
         if (ClientFpsData.bombExist) {
             float progress = BDKItem.getShearingProgress(mc.player, partialTick);
-            if (progress >= 0.0F) {
+            if (progress >= 0.0F && canRenderBombProgressBar(mc.player)) {
                 renderShearingAnimation(mc.player, gui, graphics, progress, screenWidth, screenHeight);
             }
-            if (ClientFpsData.shouldRenderBombCountdown()) {
+            if (ClientFpsData.shouldRenderBombCountdown() && canRenderBombCountdownPrompt(mc.player)) {
                 renderBombCountdown(mc.player, gui, graphics, ClientFpsData.bombCountdownRenderTicks, screenWidth, screenHeight, partialTick);
             }
         } else {
             float progress = C4BombItem.getSettingProgress(mc.player, partialTick);
-            if (progress >= 0.0F) {
+            if (progress >= 0.0F && canRenderBombProgressBar(mc.player)) {
                 renderBombSettingAnimation(mc.player, gui, graphics, progress, screenWidth, screenHeight);
             }
         }
@@ -220,5 +221,17 @@ public class C4Overlay implements IGuiOverlay {
         if (ClientFpsData.bombCountdownRenderTimer >= ClientFpsData.BOMB_COUNTDOWN_PROMPT_DURATION - 10) {
             graphics.fill(centerX - realWidth / 2.0F, y, centerX + realWidth / 2.0F, y + height, ((int) (255.0F - alpha * 255.0F) << 24) | 0x00FFFFFF);
         }
+    }
+
+    private static boolean canRenderBombCountdownPrompt(LocalPlayer player) {
+        return CommonProxy.getFPSCap(player)
+                .map(cap -> cap.getGame2ClientOptions().hud().showBombCountdownPrompt())
+                .orElse(true);
+    }
+
+    private static boolean canRenderBombProgressBar(LocalPlayer player) {
+        return CommonProxy.getFPSCap(player)
+                .map(cap -> cap.getGame2ClientOptions().hud().showBombProgressBar())
+                .orElse(true);
     }
 }

@@ -3,8 +3,8 @@ package com.mega.xty.common.event.map2;
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.capability.Map2Capability;
+import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.Game2SavedData;
-import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
 import com.mega.xty.proxy.CommonProxy;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import net.minecraft.server.level.ServerPlayer;
@@ -48,6 +48,6 @@ public class Game2TaczEvents {
     }
 
     private static boolean isClientRoundStartLocked() {
-        return Game2StartPostEffect.INSTANCE != null && Game2StartPostEffect.INSTANCE.canUse();
+        return ClientGame2Data.isRoundStartLocked();
     }
 }

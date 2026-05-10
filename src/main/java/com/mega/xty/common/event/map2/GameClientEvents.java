@@ -93,6 +93,7 @@ public class GameClientEvents {
         C4SpectateCameraHandler.stop();
         Game2StartPostEffect.stop();
         RoundStartData.stop();
+        ClientGame2Data.setRoundStartLockedTicks(0);
         if (event.getMultiPlayerGameMode() != null) {
             ClientGameData.currentCameraPlayerIndex = 0;
             ClientGameData.aliveSameTeamPlayers.clear();

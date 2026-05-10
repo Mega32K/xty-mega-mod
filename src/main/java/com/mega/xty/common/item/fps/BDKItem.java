@@ -1,10 +1,13 @@
 package com.mega.xty.common.item.fps;
 
 import com.mega.xty.common.data.fps.FpsSavedData;
+import com.mega.xty.common.data.map2.ClientGame2Data;
+import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.init.SoundsInit;
+import com.mega.xty.common.options.map2game2.Game2ServerOptionsCache;
 import net.minecraft.network.protocol.game.ClientboundStopSoundPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,14 +39,17 @@ public class BDKItem extends Item {
 
     @Override
     public int getUseDuration(@NotNull ItemStack itemStack) {
-        return SETTING_DURATION;
+        return Game2ServerOptionsCache.CURRENT.getBomb().getDefuseDurationTicks();
     }
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand interactionHand) {
         ItemStack itemstack = player.getItemInHand(interactionHand);
         boolean canStart = false;
+        double defuseDistance = level instanceof ServerLevel serverLevel
+                ? Game2SavedData.getInstance(serverLevel.getServer()).getServerOptions().getBomb().getDefuseDistance()
+                : ClientGame2Data.SERVER_OPTIONS.getBomb().getDefuseDistance();
         for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, new AABB(player.blockPosition()).inflate(32F))) {
-            if (c4Entity.distanceTo(player) < 0.7F) {
+            if (c4Entity.distanceTo(player) < defuseDistance) {
                 canStart = true;
                 break;
             }
@@ -60,8 +66,9 @@ public class BDKItem extends Item {
         boolean cancel = true;
         if (!level.isClientSide) {
             if (entity instanceof Player player) {
+                double defuseDistance = Game2SavedData.getInstance(((ServerPlayer) player).server).getServerOptions().getBomb().getDefuseDistance();
                 for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, new AABB(player.blockPosition()).inflate(32F))) {
-                    if (c4Entity.distanceTo(player) < 0.7F) {
+                    if (c4Entity.distanceTo(player) < defuseDistance) {
                         cancel = false;
                         break;
                     }
@@ -82,8 +89,9 @@ public class BDKItem extends Item {
     public @NotNull ItemStack finishUsingItem(@NotNull ItemStack itemStack, @NotNull Level level, @NotNull LivingEntity entity) {
         if (!level.isClientSide) {
             if (entity instanceof ServerPlayer player) {
+                double defuseDistance = Game2SavedData.getInstance(player.server).getServerOptions().getBomb().getDefuseDistance();
                 for (C4Entity c4Entity : level.getEntitiesOfClass(C4Entity.class, new AABB(player.blockPosition()).inflate(32F))) {
-                    if (c4Entity.distanceTo(player) < 0.7F) {
+                    if (c4Entity.distanceTo(player) < defuseDistance) {
                         c4Entity.remove(Entity.RemovalReason.KILLED);
                         FpsSavedData savedData = FpsSavedData.getInstance(player.getServer());
                         savedData.setBombPosition((byte) 0);
@@ -100,7 +108,7 @@ public class BDKItem extends Item {
 
     public static float getShearingProgress(Player player, float partialTicks) {
         if (!player.isUsingItem() || !player.getUseItem().is(ItemInit.BDK.get())) return -1F;
-        return Mth.clamp((player.getTicksUsingItem() + partialTicks) / SETTING_DURATION, 0, 1.0F);
+        return Mth.clamp((player.getTicksUsingItem() + partialTicks) / Game2ServerOptionsCache.CURRENT.getBomb().getDefuseDurationTicks(), 0, 1.0F);
     }
     private static void playBDKSound(LivingEntity entity, SoundEvent soundEvent, float volume, float pitch) {
         entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), soundEvent, SoundSource.PLAYERS, volume, pitch);

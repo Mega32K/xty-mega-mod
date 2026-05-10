@@ -8,6 +8,7 @@ import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.proxy.ClientProxy;
+import com.mega.xty.proxy.CommonProxy;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -45,6 +46,9 @@ public class WinOverlay implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) return;
+        boolean showResult = CommonProxy.getFPSCap(player).map(cap -> cap.getGame2ClientOptions().hud().showRoundResultOverlay()).orElse(true);
+        if (!showResult) return;
+        boolean showMvp = CommonProxy.getFPSCap(player).map(cap -> cap.getGame2ClientOptions().hud().showRoundMvpOverlay()).orElse(true);
 
         gui.setupOverlayRenderState(true, false);
         MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
@@ -64,7 +68,7 @@ public class WinOverlay implements IGuiOverlay {
         int titleBorderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), titleTextColor);
 
         renderTitleBox(graphics, font, "回合胜利", x, titleY, width, titleHeight, titleAlpha, titleTextColor, titleBorderColor);
-        if (mvpAlpha > 0.0F) {
+        if (showMvp && mvpAlpha > 0.0F) {
             int mvpTextColor = ((int) (mvpAlpha * 255.0F) << 24) | 0x00D0D0D0;
             int mvpBorderColor = FastColor.ARGB32.multiply(0xD8000000 | player.getTeamColor(), mvpTextColor);
             findMvp(mc).ifPresent(mvp -> renderMvpBox(graphics, font, mvp, x, mvpY, mvpWidth, mvpHeight, mvpAlpha, mvpTextColor, mvpBorderColor));

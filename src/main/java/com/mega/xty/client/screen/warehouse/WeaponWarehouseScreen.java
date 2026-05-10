@@ -1,12 +1,14 @@
 package com.mega.xty.client.screen.warehouse;
 
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
+import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.c2s.warehouse.C2SSaveWeaponWarehousePacket;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import com.mega.xty.common.warehouse.WeaponWarehouseSlotType;
 import com.mega.xty.proxy.CommonProxy;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -14,6 +16,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +25,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WeaponWarehouseScreen extends Screen {
+    private static final ResourceLocation GUI_PANEL = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/gui_icons.png");
+    private static final ResourceLocation SLIDER = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider.png");
+    private static final ResourceLocation SLIDER_HIGHLIGHTED = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider_highlighted.png");
+    private static final ResourceLocation SLIDER_HANDLE = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider_handle.png");
+    private static final ResourceLocation SLIDER_HANDLE_HIGHLIGHTED = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider_handle_highlighted.png");
+    private static final int PANEL_TEXTURE_SIZE = 96;
+    private static final int PANEL_SLICE = 5;
     private static final int CANDIDATE_ITEM_HEIGHT = 20;
     private static final int SEARCH_FIELD_HEIGHT = 24;
-    private static final int SCROLL_BAR_WIDTH = 5;
+    private static final int SCROLL_BAR_WIDTH = 8;
     private static final int SCROLL_BAR_HIT_WIDTH = 12;
+    private static final int SCROLL_BAR_TEXTURE_WIDTH = 200;
+    private static final int SCROLL_BAR_TEXTURE_HEIGHT = 20;
+    private static final int SCROLL_BAR_TEXTURE_U = (SCROLL_BAR_TEXTURE_WIDTH - SCROLL_BAR_WIDTH) / 2;
+    private static final int SCROLL_BAR_SLICE = 4;
+    private static final int SCROLL_HANDLE_TEXTURE_HEIGHT = 20;
     private static final int CANDIDATE_SCROLL_GUTTER = 18;
     private static final Component SEARCH_PLACEHOLDER = Component.literal("输入要查找的武器名");
+
     private WeaponWarehouseSnapshot snapshot;
     private List<ItemStack> visibleCandidates = List.of();
     private WarehouseSearchBox searchBox;
@@ -71,7 +87,6 @@ public class WeaponWarehouseScreen extends Screen {
 
     @Override
     protected void init() {
-        int panelX = left();
         int panelY = top();
         this.searchBox = new WarehouseSearchBox(this.font, searchX(), panelY + 22, searchWidth(), SEARCH_FIELD_HEIGHT,
                 Component.translatable("screen.xtymegamod.weapon_warehouse.search"), SEARCH_PLACEHOLDER);
@@ -116,16 +131,14 @@ public class WeaponWarehouseScreen extends Screen {
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         MegaGuiGraphics graphics = MegaGuiGraphics.of(guiGraphics);
-        renderBackground(guiGraphics);
         int panelX = left();
         int panelY = top();
         graphics.fill(0, 0, this.width, this.height, 0xD010131A);
-        graphics.fill(panelX, panelY, panelX + panelWidth(), panelY + panelHeight(), 0xE1141822);
-        graphics.renderOutline(panelX, panelY, panelWidth(), panelHeight(), 0xFF57657A);
+        renderWindow(graphics, panelX, panelY, panelWidth(), panelHeight());
 
         graphics.drawString(this.font, this.title, panelX + 16, panelY + 8, 0xFFE8EEF7);
         graphics.drawString(this.font, Component.translatable("screen.xtymegamod.weapon_warehouse.tip"), searchX(), panelY + 8, 0xFFAAB6C8);
-        renderModernField(graphics, searchX(), panelY + 22, searchWidth(), SEARCH_FIELD_HEIGHT, this.searchBox.isFocused());
+        renderSearchField(graphics, searchX(), panelY + 22, searchWidth(), SEARCH_FIELD_HEIGHT, this.searchBox.isFocused());
         refreshButtons();
 
         renderSlotGrid(graphics, mouseX, mouseY);
@@ -145,7 +158,7 @@ public class WeaponWarehouseScreen extends Screen {
             int x = startX + column * (slotWidth + slotGap());
             int y = startY + row * (slotHeight + 8);
             boolean selected = slotType == this.selectedSlot;
-            renderModernField(graphics, x, y, slotWidth, slotHeight, selected);
+            renderPanelField(graphics, x, y, slotWidth, slotHeight, selected);
             graphics.drawString(this.font, Component.translatable(slotType.getTranslationKey()), x + 6, y + 5, 0xFFE3EDF8);
             ItemStack stack = this.snapshot.getLoadout(this.selectedLoadout).getSlot(slot);
             if (!stack.isEmpty()) {
@@ -165,7 +178,7 @@ public class WeaponWarehouseScreen extends Screen {
         int y = candidatePanelY();
         int width = contentWidth();
         int height = candidatePanelHeight();
-        renderModernField(graphics, x, y, width, height, true);
+        renderPanelField(graphics, x, y, width, height, false);
         graphics.drawString(this.font, Component.translatable("screen.xtymegamod.weapon_warehouse.candidates"), x + 8, y + 6, 0xFFE8EEF7);
 
         int listY = y + 24;
@@ -184,19 +197,16 @@ public class WeaponWarehouseScreen extends Screen {
             int itemY = listY + i * CANDIDATE_ITEM_HEIGHT;
             int itemRight = x + width - CANDIDATE_SCROLL_GUTTER;
             boolean hovered = isWithin(mouseX, mouseY, x + 6, itemY, itemRight - x - 6, 20);
-            graphics.fill(x + 6, itemY, itemRight, itemY + 20, hovered ? 0x884A6B8F : 0x330D1118);
+            renderCandidateRow(graphics, x + 6, itemY, itemRight - x - 6, 20, hovered);
             if (!stack.isEmpty()) {
                 graphics.renderItem(stack, x + 10, itemY + 2);
-            }
+            } else graphics.blit(ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/locked_button.png"), x + 9, itemY, 0, 0, 20, 20 ,20, 20);
             graphics.drawString(this.font, Component.literal(WeaponWarehouseItems.getDisplayName(stack)), x + 30, itemY + 6, stack.isEmpty() ? 0xFF8B97A7 : 0xFFDDE7F4);
         }
         if (maxScroll > 0) {
             ScrollBarMetrics metrics = scrollBarMetrics(trackTop, trackHeight, visibleCount, maxScroll);
             boolean hovered = isWithin(mouseX, mouseY, trackX - 4, trackTop, SCROLL_BAR_HIT_WIDTH, trackHeight);
-            int trackColor = this.draggingScrollBar || hovered ? 0x774A5E73 : 0x55394A5C;
-            int thumbColor = this.draggingScrollBar ? 0xFFC5F0FF : hovered ? 0xFFA8E5FF : 0xFF8AD8FF;
-            graphics.fill(trackX, trackTop, trackX + SCROLL_BAR_WIDTH, trackTop + trackHeight, trackColor);
-            graphics.fill(trackX, metrics.thumbTop(), trackX + SCROLL_BAR_WIDTH, metrics.thumbTop() + metrics.thumbHeight(), thumbColor);
+            renderSlider(graphics, trackX - 1, trackTop, trackHeight, metrics.thumbTop(), metrics.thumbHeight(), hovered || this.draggingScrollBar);
         }
     }
 
@@ -414,12 +424,51 @@ public class WeaponWarehouseScreen extends Screen {
         }
     }
 
-    private void renderModernField(MegaGuiGraphics graphics, int x, int y, int width, int height, boolean focused) {
-        int fill = focused ? 0xAA243042 : 0xAA171D28;
-        int line = focused ? 0xFF8AD8FF : 0xFF4E5F73;
-        graphics.fill(x, y, x + width, y + height, fill);
-        graphics.fill(x, y + height - 1, x + width, y + height, line);
-        graphics.renderOutline(x, y, width, height, 0x332A3A4D);
+    private void renderWindow(MegaGuiGraphics graphics, int x, int y, int width, int height) {
+        graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xCC0B0D13);
+        graphics.fill(x, y, x + width, y + height, 0xE1141822);
+        graphics.blitNineSlicedSized(GUI_PANEL, x, y, width, height, 5, PANEL_TEXTURE_SIZE, PANEL_TEXTURE_SIZE, 0, 0, 256, 256);
+    }
+
+    private void renderSearchField(MegaGuiGraphics graphics, int x, int y, int width, int height, boolean focused) {
+        graphics.blit(GUI_PANEL, x, y, width, height, 0.0F, 96F, 200.0F, 20.0F, 256, 256);
+    }
+
+    private void renderPanelField(MegaGuiGraphics graphics, int x, int y, int width, int height, boolean selected) {
+        graphics.blitNineSlicedSized(GUI_PANEL, x, y, width, height, 5, PANEL_TEXTURE_SIZE, PANEL_TEXTURE_SIZE, 0, 0, 256, 256);
+    }
+
+    private void renderCandidateRow(MegaGuiGraphics graphics, int x, int y, int width, int height, boolean hovered) {
+        graphics.fill(x, y, x + width, y + height, hovered ? 0x663B4960 : 0x4411171F);
+    }
+
+    private void renderSlider(MegaGuiGraphics graphics, int x, int y, int height, int thumbTop, int thumbHeight, boolean hovered) {
+        if (height <= 0 || thumbHeight <= 0) {
+            return;
+        }
+        graphics.fill(x, y, x + SCROLL_BAR_WIDTH, y + height, 0x9911171F);
+        ResourceLocation handle = hovered ? SLIDER_HANDLE_HIGHLIGHTED : SLIDER_HANDLE;
+        graphics.blitNineSlicedSized(
+                handle,
+                x,
+                thumbTop,
+                SCROLL_BAR_WIDTH,
+                thumbHeight,
+                SCROLL_BAR_SLICE,
+                SCROLL_BAR_WIDTH,
+                SCROLL_HANDLE_TEXTURE_HEIGHT,
+                0,
+                0,
+                SCROLL_BAR_WIDTH,
+                SCROLL_HANDLE_TEXTURE_HEIGHT
+        );
+    }
+
+    private void blitRegion(MegaGuiGraphics graphics, ResourceLocation texture, int x, int y, int width, int height, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {
+        if (width <= 0 || height <= 0 || regionWidth <= 0 || regionHeight <= 0) {
+            return;
+        }
+        graphics.blit(texture, x, y, width, height, (float) u, (float) v, (float) regionWidth, (float) regionHeight, (float) textureWidth, (float) textureHeight);
     }
 
     private static boolean isWithin(double mouseX, double mouseY, double x, double y, double width, double height) {
@@ -446,11 +495,11 @@ public class WeaponWarehouseScreen extends Screen {
             int textY = originalY + (this.getHeight() - this.displayFont.lineHeight) / 2;
             this.setY(textY);
             if (this.getValue().isEmpty()) {
-                graphics.drawString(this.displayFont, this.placeholder, this.getX() + 2, textY, 0xFF738093);
+                graphics.drawString(this.displayFont, this.placeholder, this.getX() + 9, textY, 0xFF738093);
             }
             PoseStack poseStack = graphics.pose();
             poseStack.pushPose();
-            poseStack.translate(2, 0, 0);
+            poseStack.translate(9, 0, 0);
             super.renderWidget(graphics, mouseX, mouseY, partialTicks);
             poseStack.popPose();
             this.setY(originalY);

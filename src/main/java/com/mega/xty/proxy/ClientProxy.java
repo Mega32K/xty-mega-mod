@@ -15,7 +15,6 @@ import com.mega.xty.client.renderer.entity.*;
 import com.mega.xty.client.screen.map2.GameStartScreen;
 import com.mega.xty.client.screen.map2.RenameScreen;
 import com.mega.xty.client.screen.warehouse.WeaponWarehouseScreen;
-import com.mega.xty.client.shader.post.GuiRectBlurPostEffect;
 import com.mega.xty.client.shader.post.fps.Aspect43PostEffect;
 import com.mega.xty.client.shader.post.map2.DeadPostEffect;
 import com.mega.xty.client.shader.post.map2.Game2StartPostEffect;
@@ -117,7 +116,7 @@ public class ClientProxy implements ModProxy {
                     }
                 }
             });
-            PostEffectHandler.registerEffect(GuiRectBlurPostEffect::new);
+            //PostEffectHandler.registerEffect(GuiRectBlurPostEffect::new);
             PostEffectHandler.registerEffect(MotionBlurPostEffect::new);
             PostEffectHandler.registerEffect(Game2StartPostEffect::new);
             PostEffectHandler.registerEffect(DeadPostEffect::new);

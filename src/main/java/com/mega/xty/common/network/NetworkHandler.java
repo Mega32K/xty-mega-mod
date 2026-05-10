@@ -28,6 +28,7 @@ import com.mega.xty.common.network.s2c.map2.*;
 import com.mega.xty.common.network.s2c.map2.game2.S2CDeadPostEffectPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StartEffectPacket;
+import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2ServerOptionsPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2WarehouseMeleePacket;
 import com.mega.xty.common.network.s2c.map2.game1.*;
 import com.mega.xty.common.network.s2c.warehouse.S2COpenWeaponWarehousePacket;
@@ -93,6 +94,7 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), S2CGame2StartEffectPacket.class, S2CGame2StartEffectPacket::encode, S2CGame2StartEffectPacket::decode, S2CGame2StartEffectPacket::handle);
         INSTANCE.registerMessage(id(), S2CDeadPostEffectPacket.class, S2CDeadPostEffectPacket::encode, S2CDeadPostEffectPacket::decode, S2CDeadPostEffectPacket::handle);
         INSTANCE.registerMessage(id(), S2CSyncGame2WarehouseMeleePacket.class, S2CSyncGame2WarehouseMeleePacket::encode, S2CSyncGame2WarehouseMeleePacket::decode, S2CSyncGame2WarehouseMeleePacket::handle);
+        INSTANCE.registerMessage(id(), S2CSyncGame2ServerOptionsPacket.class, S2CSyncGame2ServerOptionsPacket::encode, S2CSyncGame2ServerOptionsPacket::decode, S2CSyncGame2ServerOptionsPacket::handle);
         INSTANCE.registerMessage(id(), S2COpenWeaponWarehousePacket.class, S2COpenWeaponWarehousePacket::encode, S2COpenWeaponWarehousePacket::decode, S2COpenWeaponWarehousePacket::handle);
         INSTANCE.registerMessage(id(), S2CSyncWeaponWarehousePacket.class, S2CSyncWeaponWarehousePacket::encode, S2CSyncWeaponWarehousePacket::decode, S2CSyncWeaponWarehousePacket::handle);
     }

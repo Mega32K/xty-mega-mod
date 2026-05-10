@@ -1,6 +1,8 @@
 package com.mega.xty.common.network.s2c.map2.game2;
 
 import com.mega.xty.client.shader.post.map2.DeadPostEffect;
+import com.mega.xty.proxy.CommonProxy;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
@@ -33,6 +35,10 @@ public class S2CDeadPostEffectPacket {
 
     static void handle0(S2CDeadPostEffectPacket packet, Supplier<NetworkEvent.Context> context) {
         if (context.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
+            if (Minecraft.getInstance().player != null && !CommonProxy.getFPSCap(Minecraft.getInstance().player).map(cap -> cap.getGame2ClientOptions().visual().useDeadPostEffect()).orElse(true)) {
+                DeadPostEffect.stop();
+                return;
+            }
             if (packet.durationTicks > 0) {
                 DeadPostEffect.start(packet.durationTicks);
             } else {

@@ -4,11 +4,14 @@ import com.mega.endinglib.common.network.PacketHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.map2.ClientGameData;
+import com.mega.xty.common.data.map2.ClientGame2Data;
+import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.entity.C4Entity;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.init.SoundsInit;
 import com.mega.xty.common.network.NetworkHandler;
+import com.mega.xty.common.options.map2game2.Game2ServerOptionsCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,7 +44,7 @@ public class C4BombItem extends Item {
 
     @Override
     public int getUseDuration(@NotNull ItemStack itemStack) {
-        return SETTING_DURATION;
+        return Game2ServerOptionsCache.CURRENT.getBomb().getPlantDurationTicks();
     }
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand interactionHand) {
@@ -53,8 +56,9 @@ public class C4BombItem extends Item {
             }
         } else if (level instanceof ServerLevel sl) {
             Map2SavedData map2SavedData = Map2SavedData.getInstance(sl.getServer());
+            double plantDistance = Game2SavedData.getInstance(sl.getServer()).getServerOptions().getBomb().getPlantSiteDistance();
             if (!FpsSavedData.getInstance(sl.getServer()).isBombExist())
-                canStart = canSetC4(map2SavedData.getPointA(), player.position()) || canSetC4(map2SavedData.getPointB(), player.position());
+                canStart = canSetC4(map2SavedData.getPointA(), player.position(), plantDistance) || canSetC4(map2SavedData.getPointB(), player.position(), plantDistance);
         }
         if (canStart) player.startUsingItem(interactionHand);
         if (canStart && !level.isClientSide) {
@@ -68,7 +72,8 @@ public class C4BombItem extends Item {
         if (!level.isClientSide) {
             if (entity instanceof ServerPlayer player) {
                 Map2SavedData savedData = Map2SavedData.getInstance(player.server);
-                if (!canSetC4(savedData.getPointA(), player.position()) && !canSetC4(savedData.getPointB(), player.position()))
+                double plantDistance = Game2SavedData.getInstance(player.server).getServerOptions().getBomb().getPlantSiteDistance();
+                if (!canSetC4(savedData.getPointA(), player.position(), plantDistance) && !canSetC4(savedData.getPointB(), player.position(), plantDistance))
                     player.stopUsingItem();
                 else
                     playPlantingKeySound(player, getUseDuration(itemStack) - leftTicks);
@@ -94,7 +99,7 @@ public class C4BombItem extends Item {
                     }
                 }
             }
-            savedData.setBombCountdownTicks(FpsSavedData.BOMB_COUNTDOWN_TOTAL_TICKS);
+            savedData.setBombCountdownTicks(Game2SavedData.getInstance(sl.getServer()).getServerOptions().getBomb().getCountdownTicks());
             if (!com.mega.xty.common.data.map2.Game2SavedData.getInstance(sl.getServer()).isStopped()) {
                 map2SavedData.setCountdown(0);
                 NetworkHandler.sendToAll(new com.mega.xty.common.network.s2c.map2.S2CMap2CountdownPacket(0));
@@ -109,11 +114,14 @@ public class C4BombItem extends Item {
     }
     public static float getSettingProgress(Player player, float partialTicks) {
         if (!player.isUsingItem() || !player.getUseItem().is(ItemInit.C4_BOMB.get())) return -1F;
-        return Mth.clamp((player.getTicksUsingItem() + partialTicks) / SETTING_DURATION, 0, 1.0F);
+        return Mth.clamp((player.getTicksUsingItem() + partialTicks) / Game2ServerOptionsCache.CURRENT.getBomb().getPlantDurationTicks(), 0, 1.0F);
     }
     public static boolean canSetC4(@Nullable BlockPos point, Vec3 playerPos) {
+        return canSetC4(point, playerPos, C4_SET_DISTANCE);
+    }
+    public static boolean canSetC4(@Nullable BlockPos point, Vec3 playerPos, double maxDistance) {
         if (point == null) return false;
-        return playerPos.distanceTo(point.getCenter()) < C4_SET_DISTANCE;
+        return playerPos.distanceTo(point.getCenter()) < maxDistance;
     }
 
     @Override
