@@ -4,16 +4,14 @@ import com.mega.endinglib.api.capability.ELCapabilityManager;
 import com.mega.endinglib.api.capability.annotation.AutoCapGetter;
 import com.mega.endinglib.api.capability.annotation.AutoCapManager;
 import com.mega.xty.XtyMegaMod;
-import com.mega.xty.common.capability.FpsCapability;
-import com.mega.xty.common.capability.Map2Capability;
-import com.mega.xty.common.capability.WeaponWarehouseCapability;
-import com.mega.xty.common.capability.XtyModPlayerCapability;
+import com.mega.xty.common.capability.*;
 import com.mega.xty.common.command.argument.LimbArgumentType;
 import com.mega.xty.common.component.ComponentInit;
 import com.mega.xty.common.init.*;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Interaction;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
@@ -39,6 +37,9 @@ public class CommonProxy implements ModProxy {
     });
     public static LazyOptional<Capability<FpsCapability>> FPS_CAP = LazyOptional.of(() -> {
         return ELCapabilityManager.getCapability(FpsCapability.NAME.toString());
+    });
+    public static LazyOptional<Capability<InteractionCapability>> INTERACTION_CAP = LazyOptional.of(() -> {
+        return ELCapabilityManager.getCapability(InteractionCapability.NAME.toString());
     });
     public static LazyOptional<Capability<WeaponWarehouseCapability>> WEAPON_WAREHOUSE_CAP = LazyOptional.of(() -> {
         return ELCapabilityManager.getCapability(WeaponWarehouseCapability.NAME.toString());
@@ -88,6 +89,11 @@ public class CommonProxy implements ModProxy {
         return player.getCapability(FPS_CAP.orElse(ELCapabilityManager.getCapability(FpsCapability.NAME.toString())));
     }
 
+    @AutoCapGetter(InteractionCapability.class)
+    public static LazyOptional<InteractionCapability> getInteractionCap(Interaction interaction) {
+        return interaction.getCapability(INTERACTION_CAP.orElse(ELCapabilityManager.getCapability(InteractionCapability.NAME.toString())));
+    }
+
     @AutoCapGetter(WeaponWarehouseCapability.class)
     public static LazyOptional<WeaponWarehouseCapability> getWeaponWarehouseCap(Player player) {
         return player.getCapability(WEAPON_WAREHOUSE_CAP.orElse(ELCapabilityManager.getCapability(WeaponWarehouseCapability.NAME.toString())));
@@ -101,6 +107,8 @@ public class CommonProxy implements ModProxy {
             ELCapabilityManager.regsterCapability(FpsCapability::new, new CapabilityToken<FpsCapability>() {
             });
             ELCapabilityManager.regsterCapability(WeaponWarehouseCapability::new, new CapabilityToken<WeaponWarehouseCapability>() {
+            });
+            ELCapabilityManager.regsterCapability(InteractionCapability::new, new CapabilityToken<InteractionCapability>() {
             });
             ArgumentTypeInfos.registerByClass(LimbArgumentType.class, ModCommandArgumentTypes.LIMBS.get());
         });

@@ -6,6 +6,7 @@ import com.mega.endinglib.api.client.shader.post.PostEffectHandler;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.client.MapLevelEvents;
 import com.mega.xty.client.overlay.DebugOverlays;
+import com.mega.xty.client.overlay.InteractionTooltipOverlay;
 import com.mega.xty.client.overlay.fps.HotbarOverlay;
 import com.mega.xty.client.overlay.fps.RoundStartOverlay;
 import com.mega.xty.client.overlay.loading.MegaStyleLoadingEffect;
@@ -162,6 +163,7 @@ public class ClientProxy implements ModProxy {
         event.registerAboveAll("fps/round_start", new RoundStartOverlay());
         event.registerAboveAll("map2/win", new WinOverlay());
         event.registerAboveAll("map2/lose", new LoseOverlay());
+        event.registerAboveAll("interaction_tooltip", new InteractionTooltipOverlay());
     }
     public static void setObj(ShadowPlayerEntity entity, Player player) {
         if (player instanceof AbstractClientPlayer clientPlayer) {

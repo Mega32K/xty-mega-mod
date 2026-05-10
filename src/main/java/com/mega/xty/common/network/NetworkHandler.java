@@ -6,6 +6,7 @@ import com.mega.xty.common.network.c2s.debug.fill_fucntion.C2SFillMakeLinePacket
 import com.mega.xty.common.network.c2s.map1.game2.C2SPlayerJumpPacket;
 import com.mega.xty.common.network.c2s.map1.game2.C2SPlayerLaydownPacket;
 import com.mega.xty.common.network.c2s.map1.game2.C2SPlayerSwingHandNoticePacket;
+import com.mega.xty.common.network.c2s.map2game2.C2SSetGame2ClientOptionPacket;
 import com.mega.xty.common.network.c2s.map2.C2SSetNamePacket;
 import com.mega.xty.common.network.c2s.map2.C2SStopJoiningGamePacket;
 import com.mega.xty.common.network.c2s.warehouse.C2SApplyWeaponWarehouseLoadoutPacket;
@@ -59,6 +60,7 @@ public class NetworkHandler {
         INSTANCE.registerMessage(id(), C2SPlayerJumpPacket.class, C2SPlayerJumpPacket::encode, C2SPlayerJumpPacket::decode, C2SPlayerJumpPacket::handle);
         INSTANCE.registerMessage(id(), C2SPlayerSwingHandNoticePacket.class, C2SPlayerSwingHandNoticePacket::encode, C2SPlayerSwingHandNoticePacket::decode, C2SPlayerSwingHandNoticePacket::handle);
         INSTANCE.registerMessage(id(), C2SPlayerLaydownPacket.class, C2SPlayerLaydownPacket::encode, C2SPlayerLaydownPacket::decode, C2SPlayerLaydownPacket::handle);
+        INSTANCE.registerMessage(id(), C2SSetGame2ClientOptionPacket.class, C2SSetGame2ClientOptionPacket::encode, C2SSetGame2ClientOptionPacket::decode, C2SSetGame2ClientOptionPacket::handle);
         INSTANCE.registerMessage(id(), C2SSaveWeaponWarehousePacket.class, C2SSaveWeaponWarehousePacket::encode, C2SSaveWeaponWarehousePacket::decode, C2SSaveWeaponWarehousePacket::handle);
         INSTANCE.registerMessage(id(), C2SApplyWeaponWarehouseLoadoutPacket.class, C2SApplyWeaponWarehouseLoadoutPacket::encode, C2SApplyWeaponWarehouseLoadoutPacket::decode, C2SApplyWeaponWarehouseLoadoutPacket::handle);
         INSTANCE.registerMessage(id(), S2CGame2HitEffectPacket.class, S2CGame2HitEffectPacket::encode, S2CGame2HitEffectPacket::decode, S2CGame2HitEffectPacket::handle);

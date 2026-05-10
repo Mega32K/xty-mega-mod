@@ -2532,6 +2532,41 @@
           }
         },
 
+        "interaction": {
+          "type": "literal",
+          "children": {
+            "target": {
+              "type": "argument",
+              "parser": "minecraft:entity",
+              "properties": {
+                "amount": "single",
+                "type": "entities"
+              },
+              "children": {
+                "tooltip": {
+                  "type": "literal",
+                  "children": {
+                    "set": {
+                      "type": "literal",
+                      "children": {
+                        "value": {
+                          "type": "argument",
+                          "parser": "minecraft:component",
+                          "executable": true
+                        }
+                      }
+                    },
+                    "get": {
+                      "type": "literal",
+                      "executable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+
         "noPhysics": {
           "type": "literal",
           "children": {

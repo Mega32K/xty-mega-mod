@@ -35,6 +35,7 @@
     "client.LevelRendererMixin",
     "client.LoadingOverlayAccessor",
     "client.MinecraftMixin",
+    "client.PauseScreenMixin",
     "client.loading.LoadingOverlayMixin",
     "limbs.PlayerRendererMixin",
     "map1.game_2.LocalPlayerMixin",
