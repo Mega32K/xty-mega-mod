@@ -19,7 +19,7 @@ public class InteractionCommand {
                         .then(Commands.literal("tooltip")
                                 .then(Commands.literal("set")
                                         .then(Commands.argument("value", ComponentArgument.textComponent())
-                                                .executes(context -> setTooltip(EntityArgument.getEntity(context, "target"), ComponentArgument.getComponent(context, "value")))
+                                                .executes(context -> setTooltip(context.getSource(), EntityArgument.getEntity(context, "target"), ComponentArgument.getComponent(context, "value")))
                                         )
                                 )
                                 .then(Commands.literal("get")
@@ -28,9 +28,12 @@ public class InteractionCommand {
                         )
                 );
     }
-    private static int setTooltip(Entity entity, Component component) {
+    private static int setTooltip(CommandSourceStack stack, Entity entity, Component component) {
         if (entity instanceof Interaction interaction) {
-            CommonProxy.getInteractionCap(interaction).ifPresent(cap -> cap.setTooltip(component));
+            CommonProxy.getInteractionCap(interaction).ifPresent(cap -> {
+                cap.setTooltip(component);
+                cap.tooltip().ifPresent(tooltip -> stack.sendSuccess(()-> tooltip, false));
+            });
             return 1;
         }
         return 0;

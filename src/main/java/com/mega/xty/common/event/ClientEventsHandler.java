@@ -18,9 +18,19 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Interaction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -47,6 +57,39 @@ public class ClientEventsHandler {
             Minecraft mc = Minecraft.getInstance();
             ClientLevel clientLevel = mc.level;
             if (clientLevel != null) {
+                {
+                    if (mc.player != null && mc.gameMode != null) {
+                        double d0 = mc.gameMode.getPickRange() + 2;
+                        double d1;
+                        d0 = d1 = Math.max(d0, mc.player.getEntityReach() + 2);
+                        Entity entity = mc.cameraEntity;
+                        if (entity != null) {
+                            ClientGameData.pickedEntity = null;
+                            ClientGameData.hitResult = null;
+                            double entityReach = mc.player.getEntityReach() + 2; // Note - MC-76493 - We must validate players cannot click-through objects.
+                            Vec3 vec3 = entity.getEyePosition(0.5F);
+                            Vec3 vec31 = entity.getViewVector(1.0F);
+                            Vec3 vec32 = vec3.add(vec31.x * d0, vec31.y * d0, vec31.z * d0);
+                            AABB aabb = entity.getBoundingBox().expandTowards(vec31.scale(d0)).inflate(1.0D, 1.0D, 1.0D);
+                            EntityHitResult entityhitresult = ProjectileUtil.getEntityHitResult(entity, vec3, vec32, aabb, (p_234237_) -> {
+                                return !p_234237_.isSpectator() && p_234237_.isPickable();
+                            }, d1);
+                            if (entityhitresult != null) {
+                                Entity entity1 = entityhitresult.getEntity();
+                                Vec3 vec33 = entityhitresult.getLocation();
+                                double d2 = vec3.distanceToSqr(vec33);
+                                if (d2 > d1 || d2 > entityReach * entityReach) { // Discard if the result is behind a block, or past the entity reach max. The var "flag" no longer has a use.
+                                    ClientGameData.hitResult = BlockHitResult.miss(vec33, Direction.getNearest(vec31.x, vec31.y, vec31.z), BlockPos.containing(vec33));
+                                } else if (d2 < d1 || ClientGameData.hitResult == null) {
+                                    ClientGameData.hitResult = entityhitresult;
+                                    if (entity1 instanceof LivingEntity || entity1 instanceof ItemFrame || entity1 instanceof Interaction) {
+                                        ClientGameData.pickedEntity = entity1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 DeathCameraEffectHandler.clientTick();
                 Game2StartPostEffect.clientTick();
                 if (!mc.isPaused()) {

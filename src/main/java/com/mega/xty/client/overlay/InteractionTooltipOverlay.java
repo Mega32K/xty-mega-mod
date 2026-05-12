@@ -16,12 +16,12 @@ public class InteractionTooltipOverlay implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
         if (gui.getMinecraft().options.hideGui) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.crosshairPickEntity instanceof Interaction interaction) {
+        if (ClientGameData.pickedEntity instanceof Interaction interaction) {
             gui.setupOverlayRenderState(true, false);
             Font font = gui.getFont();
             CommonProxy.getInteractionCap(interaction).ifPresent(cap -> {
                 cap.tooltip().ifPresent(context -> {
-                    guiGraphics.renderTooltip(font, context, screenWidth / 2 + 32, screenHeight / 2 + 24);
+                    guiGraphics.renderTooltip(font, font.split(context, 200), screenWidth / 2 + 32, screenHeight / 2 + 24);
                 });
             });
         }

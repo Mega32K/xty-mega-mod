@@ -13,7 +13,9 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -24,6 +26,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientGameData {
+    @javax.annotation.Nullable
+    public static Entity pickedEntity = null;
+    @javax.annotation.Nullable
+    public static HitResult hitResult;
     public static boolean isStopped = true;
     public static boolean scoreOverlayVisible = false;
     public static Queue<DeathData> toAddDeathData = Queues.newArrayDeque();
