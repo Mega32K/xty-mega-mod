@@ -45,5 +45,6 @@ public class AdminRenameCardItem extends RenameCardItem {
     public void appendHoverText(@NotNull ItemStack itemStack, @Nullable Level level, @NotNull List<Component> lines, @NotNull TooltipFlag flag) {
         lines.add(Component.literal("Shift+右键以更改自己的名称").withStyle(ChatFormatting.GRAY));
         lines.add(Component.literal("右键玩家以更改玩家名称").withStyle(ChatFormatting.GRAY));
+        lines.add(Component.literal("注意,请保留此道具直到\"游戏\"正式开始").withStyle(ChatFormatting.RED));
     }
 }
