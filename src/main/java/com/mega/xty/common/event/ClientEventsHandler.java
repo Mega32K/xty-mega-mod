@@ -59,14 +59,14 @@ public class ClientEventsHandler {
             if (clientLevel != null) {
                 {
                     if (mc.player != null && mc.gameMode != null) {
-                        double d0 = mc.gameMode.getPickRange() + 2;
+                        double d0 = mc.gameMode.getPickRange() + 4;
                         double d1;
-                        d0 = d1 = Math.max(d0, mc.player.getEntityReach() + 2);
+                        d0 = d1 = Math.max(d0, mc.player.getEntityReach() + 4);
                         Entity entity = mc.cameraEntity;
                         if (entity != null) {
                             ClientGameData.pickedEntity = null;
                             ClientGameData.hitResult = null;
-                            double entityReach = mc.player.getEntityReach() + 2; // Note - MC-76493 - We must validate players cannot click-through objects.
+                            double entityReach = mc.player.getEntityReach() + 4; // Note - MC-76493 - We must validate players cannot click-through objects.
                             Vec3 vec3 = entity.getEyePosition(0.5F);
                             Vec3 vec31 = entity.getViewVector(1.0F);
                             Vec3 vec32 = vec3.add(vec31.x * d0, vec31.y * d0, vec31.z * d0);

@@ -1242,7 +1242,6 @@
               "type" : "literal",
               "executable":true
             },
-
             "evolution": {
               "type" : "literal",
               "children": {
@@ -1305,116 +1304,11 @@
               }
             },
 
-            "home": {
-              "type":"literal",
-              "children": {
 
-                "red": {
-                  "type":"literal",
-                  "children": {
 
-                    "add": {
-                      "type":"literal",
-                      "children": {
 
-                        "pos": {
-                          "type":"argument",
-                          "parser":"minecraft:block_pos",
-                          "executable":true
-                        }
-                      }
-                    },
 
-                    "clear": {
-                      "type":"literal",
-                      "executable":true
-                    },
 
-                    "get": {
-                      "type":"literal",
-                      "executable":true
-                    }
-                  }
-                },
-
-                "blue": {
-                  "type":"literal",
-                  "children": {
-
-                    "add": {
-                      "type":"literal",
-                      "children": {
-
-                        "pos": {
-                          "type":"argument",
-                          "parser":"minecraft:block_pos",
-                          "executable":true
-                        }
-                      }
-                    },
-
-                    "clear": {
-                      "type":"literal",
-                      "executable":true
-                    },
-
-                    "get": {
-                      "type":"literal",
-                      "executable":true
-                    }
-                  }
-                },
-
-                "back": {
-                  "type":"literal",
-                  "children": {
-
-                    "players": {
-                      "type":"argument",
-                      "parser":"minecraft:entity",
-                      "properties":{
-                        "amount":"multiple",
-                        "type":"players"
-                      },
-                      "executable":true
-                    }
-                  }
-                }
-              }
-            },
-
-            "game2Dimension": {
-              "type":"literal",
-              "children": {
-
-                "set": {
-                  "type":"literal",
-                  "children": {
-
-                    "dimension": {
-                      "type":"argument",
-                      "parser":"minecraft:dimension",
-                      "executable":true
-                    }
-                  }
-                },
-
-                "get": {
-                  "type":"literal",
-                  "executable":true
-                },
-
-                "clear": {
-                  "type":"literal",
-                  "executable":true
-                }
-              }
-            },
-
-            "startNewRound": {
-              "type":"literal",
-              "executable":true
-            },
 
             "functions": {
               "type":"literal",
@@ -2360,6 +2254,38 @@
               "executable":true
             },
 
+            "game2Dimension": {
+              "type":"literal",
+              "children": {
+
+                "set": {
+                  "type":"literal",
+                  "children": {
+
+                    "dimension": {
+                      "type":"argument",
+                      "parser":"minecraft:dimension",
+                      "executable":true
+                    }
+                  }
+                },
+
+                "get": {
+                  "type":"literal",
+                  "executable":true
+                },
+
+                "clear": {
+                  "type":"literal",
+                  "executable":true
+                }
+              }
+            },
+
+            "startNewRound": {
+              "type":"literal",
+              "executable":true
+            },
             "warehouseMelee": {
               "type":"literal",
               "children": {
@@ -2406,6 +2332,84 @@
                 "get": {
                   "type":"literal",
                   "executable": true
+                }
+              }
+            },
+
+            "home": {
+              "type":"literal",
+              "children": {
+
+                "red": {
+                  "type":"literal",
+                  "children": {
+
+                    "add": {
+                      "type":"literal",
+                      "children": {
+
+                        "pos": {
+                          "type":"argument",
+                          "parser":"minecraft:block_pos",
+                          "executable":true
+                        }
+                      }
+                    },
+
+                    "clear": {
+                      "type":"literal",
+                      "executable":true
+                    },
+
+                    "get": {
+                      "type":"literal",
+                      "executable":true
+                    }
+                  }
+                },
+
+                "blue": {
+                  "type":"literal",
+                  "children": {
+
+                    "add": {
+                      "type":"literal",
+                      "children": {
+
+                        "pos": {
+                          "type":"argument",
+                          "parser":"minecraft:block_pos",
+                          "executable":true
+                        }
+                      }
+                    },
+
+                    "clear": {
+                      "type":"literal",
+                      "executable":true
+                    },
+
+                    "get": {
+                      "type":"literal",
+                      "executable":true
+                    }
+                  }
+                },
+
+                "back": {
+                  "type":"literal",
+                  "children": {
+
+                    "players": {
+                      "type":"argument",
+                      "parser":"minecraft:entity",
+                      "properties":{
+                        "amount":"multiple",
+                        "type":"players"
+                      },
+                      "executable":true
+                    }
+                  }
                 }
               }
             },
