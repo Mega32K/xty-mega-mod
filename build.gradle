@@ -194,6 +194,7 @@ dependencies {
     implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
     implementation("io.github.llamalad7:mixinextras-forge:0.4.1")
     implementation fg.deobf("blank:bettercombat-1.20.1:1.0");
+    implementation fg.deobf("blank:voicechat-1.20.1:2.6.16");
     implementation fg.deobf("blank:EndingLibrary-1.20.1:${endinglib_version}-all");
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 

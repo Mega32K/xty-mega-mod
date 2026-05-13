@@ -20,7 +20,7 @@ public abstract class PauseScreenMixin extends Screen {
     @Inject(method = "init", at = @At("TAIL"))
     private void xtyMegaMod$addGame2ClientOptionsButton(CallbackInfo ci) {
         int x = this.width / 2 - 102 - 24;
-        int y = this.height / 4 + 72 - 16;
+        int y = this.height / 4 + 64 - 16;
         this.addRenderableWidget(Button.builder(Component.translatable("screen.xtymegamod.map2game2.client_options.open_short"), button -> {
             if (this.minecraft != null) {
                 this.minecraft.setScreen(new Game2ClientOptionsScreen((Screen) (Object) this));

@@ -337,4 +337,9 @@ public class GameStartScreen extends Screen {
         float f1 = f + partialTicks;
         return Mth.clamp(Mth.inverseLerp(f1, 0.0F, (float)i), 0.0F, 1.0F);
     }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
+    }
 }

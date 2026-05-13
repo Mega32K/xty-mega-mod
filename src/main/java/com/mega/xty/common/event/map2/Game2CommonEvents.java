@@ -5,8 +5,10 @@ import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2StatsPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2ServerOptionsPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2WarehouseMeleePacket;
+import com.mega.xty.common.voicechat.Game2VoicechatGroups;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,6 +23,13 @@ public class Game2CommonEvents {
             NetworkHandler.sendToPlayer(new S2CGame2StatsPacket(data.isStopped()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CSyncGame2WarehouseMeleePacket(data.getExtraWarehouseMeleeStacks()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CSyncGame2ServerOptionsPacket(data.getServerOptions()), serverPlayer);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            Game2VoicechatGroups.syncGame2Groups(event.getServer());
         }
     }
 }

@@ -13,6 +13,7 @@ import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2ServerOptionsPacke
 import com.mega.xty.common.network.s2c.map2.game2.S2CSyncGame2WarehouseMeleePacket;
 import com.mega.xty.common.options.map2game2.Game2ServerOptions;
 import com.mega.xty.common.options.map2game2.Game2ServerOptionsCache;
+import com.mega.xty.common.voicechat.Game2VoicechatGroups;
 import com.mega.xty.proxy.CommonProxy;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAmmoBox;
@@ -111,6 +112,7 @@ public class Game2SavedData extends SavedData {
             FpsSavedData fpsSavedData = FpsSavedData.getInstance(server);
             EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
             Map2SavedData map2SavedData = Map2SavedData.getInstance(this.server);
+            Game2VoicechatGroups.clearAllPlayers(this.server);
             map2SavedData.clearGame2RoundWorldEntities();
             for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
                 CommonProxy.getMap2Cap(serverPlayer).ifPresent(cap -> {
