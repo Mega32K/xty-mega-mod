@@ -145,13 +145,15 @@ public class GameGhostModeCommand {
     private static int start(CommandSourceStack sourceStack) {
         Game2SavedData data = Game2SavedData.getInstance(sourceStack.getServer());
         data.setStopped(false);
-        Entity entity = sourceStack.getEntity();
-        if (entity != null) {
-            CommandSourceStack sourceStack2 = sourceStack.withSuppressedOutput().withMaximumPermission(2);
-            MinecraftServer server = sourceStack2.getServer();
-            String func = data.getGame2Functions().getStartFunction();
-            if (func != null && !func.isEmpty()) {
-                server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f -> server.getFunctions().execute(f, sourceStack2));
+        for (ServerPlayer serverPlayer : sourceStack.getServer().getPlayerList().getPlayers()) {
+            if (serverPlayer != null) {
+                CommandSourceStack sourceStack2 = sourceStack.withSuppressedOutput().withMaximumPermission(2);
+                MinecraftServer server = sourceStack2.getServer();
+                String func = data.getGame2Functions().getStartFunction();
+                if (func != null && !func.isEmpty()) {
+                    server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f-> server.getFunctions().execute(f, sourceStack2));
+                }
+                break;
             }
         }
         return 1;
@@ -159,15 +161,6 @@ public class GameGhostModeCommand {
     private static int stop(CommandSourceStack sourceStack) {
         Game2SavedData data = Game2SavedData.getInstance(sourceStack.getServer());
         data.setStopped(true);
-        Entity entity = sourceStack.getEntity();
-        if (entity != null) {
-            CommandSourceStack sourceStack2 = sourceStack.withSuppressedOutput().withMaximumPermission(2);
-            MinecraftServer server = sourceStack2.getServer();
-            String func = data.getGame2Functions().getStopFunction();
-            if (func != null && !func.isEmpty()) {
-                server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f-> server.getFunctions().execute(f, sourceStack2));
-            }
-        }
         return 1;
     }
     private static int setGame2Dimension(CommandSourceStack sourceStack, ServerLevel level) {

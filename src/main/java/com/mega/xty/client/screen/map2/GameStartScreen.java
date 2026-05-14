@@ -195,7 +195,7 @@ public class GameStartScreen extends Screen {
         //渲染icon
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        ModShaders.logoGlitch(time, 1.0F);
+        ModShaders.logoGlitch(time % 100.0F, 1.0F);
         graphics.blit(AMAGARI.texture(),
                 x - iconSize / 2F, y - iconSize / 2F,
                 iconSize, iconSize,

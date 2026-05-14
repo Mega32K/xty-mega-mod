@@ -9,6 +9,7 @@ import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.proxy.ModProxy;
 import com.mega.xty.proxy.ServerProxy;
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.KeyMapping;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;

@@ -22,11 +22,13 @@ import com.mega.xty.util.data_expand.SavedDataGetter;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import me.xjqsh.lrtactical.api.item.IThrowable;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -128,6 +130,16 @@ public class Game2SavedData extends SavedData {
             }
             clearDeadSavedRoundInventories(map2SavedData);
             teleportPlayersToRespawnPoints(this.server.getPlayerList().getPlayers());
+            for (ServerPlayer serverPlayer : this.server.getPlayerList().getPlayers()) {
+                if (serverPlayer != null) {
+                    CommandSourceStack sourceStack2 = serverPlayer.createCommandSourceStack().withSuppressedOutput().withMaximumPermission(2);
+                    String func = this.game2Functions.getStopFunction();
+                    if (func != null && !func.isEmpty()) {
+                        server.getFunctions().get(ResourceLocation.parse(func)).ifPresent(f-> server.getFunctions().execute(f, sourceStack2));
+                    }
+                    break;
+                }
+            }
         }
         isStopped = stopped;
     }
