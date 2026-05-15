@@ -1,7 +1,7 @@
 package com.mega.xty.common.event;
 
 import com.mega.endinglib.api.item.component.ItemComponentManager;
-import com.mega.xty.common.capability.FpsCapability;
+import com.mega.xty.common.capability.DeathMessage;
 import com.mega.xty.common.capability.Map2Capability;
 import com.mega.xty.common.component.ComponentInit;
 import com.mega.xty.common.component.ItemSwitchComponent;
@@ -13,6 +13,7 @@ import com.mega.xty.common.data.map2.Game1SavedData;
 import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.data.map2.Map2SavedData;
 import com.mega.xty.common.data.map2.ServerGameData;
+import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.network.s2c.map2.S2CAddDeathDataPacket;
 import com.mega.xty.common.network.s2c.map2.game2.S2CGame2DeathEffectPacket;
@@ -65,12 +66,15 @@ public class CommonEventsHandler {
         if (entity.level() instanceof ServerLevel serverLevel) {
             MinecraftServer server = serverLevel.getServer();
             if (entity instanceof ServerPlayer deathP && ServerGameData.map2Playing(server) && !entity.isAlive()) {
+                if (deathP.getInventory().hasAnyMatching(i -> i.is(ItemInit.C4_BOMB.get()))) {
+                    deathP.drop(new ItemStack(ItemInit.C4_BOMB.get()), true, true);
+                }
                 if (event.getSource().getEntity() instanceof ServerPlayer killer) {
                     ItemStack itemStack = killer.getMainHandItem();
                     if (itemStack.isEmpty()) itemStack = killer.getOffhandItem();
                     final ItemStack weapon = itemStack;
                     CommonProxy.getFPSCap(killer).ifPresent(cap -> {
-                        FpsCapability.DeathMessage message = cap.getOrDefaultDeathMessage(entity);
+                        DeathMessage message = cap.getOrDefaultDeathMessage(entity);
                         message.putIfAbsentKiller(makeKillerMessage(killer, entity));
                         message.setKilledWeapon(weapon);
                         message.putIfAbsentKilled(entity.getDisplayName());
@@ -93,7 +97,7 @@ public class CommonEventsHandler {
                     if (!entity.isAlive()) {
                         final ItemStack weapon = killer.getMainHandItem();
                         CommonProxy.getFPSCap(killer).ifPresent(cap -> {
-                            FpsCapability.DeathMessage message = cap.getOrDefaultDeathMessage(entity);
+                            DeathMessage message = cap.getOrDefaultDeathMessage(entity);
                             message.putIfAbsentKiller(makeKillerMessage(killer, entity));
                             message.setKilledWeapon(weapon);
                             message.putIfAbsentKilled(entity.getDisplayName());

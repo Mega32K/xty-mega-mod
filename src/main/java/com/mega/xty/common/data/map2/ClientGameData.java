@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -51,12 +52,16 @@ public class ClientGameData {
     public static BlockPos pointA;
     @Nullable
     public static BlockPos pointB;
+    public static String aText = "A";
+    public static String bText = "B";
     public static int currentCameraPlayerIndex;
     public static List<AbstractClientPlayer> aliveSameTeamPlayers = new ObjectArrayList<>();
     public static List<AbstractClientPlayer> aliveSameTeamPlayersWithoutLocal = new ObjectArrayList<>();
+
     public static boolean shouldRenderCFHealth() {
         return !ClientGameData.isStopped && (!ClientGame1Data.isStopped || !ClientGame2Data.isStopped);
     }
+
     public static boolean map2Playing() {
         return !ClientGameData.isStopped && (!ClientGame1Data.isStopped || !ClientGame2Data.isStopped);
     }
@@ -64,6 +69,8 @@ public class ClientGameData {
     public static void tick(ClientLevel clientLevel) {
         Player player = ClientWrapped.clientPlayer();
         if (clientLevel != null && player != null) {
+            aText = Component.translatable("game_2.point.a").getString();
+            bText = Component.translatable("game_2.point.b").getString();
             ClientGame1Data.tick(clientLevel);
             if (ClientGameData.isStopped) {
                 if (!shouldRenderCFHealth())
@@ -85,17 +92,11 @@ public class ClientGameData {
                             aliveSameTeamPlayersWithoutLocal.add(p);
                         aliveSameTeamPlayers.add(p);
                     }
-                    //noinspection DataFlowIssue
                     if (p.getTeamColor() == ChatFormatting.RED.getColor()) {
-                        CommonProxy.getMap2Cap(p).ifPresent(map2Capability -> {
-                            red.addAndGet(map2Capability.get1KillCount());
-                        });
-                    } else //noinspection DataFlowIssue
-                        if (p.getTeamColor() == ChatFormatting.BLUE.getColor()) {
-                            CommonProxy.getMap2Cap(p).ifPresent(map2Capability -> {
-                                blue.addAndGet(map2Capability.get1KillCount());
-                            });
-                        }
+                        CommonProxy.getMap2Cap(p).ifPresent(map2Capability -> red.addAndGet(map2Capability.get1KillCount()));
+                    } else if (p.getTeamColor() == ChatFormatting.BLUE.getColor()) {
+                        CommonProxy.getMap2Cap(p).ifPresent(map2Capability -> blue.addAndGet(map2Capability.get1KillCount()));
+                    }
                 }
             }
             redTeamKillcount = red.get();
@@ -104,8 +105,8 @@ public class ClientGameData {
     }
 
     public void tick() {
-
     }
+
     public static void updateAliveSameTeamPlayers() {
         ClientLevel clientLevel = Minecraft.getInstance().level;
         if (clientLevel == null) return;
@@ -123,6 +124,7 @@ public class ClientGameData {
             }
         }
     }
+
     public static void fpsSpectate() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -146,7 +148,11 @@ public class ClientGameData {
                         cap.getPlayerC4Pos().ifPresent(C4SpectateCameraHandler::start);
                     } else {
                         C4SpectateCameraHandler.stop();
-                        getRandomEnemySpectatablePlayer(player).ifPresent(mc::setCameraEntity);
+                        getRandomEnemySpectatablePlayer(player).ifPresentOrElse(mc::setCameraEntity, () ->
+                                getNearestPointSpectatePos(player).ifPresent(pos ->
+                                        C4SpectateCameraHandler.start(pos, getNearestPointCenter(player).orElse(null))
+                                )
+                        );
                     }
                 } else {
                     C4SpectateCameraHandler.stop();
@@ -185,5 +191,50 @@ public class ClientGameData {
             return Optional.empty();
         }
         return Optional.of(spectatablePlayers.get(ThreadLocalRandom.current().nextInt(spectatablePlayers.size())));
+    }
+
+    public static Optional<Vec3> getNearestPointCenter(LocalPlayer localPlayer) {
+        var cap = CommonProxy.getMap2Cap(localPlayer).orElse(null);
+        if (cap == null) {
+            return Optional.empty();
+        }
+        Vec3 deathPos = cap.getLastDeathPos().map(Vec3::new).orElse(localPlayer.position());
+        BlockPos nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (BlockPos point : List.of(pointA, pointB)) {
+            if (point == null) {
+                continue;
+            }
+            double dx = Vec3.atCenterOf(point).x - deathPos.x;
+            double dz = Vec3.atCenterOf(point).z - deathPos.z;
+            double distance = dx * dx + dz * dz;
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = point;
+            }
+        }
+        return nearest == null ? Optional.empty() : Optional.of(Vec3.atCenterOf(nearest));
+    }
+
+    public static Optional<Vec3> getNearestPointSpectatePos(LocalPlayer localPlayer) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return Optional.empty();
+        }
+        return getNearestPointCenter(localPlayer).map(center -> {
+            Vec3[] candidates = new Vec3[] {
+                    center.add(0.0D, 1.5D, 4.0D),
+                    center.add(0.0D, 1.5D, -4.0D),
+                    center.add(4.0D, 1.5D, 0.0D),
+                    center.add(-4.0D, 1.5D, 0.0D),
+                    center.add(0.0D, 2.5D, 0.0D)
+            };
+            for (Vec3 candidate : candidates) {
+                if (level.noCollision(localPlayer, localPlayer.getBoundingBox().move(candidate.subtract(localPlayer.position())))) {
+                    return candidate;
+                }
+            }
+            return center.add(0.0D, 2.5D, 0.0D);
+        });
     }
 }

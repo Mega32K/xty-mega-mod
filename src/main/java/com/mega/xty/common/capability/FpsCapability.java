@@ -6,29 +6,22 @@ import com.mega.endinglib.api.capability.EntitySyncCapabilityBase;
 import com.mega.endinglib.api.capability.syncher.CapabilityDataSerializers;
 import com.mega.endinglib.api.data.CompoundTagUtils;
 import com.mega.xty.XtyMegaMod;
-import com.mega.xty.common.data.fps.DeathSourceType;
 import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.network.NetworkHandler;
 import com.mega.xty.common.options.map2game2.Game2ClientOptions;
 import com.mega.xty.common.network.s2c.map2.S2CAddDeathDataPacket;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -194,36 +187,6 @@ public class FpsCapability extends EntitySyncCapabilityBase {
 
     public void setAssisterDamage2(float assisterDamage) {
         this.assisterDamage2 = assisterDamage;
-    }
-    public static class DeathMessage {
-        private MutableComponent killedMessageKiller;
-        private final Set<DeathSourceType> killedMessageTypes = new ObjectOpenHashSet<>();
-        private Component killedMessageKilled;
-        @NotNull
-        private ItemStack killedWeapon = ItemStack.EMPTY;
-        public void putIfAbsentKiller(MutableComponent component) {
-            if (this.killedMessageKiller == null)
-                this.killedMessageKiller = component;
-        }
-        public void putIfAbsentKilled(Component component) {
-            if (this.killedMessageKilled == null)
-                this.killedMessageKilled = component;
-        }
-        public void makeDeathType(Collection<DeathSourceType> types) {
-            this.killedMessageTypes.addAll(types);
-            if (this.killedMessageTypes.contains(DeathSourceType.DEFAULT) || this.killedMessageTypes.contains(DeathSourceType.HEADSHOT))
-                this.killedMessageTypes.remove(DeathSourceType.SLASH);
-        }
-        public MutableComponent makeDeathTypeComponent() {
-            MutableComponent baseMessage = Component.literal("");
-            for (var type : killedMessageTypes)
-                baseMessage.append(type.toFontContext());
-            return baseMessage;
-        }
-
-        public void setKilledWeapon(@NotNull ItemStack killedWeapon) {
-            this.killedWeapon = killedWeapon;
-        }
     }
 
     public boolean isAspect43() {

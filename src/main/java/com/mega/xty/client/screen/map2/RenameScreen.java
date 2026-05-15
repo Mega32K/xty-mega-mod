@@ -117,7 +117,7 @@ public class RenameScreen extends Screen {
 
     private void sure() {
         NetworkHandler.sendToServer(new C2SStopJoiningGamePacket());
-        NetworkHandler.sendToServer(new C2SSetNamePacket(editedName));
+        NetworkHandler.sendToServer(new C2SSetNamePacket(editedName, targetPlayer.getUUID()));
         if (mc.player != null)
             CommonProxy.getMap2Cap(mc.player).ifPresent(cap -> {
                 cap.setNeedStart(false);

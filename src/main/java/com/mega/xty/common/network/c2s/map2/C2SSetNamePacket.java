@@ -7,21 +7,24 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class C2SSetNamePacket {
     private final String name;
-
-    public C2SSetNamePacket(String name) {
+    private final UUID uuid;
+    public C2SSetNamePacket(String name, UUID uuid) {
         this.name = name;
+        this.uuid = uuid;
     }
 
     public static C2SSetNamePacket decode(FriendlyByteBuf friendlyByteBuf) {
-        return new C2SSetNamePacket(friendlyByteBuf.readUtf());
+        return new C2SSetNamePacket(friendlyByteBuf.readUtf(), friendlyByteBuf.readUUID());
     }
 
     public static void encode(C2SSetNamePacket packet, FriendlyByteBuf friendlyByteBuf) {
         friendlyByteBuf.writeUtf(packet.name);
+        friendlyByteBuf.writeUUID(packet.uuid);
     }
 
     public static void handle(C2SSetNamePacket packet, Supplier<NetworkEvent.Context> context) {
@@ -35,10 +38,12 @@ public class C2SSetNamePacket {
     static void handle0(C2SSetNamePacket packet, Supplier<NetworkEvent.Context> context) {
         ServerPlayer player = context.get().getSender();
         if (player == null) return;
-        CommonProxy.getCameraCapOptional(player).ifPresent(capability -> {
-            if (packet.name.isEmpty())
-                capability.setDisplayNameOpt(Optional.empty());
-            else capability.setDisplayNameOpt(Optional.of(Component.literal(packet.name)));
-        });
+        player = player.server.getPlayerList().getPlayer(packet.uuid);
+        if (player != null)
+            CommonProxy.getCameraCapOptional(player).ifPresent(capability -> {
+                if (packet.name.isEmpty())
+                    capability.setDisplayNameOpt(Optional.empty());
+                else capability.setDisplayNameOpt(Optional.of(Component.literal(packet.name)));
+            });
     }
 }

@@ -26,6 +26,7 @@ import java.util.List;
 public class C4SpectateCameraHandler {
     private static final double C4_TARGET_SEARCH_RADIUS = 64.0D;
     private static boolean active;
+    private static boolean manualSpectate;
     private static Vec3 cameraPos = Vec3.ZERO;
     @Nullable
     private static Vec3 lookTarget;
@@ -38,13 +39,29 @@ public class C4SpectateCameraHandler {
             return;
         }
         active = true;
+        manualSpectate = false;
         cameraPos = new Vec3(pos);
         lookTarget = findLookTarget(minecraft.level, cameraPos);
         faceLookTarget(minecraft.player);
     }
 
+    public static void start(Vec3 pos, @Nullable Vec3 target) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) return;
+        if (!CommonProxy.getFPSCap(minecraft.player).map(cap -> cap.getGame2ClientOptions().visual().useC4SpectateCamera()).orElse(true)) {
+            stop();
+            return;
+        }
+        active = true;
+        manualSpectate = true;
+        cameraPos = pos;
+        lookTarget = target;
+        faceLookTarget(minecraft.player);
+    }
+
     public static void stop() {
         active = false;
+        manualSpectate = false;
         cameraPos = Vec3.ZERO;
         lookTarget = null;
     }
@@ -72,6 +89,9 @@ public class C4SpectateCameraHandler {
         capOpt.ifPresent(cap -> {
             if (!cap.isXaeroDead()) {
                 stop();
+                return;
+            }
+            if (manualSpectate) {
                 return;
             }
             cap.getPlayerC4Pos().ifPresentOrElse(pos -> {

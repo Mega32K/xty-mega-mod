@@ -841,3 +841,117 @@
   - 先读工作区 `MEMORY.md`
   - 先遵守 `xty-mega-mod-forge-1201` workspace skill
 - 这不是新功能约定，但属于明确指出过的流程要求，后续继续在本工作区协作时应主动执行。
+
+### 17.1 map2game2 与 Simple Voice Chat 联动实现
+
+已在 `XtyMegaMod` 中接入 `voicechat-1.20.1-2.6.16` 的 game2 联动逻辑，核心文件为：
+
+- `src/main/java/com/mega/xty/common/voicechat/Game2VoicechatPlugin.java`
+- `src/main/java/com/mega/xty/common/voicechat/Game2VoicechatGroups.java`
+- `src/main/java/com/mega/xty/common/event/map2/Game2CommonEvents.java`
+- `src/main/java/com/mega/xty/common/data/map2/Game2SavedData.java`
+- `src/main/resources/META-INF/services/de.maxhenkel.voicechat.api.VoicechatPlugin`
+
+当前语音组语义：
+
+- 持久创建 3 个组：`RED`、`BLUE`、`REFEREE`
+- `RED` / `BLUE` 使用 `Group.Type.ISOLATED`
+- `REFEREE` 使用 `Group.Type.NORMAL`
+
+当前 game2 语音同步逻辑：
+
+- 在 `Game2CommonEvents#onServerTick` 中持续同步玩家分组
+- `map2game2` 游玩中：
+  - 红队玩家进入 `RED`
+  - 蓝队玩家进入 `BLUE`
+  - 创造 / 旁观玩家进入 `REFEREE`
+- 不符合条件的玩家会被移出对应组
+- `Game2SavedData#setStopped(true)` 时将所有玩家移出语音组，但不删除组本身
+
+### 17.2 裁判语音规则的最终实现
+
+当前实现不只依赖 voicechat 自带 group 机制，还额外监听：
+
+- `MicrophonePacketEvent`
+
+补发静态语音包以满足裁判语义：
+
+- 裁判可以听到红蓝双方所有人的语音
+- 裁判说话时，红蓝双方玩家也能听到裁判
+- 红蓝双方之间仍保持隔离，不互相听见
+- 该补发逻辑只在 `map2game2` 正在游玩时生效
+
+### 17.3 Simple Voice Chat `getGroup(UUID)` 的陷阱与修复
+
+已确认在当前 `voicechat-1.20.1-2.6.16` 版本中：
+
+- `VoicechatServerApi#getGroup(UUID)` 在组不存在时，不一定直接返回 `null`
+- 可能返回内部 `group == null` 的空壳 `GroupImpl`
+
+因此后续若要判断组是否真实存在：
+
+- 不要依赖 `api.getGroup(uuid) != null`
+- 当前稳定做法是遍历 `api.getGroups()` 再按 `UUID` 匹配
+
+本轮已因此修复过一次真实崩溃；崩溃栈位于：
+
+- `de.maxhenkel.voicechat.plugins.impl.VoicechatConnectionImpl.setGroup(...)`
+- `com.mega.xty.common.voicechat.Game2VoicechatGroups.syncGame2Groups(...)`
+
+### 17.4 BlurRectRenderer 相关客户端崩溃与兜底
+
+2026-05-15 的一次客户端崩溃报告中，出现：
+
+- `java.lang.NoClassDefFoundError: com/mega/xty/client/renderer/BlurRectRenderer`
+- 触发点：`RoundStartOverlay.renderNotificationBackground(...)`
+
+为降低同类问题的直接崩溃风险，已新增：
+
+- `src/main/java/com/mega/xty/client/renderer/SafeBlurRectRenderer.java`
+
+并将以下调用点改为先走安全包装：
+
+- `client/overlay/fps/RoundStartOverlay.java`
+- `client/overlay/map2/C4Overlay.java`
+- `client/overlay/map2/WinOverlay.java`
+- `client/overlay/map2/LoseOverlay.java`
+- `common/data/map2/DeathData.java`
+
+当前兜底行为：
+
+- 优先调用 `BlurRectRenderer.render(...)`
+- 若运行期抛异常或类加载失败，则退回普通 `fill(...)` 背景，不再直接崩客户端
+
+### 17.5 game2 死亡后长期旁观视角的最新兜底顺序
+
+本轮对 `game2` 死亡后长期旁观视角做了小范围补丁，尽量不改原有顺序。当前顺序为：
+
+1. 优先旁观己方存活玩家
+2. 若无己方存活玩家，则旁观 `playerC4Pos` 对应的 C4 镜头
+3. 若无 C4 镜头，则随机旁观敌方存活玩家
+4. 若敌方也无人存活，则旁观到离自己死亡地点最近的 `pointA` / `pointB` 旁空气处
+
+涉及文件：
+
+- `src/main/java/com/mega/xty/common/data/map2/ClientGameData.java`
+- `src/main/java/com/mega/xty/common/event/map2/C4SpectateCameraHandler.java`
+
+实现方式：
+
+- 在 `ClientGameData#fpsSpectate()` 中，仅给“敌方随机旁观失败”补了一个最近 A/B 点兜底
+- `C4SpectateCameraHandler` 增加了一个轻量的手动模式 `start(Vec3, @Nullable Vec3)`
+- 手动模式会在 `refresh()` 中跳过对 `playerC4Pos` 的覆盖，避免刚切到 point 旁观位就被原有 C4 刷新逻辑打回去
+
+### 17.6 最近 point 的计算细节
+
+当前“离自己死亡地点最近的 point”在实现上使用：
+
+- `Map2Capability#getLastDeathPos()`
+
+作为距离计算基准；若该值缺失，则回退到 `LocalPlayer.position()`。
+
+需要注意：当前服务端在玩家进入 xaero dead 状态时，设置 `lastDeathPos` 的代码为：
+
+- `player.position().toVector3f().add(0, 32, 0)`
+
+也就是说，这个“死亡地点”目前并不是纯地面死亡点，而是向上偏移 32 格后的死亡锚点。后续若用户明确要求以原始地面死亡坐标判断最近 point，需要单独调整这部分服务端数据写入。

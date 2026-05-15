@@ -1,5 +1,6 @@
 package com.mega.xty.common.item.fps;
 
+import com.mega.endinglib.api.item.IInvulnerableItem;
 import com.mega.endinglib.common.network.PacketHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.FpsSavedData;
@@ -30,7 +31,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class C4BombItem extends Item {
+public class C4BombItem extends Item implements IInvulnerableItem {
     public static final float C4_SET_DISTANCE = 6;
     public static final int SETTING_DURATION = 4 * 20;
     public C4BombItem() {
