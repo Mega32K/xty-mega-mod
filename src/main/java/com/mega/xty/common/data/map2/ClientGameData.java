@@ -3,6 +3,7 @@ package com.mega.xty.common.data.map2;
 import com.google.common.collect.Queues;
 import com.mega.endinglib.client.ClientWrapped;
 import com.mega.xty.common.event.map2.C4SpectateCameraHandler;
+import com.mega.xty.common.event.map2.DeathCameraEffectHandler;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.FixedLengthList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -101,6 +102,7 @@ public class ClientGameData {
             }
             redTeamKillcount = red.get();
             blueTeamKillcount = blue.get();
+            refreshDeadSpectateTarget(player);
         }
     }
 
@@ -129,6 +131,7 @@ public class ClientGameData {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) return;
+        if (DeathCameraEffectHandler.isPlaying()) return;
         updateAliveSameTeamPlayers();
         List<AbstractClientPlayer> spectatablePlayers = getSpectatablePlayers();
         int pIndex = ClientGameData.currentCameraPlayerIndex;
@@ -159,6 +162,52 @@ public class ClientGameData {
                 }
             });
         }
+    }
+
+    private static void refreshDeadSpectateTarget(Player player) {
+        if (DeathCameraEffectHandler.isPlaying()) {
+            return;
+        }
+        if (!ClientGame2Data.playing()) {
+            return;
+        }
+        CommonProxy.getMap2Cap(player).ifPresent(cap -> {
+            if (!cap.isXaeroDead()) {
+                return;
+            }
+            Minecraft mc = Minecraft.getInstance();
+            List<AbstractClientPlayer> sameTeamTargets = getSpectatablePlayers();
+            Entity cameraEntity = mc.getCameraEntity();
+            if (!(cameraEntity instanceof AbstractClientPlayer cameraPlayer) || cameraPlayer == player) {
+                if (!sameTeamTargets.isEmpty()) {
+                    currentCameraPlayerIndex = 0;
+                    fpsSpectate();
+                    return;
+                }
+                if (C4SpectateCameraHandler.isActive()) {
+                    if (cap.getPlayerC4Pos().isPresent()
+                            || !(player instanceof LocalPlayer localPlayer)
+                            || getRandomEnemySpectatablePlayer(localPlayer).isEmpty()) {
+                        return;
+                    }
+                }
+                fpsSpectate();
+                return;
+            }
+            boolean currentTargetDead = CommonProxy.getMap2Cap(cameraPlayer).map(map2Capability -> map2Capability.isXaeroDead()).orElse(false);
+            if (currentTargetDead) {
+                currentCameraPlayerIndex = sameTeamTargets.isEmpty() ? -1 : 0;
+                fpsSpectate();
+            } else if (cameraPlayer.isAlliedTo(player)) {
+                if (!sameTeamTargets.contains(cameraPlayer)) {
+                    currentCameraPlayerIndex = sameTeamTargets.isEmpty() ? -1 : 0;
+                    fpsSpectate();
+                }
+            } else if (!sameTeamTargets.isEmpty()) {
+                currentCameraPlayerIndex = 0;
+                fpsSpectate();
+            }
+        });
     }
 
     public static List<AbstractClientPlayer> getSpectatablePlayers() {
@@ -194,26 +243,24 @@ public class ClientGameData {
     }
 
     public static Optional<Vec3> getNearestPointCenter(LocalPlayer localPlayer) {
-        var cap = CommonProxy.getMap2Cap(localPlayer).orElse(null);
-        if (cap == null) {
-            return Optional.empty();
-        }
-        Vec3 deathPos = cap.getLastDeathPos().map(Vec3::new).orElse(localPlayer.position());
-        BlockPos nearest = null;
-        double nearestDistance = Double.MAX_VALUE;
-        for (BlockPos point : List.of(pointA, pointB)) {
-            if (point == null) {
-                continue;
+        return CommonProxy.getMap2Cap(localPlayer).map(cap -> {
+            Vec3 deathPos = cap.getLastDeathPos().map(Vec3::new).orElse(localPlayer.position());
+            BlockPos nearest = null;
+            double nearestDistance = Double.MAX_VALUE;
+            for (BlockPos point : List.of(pointA, pointB)) {
+                if (point == null) {
+                    continue;
+                }
+                double dx = Vec3.atCenterOf(point).x - deathPos.x;
+                double dz = Vec3.atCenterOf(point).z - deathPos.z;
+                double distance = dx * dx + dz * dz;
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearest = point;
+                }
             }
-            double dx = Vec3.atCenterOf(point).x - deathPos.x;
-            double dz = Vec3.atCenterOf(point).z - deathPos.z;
-            double distance = dx * dx + dz * dz;
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                nearest = point;
-            }
-        }
-        return nearest == null ? Optional.empty() : Optional.of(Vec3.atCenterOf(nearest));
+            return nearest == null ? Optional.<Vec3>empty() : Optional.of(Vec3.atCenterOf(nearest));
+        }).orElseGet(Optional::empty);
     }
 
     public static Optional<Vec3> getNearestPointSpectatePos(LocalPlayer localPlayer) {

@@ -34,6 +34,9 @@ public class C4SpectateCameraHandler {
     public static void start(Vector3f pos) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) return;
+        if (DeathCameraEffectHandler.isPlaying()) {
+            return;
+        }
         if (!CommonProxy.getFPSCap(minecraft.player).map(cap -> cap.getGame2ClientOptions().visual().useC4SpectateCamera()).orElse(true)) {
             stop();
             return;
@@ -48,6 +51,9 @@ public class C4SpectateCameraHandler {
     public static void start(Vec3 pos, @Nullable Vec3 target) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) return;
+        if (DeathCameraEffectHandler.isPlaying()) {
+            return;
+        }
         if (!CommonProxy.getFPSCap(minecraft.player).map(cap -> cap.getGame2ClientOptions().visual().useC4SpectateCamera()).orElse(true)) {
             stop();
             return;
@@ -73,6 +79,9 @@ public class C4SpectateCameraHandler {
     public static void refresh() {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
+        if (DeathCameraEffectHandler.isPlaying()) {
+            return;
+        }
         if (minecraft.level == null || player == null) {
             stop();
             return;
@@ -103,7 +112,7 @@ public class C4SpectateCameraHandler {
 
     @SubscribeEvent
     public static void onCameraPos(CameraPosEvent.Pre event) {
-        if (!active) return;
+        if (!active || DeathCameraEffectHandler.isPlaying()) return;
         refresh();
         if (!active) return;
         event.setX(cameraPos.x);

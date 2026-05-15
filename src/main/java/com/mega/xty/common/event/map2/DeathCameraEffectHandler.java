@@ -3,6 +3,7 @@ package com.mega.xty.common.event.map2;
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.api.event.render.CameraPosEvent;
 import com.mega.xty.client.shader.post.map2.DeadPostEffect;
+import com.mega.xty.common.data.map2.ClientGameData;
 import com.mega.xty.proxy.CommonProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -39,6 +40,7 @@ public class DeathCameraEffectHandler {
         if (playing) {
             DeadPostEffect.stop();
         }
+        C4SpectateCameraHandler.stop();
         playing = true;
         tickCount = 0;
         DeathCameraEffectHandler.start = start;
@@ -60,6 +62,7 @@ public class DeathCameraEffectHandler {
         tickCount++;
         if (tickCount >= EFFECT_TICKS) {
             stop();
+            ClientGameData.fpsSpectate();
         }
     }
 

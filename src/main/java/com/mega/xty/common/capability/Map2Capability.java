@@ -295,6 +295,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 }
                 savedData.addDisabledPermission(player, InputOperations.MOVEMENT);
                 savedData.addDisabledPermission(player, InputOperations.SNEAK);
+                savedData.addDisabledPermission(player, InputOperations.MOUSE_ATTACK);
 
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
@@ -324,6 +325,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 savedData.removeDisabledPermission(player, InputOperations.MOVE_FORWARD);
                 savedData.removeDisabledPermission(player, InputOperations.MOVE_BACKWARD);
                 savedData.removeDisabledPermission(player, InputOperations.SNEAK);
+                savedData.removeDisabledPermission(player, InputOperations.MOUSE_ATTACK);
 
                 savedData.removeDisabledOverlay(player, VanillaGuiOverlay.ARMOR_LEVEL.id());
                 savedData.removeDisabledOverlay(player, VanillaGuiOverlay.PLAYER_HEALTH.id());
