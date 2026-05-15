@@ -3,7 +3,7 @@ package com.mega.xty.common.data.map2;
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.mixin.accessor.AccessorGuiGraphics;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
-import com.mega.xty.client.renderer.BlurRectRenderer;
+import com.mega.xty.client.renderer.SafeBlurRectRenderer;
 import com.mega.xty.client.shader.ModShaders;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -66,7 +66,7 @@ public class DeathData {
             poseStack.pushPose();
             poseStack.translate(width * (1F-appearProgress), 0, 0);
             //背景
-            BlurRectRenderer.render(graphics, -4, -1, width + 5, 11.5F, ((int) (mixedAlpha * 100)) << 24 | 0x00303030, 4);
+            SafeBlurRectRenderer.render(graphics, -4, -1, width + 5, 11.5F, ((int) (mixedAlpha * 100)) << 24 | 0x00303030, 4);
             RenderSystem.setShaderColor(1F, 1F, 1F, mixedAlpha);
 
             int space = graphics.drawString(font, this.killer, 0, 0, 0xFFFFFFFF);

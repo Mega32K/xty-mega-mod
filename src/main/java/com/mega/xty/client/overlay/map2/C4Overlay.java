@@ -3,7 +3,7 @@ package com.mega.xty.client.overlay.map2;
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.client.font.ErrorFont;
-import com.mega.xty.client.renderer.BlurRectRenderer;
+import com.mega.xty.client.renderer.SafeBlurRectRenderer;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.map2.ClientGame2Data;
@@ -102,7 +102,7 @@ public class C4Overlay implements IGuiOverlay {
         graphics.drawCenteredString(realTextBarWidth < textBarWidth ? ErrorFont.INSTANCE : font, "炸弹安装中", (int) (textBarX + textBarWidth / 2.0F), (int) (textBarY + (barHeight - font.lineHeight) / 2.0F), percentColor);
         graphics.disableScissor();
 
-        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        SafeBlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
         float renderProgress = Math.min(1.0F, Math.max(0.0F, progress));
         float progressBarX = x + 2.0F;
         float progressBarY = y + 3.0F;
@@ -167,7 +167,7 @@ public class C4Overlay implements IGuiOverlay {
         graphics.drawCenteredString(realTextBarWidth < textBarWidth ? ErrorFont.INSTANCE : font, "炸弹拆除中", (int) (textBarX + textBarWidth / 2.0F), (int) (textBarY + (barHeight - font.lineHeight) / 2.0F), percentColor);
         graphics.disableScissor();
 
-        BlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        SafeBlurRectRenderer.render(graphics, x, y, barWidth, barHeight, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
         float renderProgress = Math.min(1.0F, Math.max(0.0F, progress));
         float progressBarX = x + 2.0F;
         float progressBarY = y + 3.0F;
@@ -212,7 +212,7 @@ public class C4Overlay implements IGuiOverlay {
 
     private static void renderNotificationBackground(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha, int borderColor) {
         graphics.flush();
-        BlurRectRenderer.render(graphics, centerX - realWidth / 2.0F, y, realWidth, height, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        SafeBlurRectRenderer.render(graphics, centerX - realWidth / 2.0F, y, realWidth, height, ((int) (alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
         graphics.fill(centerX - 2.0F - realWidth / 2.0F, y, centerX - realWidth / 2.0F, y + height, borderColor);
         graphics.fill(centerX + realWidth / 2.0F, y, centerX + realWidth / 2.0F + 2.0F, y + height, borderColor);
     }

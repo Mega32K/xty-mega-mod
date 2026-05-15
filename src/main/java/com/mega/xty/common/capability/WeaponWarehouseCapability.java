@@ -3,6 +3,7 @@ package com.mega.xty.common.capability;
 import com.mega.endinglib.api.capability.CapabilitySyncType;
 import com.mega.endinglib.api.capability.EntitySyncCapabilityBase;
 import com.mega.xty.XtyMegaMod;
+import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.init.ItemInit;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseLoadout;
@@ -14,6 +15,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
@@ -126,8 +128,17 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
         Inventory inventory = player.getInventory();
         clearItemList(inventory.items);
         clearItemList(inventory.offhand);
-        if (player.getTeam() != null && player.getTeam().getColor() == ChatFormatting.RED && !player.isCreative()) {
-            giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MELEE_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()), gunBlacklist));
+        if (player.level() instanceof ServerLevel serverLevel && !Game2SavedData.getInstance(serverLevel.getServer()).isStopped()) {
+            if (player.getTeam() != null && player.getTeam().getColor() == ChatFormatting.RED && !player.isCreative()) {
+                giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MELEE_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()), gunBlacklist));
+            } else {
+                giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MAIN_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MAIN_WEAPON.getSlotIndex()), gunBlacklist));
+                giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON.getSlotIndex()), gunBlacklist));
+                giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MELEE_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MELEE_WEAPON.getSlotIndex()), gunBlacklist));
+                setOrGiveLoadoutItem(player, 3, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.M67_GRENADE, loadout.getSlot(WeaponWarehouseSlotType.M67_GRENADE.getSlotIndex()), gunBlacklist));
+                setOrGiveLoadoutItem(player, 4, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.SMOKE_GRENADE, loadout.getSlot(WeaponWarehouseSlotType.SMOKE_GRENADE.getSlotIndex()), gunBlacklist));
+                setOrGiveLoadoutItem(player, 5, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.FLASH_GRENADE, loadout.getSlot(WeaponWarehouseSlotType.FLASH_GRENADE.getSlotIndex()), gunBlacklist));
+            }
         } else {
             giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.MAIN_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.MAIN_WEAPON.getSlotIndex()), gunBlacklist));
             giveLoadoutItem(player, WeaponWarehouseItems.sanitizeSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON, loadout.getSlot(WeaponWarehouseSlotType.SECONDARY_WEAPON.getSlotIndex()), gunBlacklist));

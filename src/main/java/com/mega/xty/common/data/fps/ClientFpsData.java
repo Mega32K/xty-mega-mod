@@ -26,12 +26,7 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Comparator;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ClientFpsData {
     public static final int BOMB_COUNTDOWN_REQUEST_INTERVAL = 15 * 20;
@@ -64,7 +59,15 @@ public class ClientFpsData {
         return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, getNameForDisplay(playerInfo))).component;
     }
     public static boolean getPlayerTabDead(PlayerInfo playerInfo) {
-        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, Component.literal(""))).isDead;
+        boolean[] b = new boolean[]{false};
+        Player player = ClientWrapped.clientPlayer();
+        if (player != null) {
+            if (Objects.equals(playerInfo.getProfile().getId(), player.getUUID()))
+                CommonProxy.getMap2Cap(player).ifPresent(cap -> b[0] = cap.isXaeroDead());
+        }
+        if (!b[0])
+            b[0] = playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, Component.literal(""))).isDead;
+        return b[0];
     }
     public static boolean isWarehouseGunBlacklisted(ResourceLocation id) {
         return id != null && warehouseGunBlacklist.contains(id);

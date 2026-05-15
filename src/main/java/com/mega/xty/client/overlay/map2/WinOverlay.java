@@ -3,7 +3,7 @@ package com.mega.xty.client.overlay.map2;
 import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.client.font.ErrorFont;
-import com.mega.xty.client.renderer.BlurRectRenderer;
+import com.mega.xty.client.renderer.SafeBlurRectRenderer;
 import com.mega.xty.client.shader.ModShaders;
 import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
@@ -120,7 +120,7 @@ public class WinOverlay implements IGuiOverlay {
 
     private static void renderNotificationBackground(MegaGuiGraphics graphics, float centerX, float y, float realWidth, float height, float alpha, int borderColor) {
         graphics.flush();
-        BlurRectRenderer.render(graphics, centerX - realWidth / 2.0F, y, realWidth, height, ((int)(alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
+        SafeBlurRectRenderer.render(graphics, centerX - realWidth / 2.0F, y, realWidth, height, ((int)(alpha * 80.0F + 1.0F) << 24) | 0x00303030, alpha * 8.0F);
         graphics.fill(centerX - 2.0F - realWidth / 2.0F, y, centerX - realWidth / 2.0F, y + height, borderColor);
         graphics.fill(centerX + realWidth / 2.0F, y, centerX + realWidth / 2.0F + 2.0F, y + height, borderColor);
     }

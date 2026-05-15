@@ -89,7 +89,7 @@ public class GameCommonEvents {
     @SubscribeEvent
     public static void onKnockBack(LivingKnockBackEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            if (!Map2SavedData.getInstance(player.server).isStopped()) {
+            if (!Game2SavedData.getInstance(player.server).isStopped()) {
                 event.setCanceled(true);
             }
         }

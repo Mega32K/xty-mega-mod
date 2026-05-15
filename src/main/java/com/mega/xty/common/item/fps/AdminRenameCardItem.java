@@ -33,10 +33,10 @@ public class AdminRenameCardItem extends RenameCardItem {
 
     @Override
     public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack itemStack, @NotNull Player player, @NotNull LivingEntity entity, @NotNull InteractionHand hand) {
-        if (player instanceof ServerPlayer serverPlayer) {
-            if (!player.getAbilities().instabuild)
+        if (entity instanceof Player beRenamed && player instanceof ServerPlayer user) {
+            if (!user.getAbilities().instabuild)
                 itemStack.shrink(1);
-            NetworkHandler.sendToPlayer(new S2CPlayerRenamePacket(serverPlayer.getUUID()), serverPlayer);
+            NetworkHandler.sendToPlayer(new S2CPlayerRenamePacket(beRenamed.getUUID()), user);
         }
         return super.interactLivingEntity(itemStack, player, entity, hand);
     }

@@ -26,6 +26,7 @@ import java.util.List;
 
 public class WeaponWarehouseScreen extends Screen {
     private static final ResourceLocation GUI_PANEL = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/gui_icons.png");
+    private static final ResourceLocation GUI_PANEL_HIGHLIGHT = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/gui_icons_highlight.png");
     private static final ResourceLocation SLIDER = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider.png");
     private static final ResourceLocation SLIDER_HIGHLIGHTED = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider_highlighted.png");
     private static final ResourceLocation SLIDER_HANDLE = ResourceLocation.fromNamespaceAndPath(XtyMegaMod.MODID, "textures/ui/fps/slider_handle.png");
@@ -435,7 +436,7 @@ public class WeaponWarehouseScreen extends Screen {
     }
 
     private void renderPanelField(MegaGuiGraphics graphics, int x, int y, int width, int height, boolean selected) {
-        graphics.blitNineSlicedSized(GUI_PANEL, x, y, width, height, 5, PANEL_TEXTURE_SIZE, PANEL_TEXTURE_SIZE, 0, 0, 256, 256);
+        graphics.blitNineSlicedSized(selected ? GUI_PANEL_HIGHLIGHT : GUI_PANEL, x, y, width, height, 5, PANEL_TEXTURE_SIZE, PANEL_TEXTURE_SIZE, 0, 0, 256, 256);
     }
 
     private void renderCandidateRow(MegaGuiGraphics graphics, int x, int y, int width, int height, boolean hovered) {
