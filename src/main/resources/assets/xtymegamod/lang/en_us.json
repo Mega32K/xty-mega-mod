@@ -147,5 +147,8 @@
   "fps.death_type.burn": "[Burn]",
   "fps.death_type.blast": "[Blast]",
   "fps.death_type.slash": "[Slash]",
-  "fps.death_type.shock": "[Shock]"
+  "fps.death_type.shock": "[Shock]",
+
+  "game_2.point.a": "A",
+  "game_2.point.b": "B"
 }

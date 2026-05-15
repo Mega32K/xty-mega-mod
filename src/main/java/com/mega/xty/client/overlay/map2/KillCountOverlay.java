@@ -124,7 +124,7 @@ public class KillCountOverlay implements IGuiOverlay {
                 if (ClientGame1Data.playing()) {
                     right = Component.literal("")
                             .withStyle(ChatFormatting.WHITE)
-                            .append(Component.literal("蓝队: ").withStyle(style -> style.withColor(0x649ee8)))
+                            .append(Component.literal("保卫者: ").withStyle(style -> style.withColor(0x649ee8)))
                             .append(Component.literal("%s".formatted(ClientGameData.blueTeamKillcount)).withStyle(ChatFormatting.GRAY));
                     mid = Component.literal("")
                             .withStyle(ChatFormatting.WHITE)
@@ -133,12 +133,12 @@ public class KillCountOverlay implements IGuiOverlay {
                             .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
                     left = Component.literal("")
                             .withStyle(ChatFormatting.WHITE)
-                            .append(Component.literal("红队: ").withStyle(ChatFormatting.RED))
+                            .append(Component.literal("幽灵: ").withStyle(ChatFormatting.RED))
                             .append(Component.literal("%s".formatted(ClientGameData.redTeamKillcount)).withStyle(ChatFormatting.GRAY));
                 } else if (ClientGame2Data.playing()) {
                     right = Component.literal("")
                             .withStyle(ChatFormatting.WHITE)
-                            .append(Component.literal("蓝队 ").withStyle(style -> style.withColor(0x649ee8)));
+                            .append(Component.literal("保卫者 ").withStyle(style -> style.withColor(0x649ee8)));
                     mid = Component.literal("")
                             .withStyle(ChatFormatting.WHITE)
                             .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
@@ -146,7 +146,7 @@ public class KillCountOverlay implements IGuiOverlay {
                             .append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
                     left = Component.literal("")
                             .withStyle(ChatFormatting.WHITE)
-                            .append(Component.literal(" 红队").withStyle(ChatFormatting.RED));
+                            .append(Component.literal(" 幽灵").withStyle(ChatFormatting.RED));
                 }
 
                     int width1 = font.width(left);

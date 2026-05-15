@@ -638,7 +638,7 @@ public class Map2SavedData extends SavedData {
             if (index >= homes.size()) {
                 break;
             }
-            BlockPos homePos = homes.get(targetLevel.random.nextInt(homes.size()));
+            BlockPos homePos = homes.get(index);
             CommonProxy.getMap2Cap(player).ifPresent(Map2Capability::clearDeathStateData);
             player.teleportTo(targetLevel, homePos.getX() + 0.5D, homePos.getY(), homePos.getZ() + 0.5D, player.getYRot(), player.getXRot());
             if (teleported != null) {
