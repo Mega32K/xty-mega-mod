@@ -145,6 +145,7 @@ public class WeaponWarehouseScreen extends Screen {
         renderSlotGrid(graphics, mouseX, mouseY);
         renderCandidatePanel(graphics, mouseX, mouseY);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
+        renderHoveredTooltip(graphics, mouseX, mouseY);
     }
 
     private void renderSlotGrid(MegaGuiGraphics graphics, int mouseX, int mouseY) {
@@ -167,9 +168,6 @@ public class WeaponWarehouseScreen extends Screen {
                 renderClippedSlotName(graphics, stack, x + 24, y + 22, x + slotWidth - 5, y + slotHeight - 3);
             } else {
                 graphics.drawString(this.font, Component.translatable("screen.xtymegamod.weapon_warehouse.empty"), x + 6, y + 22, 0xFF7F8A99);
-            }
-            if (isWithin(mouseX, mouseY, x, y, slotWidth, slotHeight) && !stack.isEmpty()) {
-                graphics.renderTooltip(this.font, stack, mouseX, mouseY);
             }
         }
     }
@@ -463,6 +461,37 @@ public class WeaponWarehouseScreen extends Screen {
                 SCROLL_BAR_WIDTH,
                 SCROLL_HANDLE_TEXTURE_HEIGHT
         );
+    }
+
+    private void renderHoveredTooltip(MegaGuiGraphics graphics, int mouseX, int mouseY) {
+        ItemStack stack = getHoveredTooltipStack(mouseX, mouseY);
+        if (stack.isEmpty()) {
+            return;
+        }
+        PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        poseStack.translate(0.0F, 0.0F, 1200.0F);
+        graphics.renderTooltip(this.font, stack, mouseX, mouseY);
+        poseStack.popPose();
+    }
+
+    private ItemStack getHoveredTooltipStack(int mouseX, int mouseY) {
+        int startX = searchX();
+        int startY = slotGridY();
+        int slotWidth = slotWidth();
+        int slotHeight = slotHeight();
+        for (WeaponWarehouseSlotType slotType : WeaponWarehouseSlotType.values()) {
+            int slot = slotType.getSlotIndex();
+            int row = slot / slotColumns();
+            int column = slot % slotColumns();
+            int x = startX + column * (slotWidth + slotGap());
+            int y = startY + row * (slotHeight + 8);
+            ItemStack stack = this.snapshot.getLoadout(this.selectedLoadout).getSlot(slot);
+            if (isWithin(mouseX, mouseY, x, y, slotWidth, slotHeight) && !stack.isEmpty()) {
+                return stack;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     private void blitRegion(MegaGuiGraphics graphics, ResourceLocation texture, int x, int y, int width, int height, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {

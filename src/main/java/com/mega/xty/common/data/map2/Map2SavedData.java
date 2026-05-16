@@ -27,8 +27,10 @@ import com.mega.xty.common.options.map2game2.Game2ServerOptions;
 import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.GunTabType;
+import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.api.item.IAmmoBox;
+import com.tacz.guns.init.ModItems;
 import com.tacz.guns.util.AttachmentDataUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -88,6 +90,10 @@ public class Map2SavedData extends SavedData {
     private ResourceKey<Level> game2Dimension;
     private Map2Functions map2Functions = new Map2Functions(this);
     private static final int HOME_MAX_SIZE = 10;
+    private static final int BACKPACK_SLOT_START = 9;
+    private static final int SHOTGUN_AMMO_MULTIPLIER = 3;
+    private static final int MIN_SHOTGUN_AMMO_COUNT = 16;
+    private static final int DEFAULT_AMMO_MULTIPLIER = 5;
     private boolean game2NextRoundPending;
     public static Map2SavedData readOrCreate(MinecraftServer server) {
         Map2SavedData data = server.overworld().getDataStorage().computeIfAbsent(tag-> load(tag,server), Map2SavedData::new, "xty_map2");
@@ -569,11 +575,11 @@ public class Map2SavedData extends SavedData {
         }
         clearGame2RoundWorldEntities();
         List<ServerPlayer> players = this.server.getPlayerList().getPlayers();
+        Set<UUID> teleportedPlayers = backToHomeInternal(players);
         EndingLibrarySavedData elData = EndingLibrarySavedData.getInstance(this.server);
         for (ServerPlayer player : players) {
             resetPlayerForNewRound(player);
         }
-        Set<UUID> teleportedPlayers = backToHomeInternal(players);
         clearNewRoundInventory(players, teleportedPlayers);
         prepareRoundC4(players, teleportedPlayers);
         prepareBlueRoundItems(players, teleportedPlayers);
@@ -629,22 +635,22 @@ public class Map2SavedData extends SavedData {
         if (homes.isEmpty()) {
             return;
         }
-        int index = 0;
+        List<ServerPlayer> teamPlayers = new ArrayList<>();
         for (ServerPlayer player : players) {
             Team team = player.getTeam();
-            if (team == null || team.getColor() != teamColor) {
-                continue;
+            if (team != null && team.getColor() == teamColor) {
+                teamPlayers.add(player);
             }
-            if (index >= homes.size()) {
-                break;
-            }
-            BlockPos homePos = homes.get(index);
+        }
+        BlockPos fallbackHome = homes.get(0);
+        for (int i = 0; i < teamPlayers.size(); i++) {
+            ServerPlayer player = teamPlayers.get(i);
+            BlockPos homePos = i < homes.size() ? homes.get(i) : fallbackHome;
             CommonProxy.getMap2Cap(player).ifPresent(Map2Capability::clearDeathStateData);
             player.teleportTo(targetLevel, homePos.getX() + 0.5D, homePos.getY(), homePos.getZ() + 0.5D, player.getYRot(), player.getXRot());
             if (teleported != null) {
                 teleported.add(player.getUUID());
             }
-            index++;
         }
     }
 
@@ -828,7 +834,7 @@ public class Map2SavedData extends SavedData {
                 giveBdkIfMissing(player);
             }
             if (loadoutOptions.isGiveBlueCreativeAmmoBox()) {
-                giveAllTypeCreativeAmmoBox(player);
+                giveBlueGunAmmo(player);
             }
             if (loadoutOptions.isFillBlueGunAmmo()) {
                 fillInventoryGuns(player);
@@ -846,14 +852,99 @@ public class Map2SavedData extends SavedData {
         }
     }
 
-    private void giveAllTypeCreativeAmmoBox(ServerPlayer player) {
-        ItemStack ammoBox = com.tacz.guns.init.ModItems.AMMO_BOX.get().getDefaultInstance();
-        if (ammoBox.getItem() instanceof IAmmoBox taczAmmoBox) {
-            taczAmmoBox.setCreative(ammoBox, true);
+    private void giveBlueGunAmmo(ServerPlayer player) {
+        Map<ResourceLocation, Integer> ammoCounts = new LinkedHashMap<>();
+        collectGunAmmoRequirements(player.getInventory().items, ammoCounts);
+        collectGunAmmoRequirements(player.getInventory().offhand, ammoCounts);
+        for (Map.Entry<ResourceLocation, Integer> entry : ammoCounts.entrySet()) {
+            giveAmmoToBackpack(player, entry.getKey(), entry.getValue());
         }
-        if (!player.getInventory().add(ammoBox)) {
-            player.drop(ammoBox, false);
+        player.getInventory().setChanged();
+        player.containerMenu.broadcastChanges();
+    }
+
+    private void collectGunAmmoRequirements(NonNullList<ItemStack> items, Map<ResourceLocation, Integer> ammoCounts) {
+        for (ItemStack stack : items) {
+            if (stack.getItem() instanceof IGun gun) {
+                TimelessAPI.getCommonGunIndex(gun.getGunId(stack)).ifPresent(index -> {
+                    ResourceLocation ammoId = index.getGunData().getAmmoId();
+                    if (ammoId == null) {
+                        return;
+                    }
+                    int magazineAmmo = AttachmentDataUtils.getAmmoCountWithAttachment(stack, index.getGunData());
+                    if (magazineAmmo <= 0) {
+                        return;
+                    }
+                    boolean shotgun = isShotgun(index.getType()) || isShotgun(index.getPojo().getType());
+                    int ammoCount = shotgun ? Math.max(MIN_SHOTGUN_AMMO_COUNT, magazineAmmo * SHOTGUN_AMMO_MULTIPLIER) : magazineAmmo * DEFAULT_AMMO_MULTIPLIER;
+                    ammoCounts.merge(ammoId, ammoCount, Integer::sum);
+                });
+            }
         }
+    }
+
+    private boolean isShotgun(@Nullable String type) {
+        return type != null && GunTabType.SHOTGUN.toString().equalsIgnoreCase(type);
+    }
+
+    private void giveAmmoToBackpack(ServerPlayer player, ResourceLocation ammoId, int count) {
+        int remaining = count;
+        while (remaining > 0) {
+            ItemStack ammo = createAmmoStack(ammoId, 1);
+            if (ammo.isEmpty()) {
+                return;
+            }
+            int moveCount = Math.min(remaining, Math.max(1, ammo.getMaxStackSize()));
+            ammo.setCount(moveCount);
+            ItemStack leftover = insertIntoBackpackSlots(player, ammo);
+            if (!leftover.isEmpty()) {
+                player.drop(leftover, false);
+            }
+            remaining -= moveCount;
+        }
+    }
+
+    private ItemStack createAmmoStack(ResourceLocation ammoId, int count) {
+        ItemStack ammo = ModItems.AMMO.get().getDefaultInstance();
+        if (!(ammo.getItem() instanceof IAmmo taczAmmo)) {
+            return ItemStack.EMPTY;
+        }
+        taczAmmo.setAmmoId(ammo, ammoId);
+        ammo.setCount(Math.max(1, count));
+        return ammo;
+    }
+
+    private ItemStack insertIntoBackpackSlots(ServerPlayer player, ItemStack stack) {
+        ItemStack remaining = stack.copy();
+        NonNullList<ItemStack> items = player.getInventory().items;
+        for (int i = BACKPACK_SLOT_START; i < items.size(); i++) {
+            ItemStack existing = items.get(i);
+            if (!existing.isEmpty() && ItemStack.isSameItemSameTags(existing, remaining)) {
+                int free = existing.getMaxStackSize() - existing.getCount();
+                if (free <= 0) {
+                    continue;
+                }
+                int moveCount = Math.min(free, remaining.getCount());
+                existing.grow(moveCount);
+                remaining.shrink(moveCount);
+                if (remaining.isEmpty()) {
+                    return ItemStack.EMPTY;
+                }
+            }
+        }
+        for (int i = BACKPACK_SLOT_START; i < items.size(); i++) {
+            if (items.get(i).isEmpty()) {
+                ItemStack placed = remaining.copy();
+                int moveCount = Math.min(remaining.getCount(), Math.max(1, placed.getMaxStackSize()));
+                placed.setCount(moveCount);
+                items.set(i, placed);
+                remaining.shrink(moveCount);
+                if (remaining.isEmpty()) {
+                    return ItemStack.EMPTY;
+                }
+            }
+        }
+        return remaining;
     }
 
     private boolean hasBdk(NonNullList<ItemStack> items) {

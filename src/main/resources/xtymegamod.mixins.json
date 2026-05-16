@@ -18,6 +18,7 @@
     "map1.game_2.EntityMixin",
     "map1.game_2.Spider1Mixin",
     "map2.game2.EntityMixin",
+    "map2.game2.ItemEntityMixin",
     "map2.game2.LivingEntityMixin",
     "map2.game2.PlayerMixin",
     "tacz.LivingEntityShootMixin",
@@ -52,7 +53,8 @@
     "map2.game2.LivingEntityRendererMixin",
     "map2.game2.PlayerItemInHandLayerMixin",
     "tacz.MinecartSoundInstanceMixin",
-    "tacz.GunHudOverlayMixin"
+    "tacz.GunHudOverlayMixin",
+    "tacz.RenderCrosshairEventMixin"
   ],
   "injectors": {
     "defaultRequire": 1

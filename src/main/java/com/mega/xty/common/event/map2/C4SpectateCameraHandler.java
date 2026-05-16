@@ -105,7 +105,9 @@ public class C4SpectateCameraHandler {
             }
             cap.getPlayerC4Pos().ifPresentOrElse(pos -> {
                 cameraPos = new Vec3(pos);
+                lookTarget = findLookTarget(minecraft.level, cameraPos);
                 active = true;
+                faceLookTarget(player);
             }, C4SpectateCameraHandler::stop);
         });
     }
@@ -118,6 +120,10 @@ public class C4SpectateCameraHandler {
         event.setX(cameraPos.x);
         event.setY(cameraPos.y);
         event.setZ(cameraPos.z);
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null) {
+            faceLookTarget(minecraft.player);
+        }
     }
 
     private static void faceLookTarget(LocalPlayer player) {
@@ -149,12 +155,19 @@ public class C4SpectateCameraHandler {
                     .orElse(null);
         }
 
+        Vec3 nearestSitePoint = null;
+        double nearestDistance = Double.MAX_VALUE;
         BlockPos[] sitePoints = {ClientGameData.pointA, ClientGameData.pointB};
         for (BlockPos sitePoint : sitePoints) {
             if (sitePoint != null) {
-                return Vec3.atCenterOf(sitePoint);
+                Vec3 center = Vec3.atCenterOf(sitePoint);
+                double distance = center.distanceToSqr(spectatePos);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestSitePoint = center;
+                }
             }
         }
-        return null;
+        return nearestSitePoint;
     }
 }

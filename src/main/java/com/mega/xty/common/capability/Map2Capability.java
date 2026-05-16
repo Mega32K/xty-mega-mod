@@ -10,7 +10,6 @@ import com.mega.endinglib.common.data.EndingLibrarySavedData;
 import com.mega.endinglib.common.data.InputOperations;
 import com.mega.endinglib.proxy.CommonProxy;
 import com.mega.xty.XtyMegaMod;
-import com.mega.xty.client.MapLevelEvents;
 import com.mega.xty.common.data.map2.ClientGame1Data;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
@@ -131,6 +130,8 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 } else if (ClientGame2Data.playing()) {
                     ClientGameData.fpsSpectate();
                 }
+            } else if (this.isXaeroDead() && ClientGame2Data.playing()) {
+                ClientGameData.hardCutDeadSpectateTarget(this.getEntity());
             }
         }
     }
@@ -303,7 +304,6 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.HOTBAR.id());
                 savedData.addDisabledOverlay(player, FPS_HOTBAR_OVERLAY);
                 savedData.addDisabledOverlay(player, VanillaGuiOverlay.EXPERIENCE_BAR.id());
-                player.serverLevel().levelEvent(player, 110120, BlockPos.ZERO, MapLevelEvents.FPS_SPECTATE);
             });
             CommonProxy.getEntityCapOptional(player).ifPresent(cap -> {
                 cap.setRenderScale(new Vector3f(0F, 0F, 0F));

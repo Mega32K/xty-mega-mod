@@ -43,9 +43,11 @@ public class ClientItemDisplayTooltip implements ClientTooltipComponent {
     public void renderText(@NotNull Font font, int x, int y, @NotNull Matrix4f matrix4f, MultiBufferSource.@NotNull BufferSource bufferSource) {
         MegaGuiGraphics graphics = new MegaGuiGraphics(Minecraft.getInstance(), bufferSource);
         PoseStack stack = graphics.pose();
+        stack.pushPose();
         stack.translate(x, y + 17, 0);
         stack.scale(0.8F, 0.8F, 1F);
-        stack.translate(0, 0, 400);
+        stack.translate(0, 0, 1200);
         graphics.drawString(font, tooltip.itemStack().getDisplayName(), 0, 0, 0xFFFFFFFF);
+        stack.popPose();
     }
 }

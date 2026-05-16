@@ -164,6 +164,26 @@ public class ClientGameData {
         }
     }
 
+    public static void hardCutDeadSpectateTarget(Entity deadEntity) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || deadEntity == null || mc.getCameraEntity() != deadEntity) {
+            return;
+        }
+        if (DeathCameraEffectHandler.isPlaying() || !ClientGame2Data.playing()) {
+            return;
+        }
+        CommonProxy.getMap2Cap(player).ifPresent(cap -> {
+            if (!cap.isXaeroDead()) {
+                return;
+            }
+            mc.setCameraEntity(player);
+            C4SpectateCameraHandler.stop();
+            currentCameraPlayerIndex = -1;
+            fpsSpectate();
+        });
+    }
+
     private static void refreshDeadSpectateTarget(Player player) {
         if (DeathCameraEffectHandler.isPlaying()) {
             return;

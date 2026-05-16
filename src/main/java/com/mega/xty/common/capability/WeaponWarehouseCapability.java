@@ -9,7 +9,7 @@ import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseLoadout;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
 import com.mega.xty.common.warehouse.WeaponWarehouseSlotType;
-import com.tacz.guns.item.AmmoBoxItem;
+import com.tacz.guns.api.item.IAmmo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -166,7 +166,7 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     private static void clearItemList(NonNullList<ItemStack> items) {
         for (int i = 0; i < items.size(); i++) {
             ItemStack stack = items.get(i);
-            if (!stack.is(ItemInit.C4_BOMB.get()) && !stack.is(ItemInit.BDK.get()) && !(stack.getItem() instanceof AmmoBoxItem))
+            if (stack.getItem() instanceof IAmmo || (!stack.is(ItemInit.C4_BOMB.get()) && !stack.is(ItemInit.BDK.get())))
                 items.set(i, ItemStack.EMPTY);
         }
     }

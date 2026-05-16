@@ -1,5 +1,7 @@
 package com.mega.xty.common.item.fps;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.mega.endinglib.api.item.IInvulnerableItem;
 import com.mega.endinglib.common.network.PacketHandler;
 import com.mega.xty.common.data.fps.ClientFpsData;
@@ -22,20 +24,30 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class C4BombItem extends Item implements IInvulnerableItem {
+    private final Multimap<Attribute, AttributeModifier> defaultModifiers;
     public static final float C4_SET_DISTANCE = 6;
     public static final int SETTING_DURATION = 4 * 20;
     public C4BombItem() {
         super(new Properties().stacksTo(1).fireResistant());
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+        builder.put(Attributes.MOVEMENT_SPEED, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "C4 modifier", -0.8, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        builder.put(ForgeMod.ENTITY_GRAVITY.get(), new AttributeModifier(BASE_ATTACK_SPEED_UUID, "C4 modifier", 10.0, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        this.defaultModifiers = builder.build();
     }
 
     @Override
@@ -61,7 +73,10 @@ public class C4BombItem extends Item implements IInvulnerableItem {
             if (!FpsSavedData.getInstance(sl.getServer()).isBombExist())
                 canStart = canSetC4(map2SavedData.getPointA(), player.position(), plantDistance) || canSetC4(map2SavedData.getPointB(), player.position(), plantDistance);
         }
-        if (canStart) player.startUsingItem(interactionHand);
+        if (canStart) {
+            player.startUsingItem(interactionHand);
+            applyPlantingModifiers(player);
+        }
         if (canStart && !level.isClientSide) {
             playC4Sound(player, SoundsInit.C4_CLICK.get(), 0.65F, 1.0F);
         }
@@ -84,6 +99,7 @@ public class C4BombItem extends Item implements IInvulnerableItem {
 
     @Override
     public @NotNull ItemStack finishUsingItem(@NotNull ItemStack itemStack, @NotNull Level level, @NotNull LivingEntity entity) {
+        removePlantingModifiers(entity);
         if (entity instanceof Player player && !level.isClientSide && level instanceof ServerLevel sl) {
             C4Entity c4 = new C4Entity(player);
             level.addFreshEntity(c4);
@@ -163,4 +179,30 @@ public class C4BombItem extends Item implements IInvulnerableItem {
     private static void playC4Sound(LivingEntity entity, SoundEvent soundEvent, float volume, float pitch) {
         entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), soundEvent, SoundSource.PLAYERS, volume, pitch);
     }
+    @Override
+    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
+        removePlantingModifiers(entity);
+        super.onStopUsing(stack, entity, count);
+    }
+
+    private void applyPlantingModifiers(LivingEntity entity) {
+        for (var entry : this.defaultModifiers.entries()) {
+            AttributeInstance attributeInstance = entity.getAttribute(entry.getKey());
+            if (attributeInstance != null) {
+                AttributeModifier modifier = entry.getValue();
+                attributeInstance.removeModifier(modifier.getId());
+                attributeInstance.addTransientModifier(modifier);
+            }
+        }
+    }
+
+    private void removePlantingModifiers(LivingEntity entity) {
+        for (var entry : this.defaultModifiers.entries()) {
+            AttributeInstance attributeInstance = entity.getAttribute(entry.getKey());
+            if (attributeInstance != null) {
+                attributeInstance.removeModifier(entry.getValue().getId());
+            }
+        }
+    }
+
 }

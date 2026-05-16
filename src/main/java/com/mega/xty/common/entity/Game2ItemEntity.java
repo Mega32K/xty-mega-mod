@@ -4,6 +4,8 @@ import com.mega.endinglib.mixin.accessor.AccessorItemEntity;
 import com.mega.xty.common.data.map1.ClientGame2Data;
 import com.mega.xty.common.data.map1.Game2SavedData;
 import com.mega.xty.common.init.EntityInit;
+import com.mega.xty.common.init.ItemInit;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -48,6 +50,9 @@ public class Game2ItemEntity extends ItemEntity {
     @Override
     public void playerTouch(Player player) {
         if (!this.level().isClientSide) {
+            if (this.getItem().is(ItemInit.C4_BOMB.get()) && player.getTeam() != null && player.getTeam().getColor() == ChatFormatting.BLUE) {
+                return;
+            }
             AccessorItemEntity accessorItem = (AccessorItemEntity) this;
             if (accessorItem.getPickupDelay() > 0) return;
             boolean canTouch = true;
