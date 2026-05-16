@@ -1,6 +1,5 @@
 package com.mega.xty.client.overlay.map2;
 
-import com.mega.endinglib.api.client.Easing;
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.xty.client.font.ErrorFont;
 import com.mega.xty.client.renderer.SafeBlurRectRenderer;
@@ -9,9 +8,6 @@ import com.mega.xty.common.data.fps.ClientFpsData;
 import com.mega.xty.common.data.fps.kad.KAD;
 import com.mega.xty.proxy.ClientProxy;
 import com.mega.xty.proxy.CommonProxy;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.pipeline.TextureTarget;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -30,8 +26,6 @@ import net.minecraft.util.FastColor;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
 import java.util.Optional;
 
@@ -173,6 +167,7 @@ public class WinOverlay implements IGuiOverlay {
             return Optional.empty();
         }
         return minecraft.player.connection.getListedOnlinePlayers().stream()
+                .filter(ClientFpsData::isGame2MvpCandidate)
                 .max(ClientFpsData.PLAYER_COMPARATOR);
     }
 }

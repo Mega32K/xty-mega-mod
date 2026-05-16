@@ -31,7 +31,6 @@ public class C4EntityRenderer extends EntityRenderer<C4Entity> {
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotation(- entity.getYRot() * Mth.DEG_TO_RAD));
         poseStack.mulPose(Axis.XP.rotation((float)Math.PI * 0.5F));
-        poseStack.scale(2.0F, 1.0F, 1.0F);
         this.itemRenderer.renderStatic(entity.getC4(), ItemDisplayContext.FIXED, pPackedLight, OverlayTexture.NO_OVERLAY, poseStack, bufferSource, entity.level(), entity.getId());
         poseStack.popPose();
 

@@ -12,6 +12,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public final class Game2VoicechatGroups {
@@ -22,6 +25,7 @@ public final class Game2VoicechatGroups {
     private static final UUID RED_GROUP_ID = UUID.fromString("a4dddff4-314f-4d30-9714-8f86fc6fb771");
     private static final UUID BLUE_GROUP_ID = UUID.fromString("293a5739-f0fc-4b16-a8fe-697f553f75b4");
     private static final UUID REFEREE_GROUP_ID = UUID.fromString("f6888db4-8b7f-4c84-9843-4f22d2ea6d3b");
+    private static volatile VoicechatRoutes currentRoutes = VoicechatRoutes.empty();
 
     private Game2VoicechatGroups() {
     }
@@ -54,6 +58,7 @@ public final class Game2VoicechatGroups {
     public static void clearAllPlayers(MinecraftServer server) {
         VoicechatServerApi api = Game2VoicechatPlugin.getServerApi();
         if (api == null) {
+            currentRoutes = VoicechatRoutes.empty();
             return;
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -62,11 +67,13 @@ public final class Game2VoicechatGroups {
                 connection.setGroup(null);
             }
         }
+        currentRoutes = VoicechatRoutes.empty();
     }
 
     public static void syncGame2Groups(MinecraftServer server) {
         VoicechatServerApi api = Game2VoicechatPlugin.getServerApi();
         if (api == null) {
+            currentRoutes = VoicechatRoutes.empty();
             return;
         }
         ensurePersistentGroups(api);
@@ -81,9 +88,13 @@ public final class Game2VoicechatGroups {
         Group refereeGroup = findGroup(api, REFEREE_GROUP_ID);
         if (redGroup == null || blueGroup == null || refereeGroup == null) {
             XtyMegaMod.LOGGER.warn("Game2 voicechat groups are missing after initialization");
+            currentRoutes = VoicechatRoutes.empty();
             return;
         }
 
+        Map<UUID, VoicechatConnection> redConnections = new LinkedHashMap<>();
+        Map<UUID, VoicechatConnection> blueConnections = new LinkedHashMap<>();
+        Map<UUID, VoicechatConnection> refereeConnections = new LinkedHashMap<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             VoicechatConnection connection = api.getConnectionOf(player.getUUID());
             if (connection == null || !connection.isInstalled()) {
@@ -102,7 +113,19 @@ public final class Game2VoicechatGroups {
             if (!sameGroup(currentGroup, targetGroup)) {
                 connection.setGroup(targetGroup);
             }
+            if (sameGroup(targetGroup, redGroup)) {
+                redConnections.put(player.getUUID(), connection);
+            } else if (sameGroup(targetGroup, blueGroup)) {
+                blueConnections.put(player.getUUID(), connection);
+            } else if (sameGroup(targetGroup, refereeGroup)) {
+                refereeConnections.put(player.getUUID(), connection);
+            }
         }
+        currentRoutes = new VoicechatRoutes(redConnections, blueConnections, refereeConnections);
+    }
+
+    public static VoicechatRoutes getCurrentRoutes() {
+        return currentRoutes;
     }
 
     @Nullable
@@ -157,5 +180,33 @@ public final class Game2VoicechatGroups {
         }
         UUID id = group.getId();
         return RED_GROUP_ID.equals(id) || BLUE_GROUP_ID.equals(id) || REFEREE_GROUP_ID.equals(id);
+    }
+
+    public record VoicechatRoutes(
+            Map<UUID, VoicechatConnection> redConnections,
+            Map<UUID, VoicechatConnection> blueConnections,
+            Map<UUID, VoicechatConnection> refereeConnections
+    ) {
+        private static VoicechatRoutes empty() {
+            return new VoicechatRoutes(Map.of(), Map.of(), Map.of());
+        }
+
+        public VoicechatRoutes {
+            redConnections = Collections.unmodifiableMap(new LinkedHashMap<>(redConnections));
+            blueConnections = Collections.unmodifiableMap(new LinkedHashMap<>(blueConnections));
+            refereeConnections = Collections.unmodifiableMap(new LinkedHashMap<>(refereeConnections));
+        }
+
+        public boolean isRedPlayer(UUID playerId) {
+            return redConnections.containsKey(playerId);
+        }
+
+        public boolean isBluePlayer(UUID playerId) {
+            return blueConnections.containsKey(playerId);
+        }
+
+        public boolean isRefereePlayer(UUID playerId) {
+            return refereeConnections.containsKey(playerId);
+        }
     }
 }

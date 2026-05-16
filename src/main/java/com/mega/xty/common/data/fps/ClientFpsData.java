@@ -34,7 +34,7 @@ public class ClientFpsData {
     public static final int ROUND_WIN_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION + 4 * 20;
     public static final int ROUND_LOSE_PROMPT_DURATION = BOMB_COUNTDOWN_PROMPT_DURATION + 4 * 20;
     public static final int ROUND_RESULT_MVP_DELAY = 20;
-    public static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).kills).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).assists).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_GENERAL).deaths);
+    public static final Comparator<PlayerInfo> PLAYER_COMPARATOR = Comparator.<PlayerInfo>comparingInt(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_CURRENT).kills).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_CURRENT).assists).thenComparing(pInfo -> getPlayerKAD(pInfo).getOrDefaultKAD(KAD.KAD_CURRENT).deaths);
     public static boolean enabled;
     public static final Map<UUID, SynchedKADData> kadData = new Object2ObjectOpenHashMap<>();
     public static final Map<UUID, TabData> playerDisplayNames = new Object2ObjectOpenHashMap<>();
@@ -57,6 +57,13 @@ public class ClientFpsData {
     }
     public static Component getPlayerName(PlayerInfo playerInfo) {
         return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, getNameForDisplay(playerInfo))).component;
+    }
+    public static boolean isGame2MvpCandidate(PlayerInfo playerInfo) {
+        PlayerTeam team = playerInfo.getTeam();
+        GameType gameMode = playerInfo.getGameMode();
+        return team != null
+                && (team.getColor() == ChatFormatting.RED || team.getColor() == ChatFormatting.BLUE)
+                && (gameMode == GameType.SURVIVAL || gameMode == GameType.ADVENTURE);
     }
     public static boolean getPlayerTabDead(PlayerInfo playerInfo) {
         boolean[] b = new boolean[]{false};

@@ -30,6 +30,7 @@ public class FpsCommonEventsHandler {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
             MinecraftServer server = serverPlayer.server;
             FpsSavedData data = FpsSavedData.getInstance(server);
+            data.setPlayerTab(serverPlayer);
             NetworkHandler.sendToPlayer(new S2CUsingKADPacket(data.isEnableKAD()), serverPlayer);
             if (data.isEnableKAD()) {
                 NetworkHandler.sendToPlayer(new S2CPlayerKADPacket(true, data.getKadData()), serverPlayer);
@@ -37,6 +38,12 @@ public class FpsCommonEventsHandler {
             NetworkHandler.sendToPlayer(new S2CWeaponWarehouseBlacklistPacket(data.getWarehouseGunBlacklist()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CBombDataPacket(data.isBombExist(), data.getBombPosition(), data.getBombCountdownTicks()), serverPlayer);
             NetworkHandler.sendToPlayer(new S2CPlayerNamePacket(true, data.getPlayerTabData()), serverPlayer);
+        }
+    }
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            FpsSavedData.getInstance(serverPlayer.server).removePlayerTab(serverPlayer);
         }
     }
     @SubscribeEvent

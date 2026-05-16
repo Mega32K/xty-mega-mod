@@ -877,6 +877,8 @@ public class Map2SavedData extends SavedData {
                     }
                     boolean shotgun = isShotgun(index.getType()) || isShotgun(index.getPojo().getType());
                     int ammoCount = shotgun ? Math.max(MIN_SHOTGUN_AMMO_COUNT, magazineAmmo * SHOTGUN_AMMO_MULTIPLIER) : magazineAmmo * DEFAULT_AMMO_MULTIPLIER;
+                    if (gun.getGunId(stack).equals(ResourceLocation.parse("cataclysm_guns:ghost")))
+                        ammoCount = 3;
                     ammoCounts.merge(ammoId, ammoCount, Integer::sum);
                 });
             }

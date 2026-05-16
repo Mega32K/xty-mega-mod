@@ -58,6 +58,7 @@ public class FpsSavedData extends SavedData {
     private Map<UUID, ServerSynchedKADData> kadData;
     private boolean playerNamesDirty = false;
     private Map<UUID, TabData> playerTabData;
+    private final Set<UUID> removedPlayerTabData = new ObjectOpenHashSet<>();
     private Set<ResourceLocation> warehouseGunBlacklist = new LinkedHashSet<>();
 
 
@@ -184,6 +185,7 @@ public class FpsSavedData extends SavedData {
     }
     public void setPlayerTabData(Map<UUID, TabData> playerTabData) {
         this.playerTabData = playerTabData instanceof Object2ObjectOpenHashMap<UUID, TabData> map ? map : new Object2ObjectOpenHashMap<>(playerTabData);
+        this.removedPlayerTabData.clear();
     }
     public void setKadData(Map<UUID, ServerSynchedKADData> kadData) {
         this.kadData = kadData instanceof Object2ObjectOpenHashMap<UUID, ServerSynchedKADData> map ? map : new Object2ObjectOpenHashMap<>(kadData);
@@ -256,10 +258,12 @@ public class FpsSavedData extends SavedData {
 
     public Map<UUID, SynchedKADData> packDirtyKAD() {
         Map<UUID, SynchedKADData> map = new Object2ObjectOpenHashMap<>();
-        for (var entry : kadData.entrySet())
+        for (var entry : kadData.entrySet()) {
             if (entry.getValue().isDirty()) {
                 map.put(entry.getKey(), entry.getValue());
+                entry.getValue().setDirty(false);
             }
+        }
         this.setKadDirty(false);
         return map;
     }
@@ -270,6 +274,7 @@ public class FpsSavedData extends SavedData {
         if (nameData == null || !Objects.equals(nameData.component, player.getDisplayName()) || nameData.isDead != dead.getValue()) {
             nameData = new TabData(dead.getValue(), player.getDisplayName());
             this.playerTabData.put(player.getUUID(), nameData);
+            this.removedPlayerTabData.remove(player.getUUID());
             nameData.setDirty(true);
             this.setPlayerNamesDirty(true);
             this.setDirty();
@@ -284,7 +289,15 @@ public class FpsSavedData extends SavedData {
         if (nameData == null || !Objects.equals(nameData.component, player.getDisplayName()) || nameData.isDead != dead.getValue()) {
             nameData = new TabData(dead.getValue(), player.getDisplayName());
             this.playerTabData.put(player.getUUID(), nameData);
+            this.removedPlayerTabData.remove(player.getUUID());
             nameData.setDirty(true);
+            this.setPlayerNamesDirty(true);
+            this.setDirty();
+        }
+    }
+    public void removePlayerTab(Player player) {
+        if (this.playerTabData.remove(player.getUUID()) != null) {
+            this.removedPlayerTabData.add(player.getUUID());
             this.setPlayerNamesDirty(true);
             this.setDirty();
         }
@@ -294,12 +307,19 @@ public class FpsSavedData extends SavedData {
     }
     public Map<UUID, TabData> packDirtyTabs() {
         Map<UUID, TabData> map = new Object2ObjectOpenHashMap<>();
-        for (var entry : playerTabData.entrySet())
+        for (var entry : playerTabData.entrySet()) {
             if (entry.getValue().isDirty()) {
                 map.put(entry.getKey(), entry.getValue());
+                entry.getValue().setDirty(false);
+            }
         }
         this.setPlayerNamesDirty(false);
         return map;
+    }
+    public Set<UUID> packRemovedPlayerTabs() {
+        Set<UUID> set = new ObjectOpenHashSet<>(this.removedPlayerTabData);
+        this.removedPlayerTabData.clear();
+        return set;
     }
 
     public Set<ResourceLocation> getWarehouseGunBlacklist() {

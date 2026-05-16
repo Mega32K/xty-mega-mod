@@ -9,8 +9,12 @@ import de.maxhenkel.voicechat.api.events.EventRegistration;
 import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
 import de.maxhenkel.voicechat.api.events.PlayerConnectedEvent;
 import de.maxhenkel.voicechat.api.events.VoicechatServerStartedEvent;
+import de.maxhenkel.voicechat.api.packets.StaticSoundPacket;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.UUID;
 
 @ForgeVoicechatPlugin
 public class Game2VoicechatPlugin implements VoicechatPlugin {
@@ -59,22 +63,27 @@ public class Game2VoicechatPlugin implements VoicechatPlugin {
         }
 
         var packet = event.getPacket().toStaticSoundPacket();
-        boolean senderIsReferee = Game2VoicechatGroups.isRefereePlayer(player) || Game2VoicechatGroups.isRefereeGroup(senderConnection.getGroup());
-        for (ServerPlayer serverPlayer : player.server.getPlayerList().getPlayers()) {
-            if (serverPlayer.getUUID().equals(player.getUUID())) {
-                continue;
-            }
+        UUID senderId = player.getUUID();
+        Game2VoicechatGroups.VoicechatRoutes routes = Game2VoicechatGroups.getCurrentRoutes();
+        if (routes.isRefereePlayer(senderId) || Game2VoicechatGroups.isRefereeGroup(senderConnection.getGroup())) {
+            sendStaticSoundPacketTo(event, routes.redConnections(), senderId, packet);
+            sendStaticSoundPacketTo(event, routes.blueConnections(), senderId, packet);
+            return;
+        }
+        if (routes.isRedPlayer(senderId) || routes.isBluePlayer(senderId)) {
+            sendStaticSoundPacketTo(event, routes.refereeConnections(), senderId, packet);
+        }
+    }
 
-            boolean receiverIsReferee = Game2VoicechatGroups.isRefereePlayer(serverPlayer);
-            if (senderIsReferee == receiverIsReferee) {
+    private void sendStaticSoundPacketTo(MicrophonePacketEvent event, Map<UUID, VoicechatConnection> receivers, UUID senderId, StaticSoundPacket packet) {
+        for (Map.Entry<UUID, VoicechatConnection> entry : receivers.entrySet()) {
+            if (entry.getKey().equals(senderId)) {
                 continue;
             }
-
-            VoicechatConnection receiverConnection = event.getVoicechat().getConnectionOf(serverPlayer.getUUID());
-            if (receiverConnection == null || !receiverConnection.isInstalled()) {
-                continue;
+            VoicechatConnection receiverConnection = entry.getValue();
+            if (receiverConnection != null && receiverConnection.isInstalled()) {
+                event.getVoicechat().sendStaticSoundPacketTo(receiverConnection, packet);
             }
-            event.getVoicechat().sendStaticSoundPacketTo(receiverConnection, packet);
         }
     }
 

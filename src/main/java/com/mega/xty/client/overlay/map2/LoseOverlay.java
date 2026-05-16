@@ -15,7 +15,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
@@ -162,6 +161,7 @@ public class LoseOverlay implements IGuiOverlay {
             return Optional.empty();
         }
         return minecraft.player.connection.getListedOnlinePlayers().stream()
+                .filter(ClientFpsData::isGame2MvpCandidate)
                 .max(ClientFpsData.PLAYER_COMPARATOR);
     }
 }

@@ -10,6 +10,7 @@ import com.mega.endinglib.common.data.EndingLibrarySavedData;
 import com.mega.endinglib.common.data.InputOperations;
 import com.mega.endinglib.proxy.CommonProxy;
 import com.mega.xty.XtyMegaMod;
+import com.mega.xty.common.data.fps.FpsSavedData;
 import com.mega.xty.common.data.map2.ClientGame1Data;
 import com.mega.xty.common.data.map2.ClientGame2Data;
 import com.mega.xty.common.data.map2.ClientGameData;
@@ -280,6 +281,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                     if (inv != null) inv.overridePlayerInv(player);
                 }
                 updateXaeroDead(value, player, elSavedData);
+                FpsSavedData.getInstance(player.server).setPlayerTab(player);
             }
         }
     }

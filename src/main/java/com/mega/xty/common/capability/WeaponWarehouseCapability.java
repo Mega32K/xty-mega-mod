@@ -166,8 +166,9 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     private static void clearItemList(NonNullList<ItemStack> items) {
         for (int i = 0; i < items.size(); i++) {
             ItemStack stack = items.get(i);
-            if (stack.getItem() instanceof IAmmo || (!stack.is(ItemInit.C4_BOMB.get()) && !stack.is(ItemInit.BDK.get())))
+            if (!(stack.getItem() instanceof IAmmo) && !stack.is(ItemInit.C4_BOMB.get()) && !stack.is(ItemInit.BDK.get())) {
                 items.set(i, ItemStack.EMPTY);
+            }
         }
     }
 
