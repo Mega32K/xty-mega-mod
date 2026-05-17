@@ -14,6 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PlayerTabOverlayMixin {
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void render(GuiGraphics p_281484_, int p_283602_, Scoreboard p_282338_, Objective p_282369_, CallbackInfo ci) {
-        if (ClientGameData.map2Playing()) ci.cancel();
+        if (!ClientGameData.isStopped) ci.cancel();
     }
 }

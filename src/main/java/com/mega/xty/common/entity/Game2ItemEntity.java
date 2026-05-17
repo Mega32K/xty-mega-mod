@@ -7,6 +7,7 @@ import com.mega.xty.common.init.EntityInit;
 import com.mega.xty.common.init.ItemInit;
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;

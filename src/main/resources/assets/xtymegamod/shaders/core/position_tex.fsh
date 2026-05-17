@@ -1,9 +1,9 @@
 #version 150
 #define layers 5 //int how many layers
-#define speed .22 //float speed multiplyer
+#define speed 0.22 //float speed multiplyer
 #define scale 1.7 //float scale multiplyer
-#define lineScale 1.5; //line effect scale
-#define lineSpeed -0.035; //line effect speed
+#define lineScale 1.5 //line effect scale
+#define lineSpeed -0.035 //line effect speed
 //#define totalLine 30.0; //approximate number of lines
 //#define blackWhiteProportion 1.5; //blackline scale / whiteline scale;
 //#define lineWidth 1.0; //width of white line;
@@ -70,18 +70,18 @@ void noiseBackground(vec4 resultColor) {
     float t = _ProgramTime*speed;
 
     uv *= scale;
-    float h = noise(vec3(uv*2.,t));
+    float h = noise(vec3(uv * 2.0, t));
     //uv distortion loop
     for (int n = 1; n < layers; n++){
         float i = n * 1.0;
-        uv -= vec2(0.7 / i * sin(i * uv.y+i + t*5. + h * i) + 0.8, 0.4 / i * sin(uv.x+4.-i+h + t*5. + 0.3 * i) + 1.6);
+        uv -= vec2(0.7 / i * sin(i * uv.y + i + t * 5.0 + h * i) + 0.8, 0.4 / i * sin(uv.x + 4.0 - i + h + t * 5.0 + 0.3 * i) + 1.6);
     }
 
     uv -= vec2(1.2 * sin(uv.x + t + h) + 1.8, 0.4 * sin(uv.y + t + 0.3*h) + 1.6);
 
 
     // Time varying pixel color
-    vec3 col = vec3(.5 * cos(uv.x) + 0.5, .5 * cos(uv.x + uv.y) + 0.5, -.5 * cos(uv.y) + 0.8)*0.8;
+    vec3 col = vec3(0.5 * cos(uv.x) + 0.5, 0.5 * cos(uv.x + uv.y) + 0.5, -0.5 * cos(uv.y) + 0.8) * 0.8;
 
     // Output to screen
     fragColor = lineColorMix(oUV, vec4(col, 1.0), resultColor);

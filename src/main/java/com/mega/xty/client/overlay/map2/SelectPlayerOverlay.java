@@ -29,6 +29,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -121,7 +122,7 @@ public class SelectPlayerOverlay implements IGuiOverlay {
         poseStack.popPose();
         if (isAlive.getValue())  {
             //渲染血条
-            graphics.fill(3 + height, 0, width * (player.getHealth() / player.getMaxHealth()), height * 0.5F, teamColor);
+            graphics.fill(3 + height, 0, width * Mth.clamp((player.getHealth() / player.getMaxHealth()), 0F, 1F), height * 0.5F, teamColor);
             //渲染文字
             renderTextOnHealthBar(graphics, poseStack, player, font, width, height, Math.round(player.getHealth()));
             //渲染物品

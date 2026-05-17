@@ -56,7 +56,7 @@ vec2 fastVoronoiUV(vec2 fragCoord, float cellSize, float time)
             vec2 nid = id + offset;
 
             // 基础随机中心（固定 seed）
-            vec2 rnd = vec2(hash21(nid), hash21(nid + 1.23));
+            vec2 rnd = vec2(hash21(nid), hash21(nid + vec2(1.23)));
 
             // ---------------------------
             // Voronoi 流动（flow）动画核心
@@ -100,5 +100,5 @@ void main()
     vec2 sampleUV = fastVoronoiUV(pos.xy, cellSize, time);
 
     // 三色渐变着色
-    fragColor = threeColorGradient(sampleUV, time);
+    fragColor = threeColorGradient(sampleUV, time) * ColorModulator;
 }

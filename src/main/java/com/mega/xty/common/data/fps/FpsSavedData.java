@@ -19,23 +19,24 @@ import com.mega.xty.proxy.CommonProxy;
 import com.mega.xty.util.data_expand.SavedDataGetter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.Team;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,7 @@ import java.util.UUID;
 
 public class FpsSavedData extends SavedData {
     public static final int BOMB_COUNTDOWN_TOTAL_TICKS = 40 * 20;
+    public long tickCount = 0;
     private boolean enableKAD = false;
     private boolean kadDirty = false;
     private boolean bombExist = false;
@@ -268,11 +270,20 @@ public class FpsSavedData extends SavedData {
         return map;
     }
     public TabData getOrPutPlayerTab(Player player) {
+        return updatePlayerTab(player);
+    }
+    public void setPlayerTab(Player player) {
+        updatePlayerTab(player);
+    }
+    private TabData updatePlayerTab(Player player) {
         TabData nameData = this.playerTabData.get(player.getUUID());
         MutableBoolean dead = new MutableBoolean(false);
         CommonProxy.getMap2Cap(player).ifPresent(cap -> dead.setValue(cap.isXaeroDead()));
-        if (nameData == null || !Objects.equals(nameData.component, player.getDisplayName()) || nameData.isDead != dead.getValue()) {
-            nameData = new TabData(dead.getValue(), player.getDisplayName());
+        String teamName = getTeamName(player);
+        Component displayName = getPlayerTabDisplayName(player);
+        if (nameData == null || !Objects.equals(nameData.component, displayName) || nameData.isDead != dead.getValue()) {
+            nameData = new TabData(dead.getValue(), displayName);
+            nameData.teamName = teamName;
             this.playerTabData.put(player.getUUID(), nameData);
             this.removedPlayerTabData.remove(player.getUUID());
             nameData.setDirty(true);
@@ -280,20 +291,19 @@ public class FpsSavedData extends SavedData {
             this.setDirty();
             return nameData;
         }
-        return nameData;
-    }
-    public void setPlayerTab(Player player) {
-        TabData nameData = this.playerTabData.get(player.getUUID());
-        MutableBoolean dead = new MutableBoolean(false);
-        CommonProxy.getMap2Cap(player).ifPresent(cap -> dead.setValue(cap.isXaeroDead()));
-        if (nameData == null || !Objects.equals(nameData.component, player.getDisplayName()) || nameData.isDead != dead.getValue()) {
-            nameData = new TabData(dead.getValue(), player.getDisplayName());
-            this.playerTabData.put(player.getUUID(), nameData);
-            this.removedPlayerTabData.remove(player.getUUID());
-            nameData.setDirty(true);
+        if (!Objects.equals(nameData.teamName, teamName)) {
+            nameData.setTeamName(teamName);
             this.setPlayerNamesDirty(true);
             this.setDirty();
         }
+        return nameData;
+    }
+    private Component getPlayerTabDisplayName(Player player) {
+        return com.mega.endinglib.proxy.CommonProxy.getCameraCapOptional(player)
+                .map(cap -> cap.getDisplayNameOpt()
+                        .<Component>map(displayName -> PlayerTeam.formatNameForTeam(player.getTeam(), displayName.copy()))
+                        .orElseGet(player::getDisplayName))
+                .orElseGet(player::getDisplayName);
     }
     public void removePlayerTab(Player player) {
         if (this.playerTabData.remove(player.getUUID()) != null) {
@@ -390,6 +400,26 @@ public class FpsSavedData extends SavedData {
                 cap.setWeaponWarehouse(sanitized);
                 NetworkHandler.sendToPlayer(new S2CSyncWeaponWarehousePacket(cap.getWeaponWarehouse()), serverPlayer);
             });
+        }
+    }
+
+    private static String getTeamName(Player player) {
+        return player.getTeam() == null ? null : player.getTeam().getName();
+    }
+    public void tick() {
+        tickCount++;
+        if (tickCount % 10 == 0) {
+            PlayerList playerList = server.getPlayerList();
+            for (var entry : playerTabData.entrySet()) {
+                ServerPlayer player = playerList.getPlayer(entry.getKey());
+                if (player != null) {
+                    String currentTeam = getTeamName(player);
+                    if (!Objects.equals(currentTeam, entry.getValue().teamName)) {
+                        updatePlayerTab(player);
+                    }
+
+                }
+            }
         }
     }
 }

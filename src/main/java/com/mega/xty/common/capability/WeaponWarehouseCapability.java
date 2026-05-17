@@ -5,6 +5,7 @@ import com.mega.endinglib.api.capability.EntitySyncCapabilityBase;
 import com.mega.xty.XtyMegaMod;
 import com.mega.xty.common.data.map2.Game2SavedData;
 import com.mega.xty.common.init.ItemInit;
+import com.mega.xty.common.warehouse.WeaponWarehouseAmmoHelper;
 import com.mega.xty.common.warehouse.WeaponWarehouseItems;
 import com.mega.xty.common.warehouse.WeaponWarehouseLoadout;
 import com.mega.xty.common.warehouse.WeaponWarehouseSnapshot;
@@ -16,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
@@ -124,6 +126,10 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
     }
 
     public void applySelectedWarehouseLoadout(Player player, Set<ResourceLocation> gunBlacklist) {
+        applySelectedWarehouseLoadout(player, gunBlacklist, true);
+    }
+
+    public void applySelectedWarehouseLoadout(Player player, Set<ResourceLocation> gunBlacklist, boolean refillAmmo) {
         WeaponWarehouseLoadout loadout = this.weaponWarehouse.getLoadout(this.weaponWarehouse.getSelectedLoadout());
         Inventory inventory = player.getInventory();
         clearItemList(inventory.items);
@@ -151,6 +157,11 @@ public class WeaponWarehouseCapability extends EntitySyncCapabilityBase {
         player.setItemSlot(EquipmentSlot.MAINHAND, inventory.getItem(inventory.selected));
         inventory.setChanged();
         if (!player.level().isClientSide) {
+            if (refillAmmo && player instanceof ServerPlayer serverPlayer) {
+                WeaponWarehouseAmmoHelper.clearInventoryAmmo(inventory);
+                WeaponWarehouseAmmoHelper.giveAmmoForInventoryGuns(serverPlayer);
+                inventory.setChanged();
+            }
             player.containerMenu.broadcastChanges();
         }
     }

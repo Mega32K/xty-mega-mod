@@ -34,7 +34,7 @@ public class ModShaders extends RenderType {
     private static ShaderInstance X_REVERSE;
 
     public static ShaderInstance getGray() {
-        return GRAY;
+        return GRAY != null ? GRAY : GameRenderer.getPositionTexShader();
     }
 
     public static void setGray(ShaderInstance GRAY) {

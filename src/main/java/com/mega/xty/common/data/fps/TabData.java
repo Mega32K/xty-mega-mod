@@ -30,6 +30,7 @@ public class TabData {
 
     public Component component;
     public boolean isDead;
+    public String teamName;
     public boolean isDirty;
 
     public TabData(boolean isDead, Component component) {
@@ -57,6 +58,13 @@ public class TabData {
     public void setDead(boolean dead) {
         if (this.isDead != dead) {
             isDead = dead;
+            this.setDirty(true);
+        }
+    }
+
+    public void setTeamName(String teamName) {
+        if (!Objects.equals(this.teamName, teamName)) {
+            this.teamName = teamName;
             this.setDirty(true);
         }
     }

@@ -44,7 +44,7 @@ public class GameStartScreen extends Screen {
             0, 0,
             2708, 2708
     );
-    final int randomTime = (int) (Math.random() * 20);
+    final int randomTime = 0;
     public int startInterpolationTick;
     public int tickCount;
     public int waitingForClosing = Integer.MAX_VALUE;
