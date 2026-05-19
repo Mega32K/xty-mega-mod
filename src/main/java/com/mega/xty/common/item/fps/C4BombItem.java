@@ -40,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class C4BombItem extends Item implements IInvulnerableItem {
     private final Multimap<Attribute, AttributeModifier> defaultModifiers;
-    public static final float C4_SET_DISTANCE = 6;
-    public static final int SETTING_DURATION = 4 * 20;
     public C4BombItem() {
         super(new Properties().stacksTo(1).fireResistant());
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
@@ -134,7 +132,7 @@ public class C4BombItem extends Item implements IInvulnerableItem {
         return Mth.clamp((player.getTicksUsingItem() + partialTicks) / Game2ServerOptionsCache.CURRENT.getBomb().getPlantDurationTicks(), 0, 1.0F);
     }
     public static boolean canSetC4(@Nullable BlockPos point, Vec3 playerPos) {
-        return canSetC4(point, playerPos, C4_SET_DISTANCE);
+        return canSetC4(point, playerPos, Game2ServerOptionsCache.CURRENT.getBomb().getPlantSiteDistance());
     }
     public static boolean canSetC4(@Nullable BlockPos point, Vec3 playerPos, double maxDistance) {
         if (point == null) return false;

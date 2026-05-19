@@ -27,7 +27,6 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
 public class BDKItem extends Item {
-    public static final int SETTING_DURATION = 4 * 20;
     public BDKItem() {
         super(new Properties().stacksTo(1).durability(-1));
     }
