@@ -1,0 +1,242 @@
+package com.mega.map.proxy;
+
+import com.google.gson.JsonSyntaxException;
+import com.mega.endinglib.api.client.levelevent.LevelEventManager;
+import com.mega.endinglib.api.client.shader.post.PostEffectHandler;
+import com.mega.map.MegaMod;
+import com.mega.map.client.MapLevelEvents;
+import com.mega.map.client.overlay.DebugOverlays;
+import com.mega.map.client.overlay.InteractionTooltipOverlay;
+import com.mega.map.client.overlay.fps.HotbarOverlay;
+import com.mega.map.client.overlay.fps.RoundStartOverlay;
+import com.mega.map.client.overlay.loading.MegaStyleLoadingEffect;
+import com.mega.map.client.overlay.map1.HealthOverlay;
+import com.mega.map.client.overlay.map2.*;
+import com.mega.map.client.renderer.entity.*;
+import com.mega.map.client.screen.map2.GameStartScreen;
+import com.mega.map.client.screen.map2.RenameScreen;
+import com.mega.map.client.screen.warehouse.WeaponWarehouseScreen;
+import com.mega.map.client.shader.post.fps.Aspect43PostEffect;
+import com.mega.map.client.shader.post.map2.DeadPostEffect;
+import com.mega.map.client.shader.post.map2.Game2StartPostEffect;
+import com.mega.map.client.shader.post.map2.MotionBlurPostEffect;
+import com.mega.map.client.text.ClientItemDisplayTooltip;
+import com.mega.map.client.text.ItemDisplayTooltip;
+import com.mega.map.common.data.map2.ClientGameData;
+import com.mega.map.common.entity.ShadowPlayerEntity;
+import com.mega.map.common.init.EntityInit;
+import com.mega.map.common.init.ParticleInit;
+import com.mega.map.common.warehouse.WeaponWarehouseSnapshot;
+import com.mega.map.common.particle.Game2HitParticle;
+import com.mega.map.util.data_expand.ExtraPlayerRenderer;
+import com.mojang.blaze3d.platform.Window;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.NoopRenderer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import org.lwjgl.glfw.GLFW;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+public class ClientProxy implements ModProxy {
+    public static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/ui/white.png");
+    public static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/ui/icons.png");
+    public static final ResourceLocation DEATH_PLAYER_SKIN = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/entity/death.png");
+    public static final ResourceLocation FPS_UI_ICONS_LOCATION = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/ui/fps/icons.png");
+    public static volatile boolean isUpdatingNoCullingInfo;
+    public static List<BlockPos> chunksNoCullingBlocks = new ObjectArrayList<>();
+    public static Set<BlockPos> chunksNoCullingBlocks2 = new ObjectOpenHashSet<>();
+    public static final KeyMapping DEBUG_ITEM_GUI = new KeyMapping("key.megamod.debug_item_gui", GLFW.GLFW_KEY_G | GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.megamod");
+    public ClientProxy() {
+        IEventBus mBus = this.getModBus();
+        mBus.addListener(this::onKeyRegister);
+        mBus.addListener(this::clientSetup);
+        mBus.addListener(this::onRegisterOverlays);
+        mBus.addListener(this::onRegisterClientTooltipComponent);
+        mBus.addListener(this::onEntityRendererRegistering);
+        mBus.addListener(this::registerParticleProviders);
+        mBus.addListener(this::registerOverlay);
+    }
+    private void clientSetup(final FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            Minecraft mc = Minecraft.getInstance();
+            ReloadableResourceManager manager = (ReloadableResourceManager) Minecraft.getInstance().getResourceManager();
+            manager.registerReloadListener(new ResourceManagerReloadListener() {
+                @Override
+                public void onResourceManagerReload(ResourceManager resourceManager) {
+                    ResourceLocation path = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "shaders/post/motion_blur.json");
+                    try {
+                        if (MegaStyleLoadingEffect.motionEffect != null)
+                            MegaStyleLoadingEffect.motionEffect.close();
+                        Minecraft minecraft = Minecraft.getInstance();
+                        Window window = minecraft.getWindow();
+                        PostChain postChain = new PostChain(minecraft.getTextureManager(), resourceManager, minecraft.getMainRenderTarget(), path);
+                        postChain.resize(window.getWidth(), window.getHeight());
+                        MegaStyleLoadingEffect.motionEffect = postChain;
+                    } catch (JsonSyntaxException jsonE) {
+                        MegaMod.LOGGER.warn("Failed to parse shader: {}", path, jsonE);
+                    } catch (IOException IOE) {
+                        MegaMod.LOGGER.warn("Failed to load shader: {}", path, IOE);
+                    }
+                }
+            });
+            LevelEventManager.registerLevelEvent(110120, (blockPos, randomSource, i) -> {
+                switch (i) {
+                    case 2 -> {
+                        ClientProxy.playSoundNoDelayed(blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.DISPENSER_LAUNCH, SoundSource.PLAYERS, 2.5F, 1F, true, randomSource.nextLong());
+                    }
+                    case MapLevelEvents.FPS_SPECTATE -> {
+                        ClientGameData.currentCameraPlayerIndex = Math.max(ClientGameData.currentCameraPlayerIndex, 0);
+                        ClientGameData.fpsSpectate();
+                    }
+                }
+            });
+            //PostEffectHandler.registerEffect(GuiRectBlurPostEffect::new);
+            PostEffectHandler.registerEffect(MotionBlurPostEffect::new);
+            PostEffectHandler.registerEffect(Game2StartPostEffect::new);
+            PostEffectHandler.registerEffect(DeadPostEffect::new);
+            PostEffectHandler.registerEffect(Aspect43PostEffect::new);
+        });
+    }
+    private void onKeyRegister(RegisterKeyMappingsEvent event) {
+        event.register(DEBUG_ITEM_GUI);
+    }
+    private void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
+        event.registerAboveAll("xty_debug", DebugOverlays.INSTANCE);
+    }
+    private void onRegisterClientTooltipComponent(RegisterClientTooltipComponentFactoriesEvent event) {
+        event.register(ItemDisplayTooltip.class, ClientItemDisplayTooltip::new);
+    }
+    private void onEntityRendererRegistering(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(EntityInit.BINDING.get(), NoopRenderer::new);
+        event.registerEntityRenderer(EntityInit.THROWN_ITEM.get(), NoopRenderer::new);
+        event.registerEntityRenderer(EntityInit.SHADOW_PLAYER.get(), ShadowPlayerRenderer::new);
+        event.registerEntityRenderer(EntityInit.BLACKHOLE.get(), BlackHoleRenderer::new);
+        event.registerEntityRenderer(EntityInit.GAME_ITEM.get(), Game2ItemRenderer::new);
+        event.registerEntityRenderer(EntityInit.C4.get(), C4EntityRenderer::new);
+    }
+    private void registerParticleProviders(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(ParticleInit.GAME2_HIT.get(), Game2HitParticle.Provider::new);
+    }
+    private void registerOverlay(RegisterGuiOverlaysEvent event) {
+        event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "fps/hotbar", new HotbarOverlay());
+        event.registerAbove(VanillaGuiOverlay.PLAYER_HEALTH.id(), "game2_health", new HealthOverlay());
+        event.registerAboveAll("map2/health", new com.mega.map.client.overlay.map2.HealthOverlay());
+        event.registerAboveAll("map2/killcount", new KillCountOverlay());
+        event.registerAbove(
+                ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "map2/killcount"),
+                "map2/death_data",
+                new DeathDataOverlay()
+        );
+        event.registerAboveAll("map2/ghost_circle", new GhostCircleOverlay());
+        event.registerAboveAll("map2/points", new PointsOverlay());
+        event.registerAboveAll("fps/select_player", new SelectPlayerOverlay());
+        event.registerAboveAll("fps/tab", new TabOverlay());
+        event.registerAboveAll("map2/text_tip", new TextTipOverlay());
+        event.registerAboveAll("fps/c4", new C4Overlay());
+        event.registerAboveAll("fps/round_start", new RoundStartOverlay());
+        event.registerAboveAll("map2/win", new WinOverlay());
+        event.registerAboveAll("map2/lose", new LoseOverlay());
+        event.registerAboveAll("interaction_tooltip", new InteractionTooltipOverlay());
+    }
+    public static void setObj(ShadowPlayerEntity entity, Player player) {
+        if (player instanceof AbstractClientPlayer clientPlayer) {
+            Minecraft mc = Minecraft.getInstance();
+            EntityRenderer<? super Player> renderer = mc.getEntityRenderDispatcher().getRenderer(player);
+            if ((Object)(renderer) instanceof PlayerRenderer playerRenderer) {
+                entity.renderer = new WrappedPlayerRenderer(
+                        new EntityRendererProvider.Context(mc.getEntityRenderDispatcher(),mc.getItemRenderer(),mc.getBlockRenderer(),mc.gameRenderer.itemInHandRenderer, mc.getResourceManager(), mc.getEntityModels(), mc.font),
+                        ((ExtraPlayerRenderer) playerRenderer).megaMod$isSlim()
+                );
+            }
+            entity.sWalkSpeed = player.walkAnimation.speed(mc.getPartialTick());
+            entity.sWalkPosition = player.walkAnimation.position(mc.getPartialTick());
+            entity.sAttackAnim = player.getAttackAnim(mc.getPartialTick());
+        }
+    }
+
+    public static void playSoundNoDelayed(double p_233603_, double p_233604_, double p_233605_, SoundEvent p_233606_, SoundSource p_233607_, float p_233608_, float p_233609_, boolean p_233610_, long p_233611_) {
+        Minecraft mc = Minecraft.getInstance();
+        SimpleSoundInstance simplesoundinstance = new SimpleSoundInstance(p_233606_, p_233607_, p_233608_, p_233609_, RandomSource.create(p_233611_), p_233603_, p_233604_, p_233605_);
+        mc.getSoundManager().play(simplesoundinstance);
+    }
+
+    public static void playSoundAtCamera(SoundEvent soundEvent, float volume, float pitch, long seed) {
+        Minecraft mc = Minecraft.getInstance();
+        SimpleSoundInstance sound = new SimpleSoundInstance(soundEvent.getLocation(), SoundSource.PLAYERS, volume, pitch, RandomSource.create(seed), false, 0, SoundInstance.Attenuation.NONE, 0.0D, 0.0D, 0.0D, true);
+        mc.getSoundManager().play(sound);
+    }
+    public static void openRenameScreen(UUID uuid) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            if (mc.level.getPlayerByUUID(uuid) instanceof AbstractClientPlayer cp) {
+                mc.execute(()-> {
+                    mc.forceSetScreen(new RenameScreen(cp));
+                });
+            }
+        }
+    }
+    public static void openMap2StartScreen() {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(mc.screen instanceof GameStartScreen))
+            mc.execute(() ->{
+                mc.forceSetScreen(new GameStartScreen(Component.empty()));
+            });
+    }
+    public static void closeMap2Screen() {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.screen instanceof GameStartScreen || mc.screen instanceof RenameScreen)
+                mc.setScreen(null);
+        });
+    }
+
+    public static void openWeaponWarehouseScreen() {
+        openWeaponWarehouseScreen(null);
+    }
+
+    public static void openWeaponWarehouseScreen(WeaponWarehouseSnapshot snapshot) {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.player != null) {
+                if (snapshot != null) {
+                    WeaponWarehouseScreen.refreshOpenScreen(snapshot);
+                }
+                mc.setScreen(new WeaponWarehouseScreen());
+            }
+        });
+    }
+
+    public static void refreshWeaponWarehouseScreen(WeaponWarehouseSnapshot snapshot) {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            WeaponWarehouseScreen.refreshOpenScreen(snapshot);
+        });
+    }
+}

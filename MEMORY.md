@@ -46,7 +46,7 @@
 
 今后编写与 FPS 相关的 overlay，默认以：
 
-- `com.mega.xty.client.overlay.map2.C4Overlay#renderBombCountdown`
+- `com.mega.map.client.overlay.map2.C4Overlay#renderBombCountdown`
 
 作为视觉基准。
 
@@ -75,7 +75,7 @@
 
 已新增：
 
-- `com.mega.xty.client.renderer.BlurRectRenderer`
+- `com.mega.map.client.renderer.BlurRectRenderer`
 
 核心思路：
 
@@ -186,7 +186,7 @@
 
 类：
 
-- `com.mega.xty.common.data.fps.FpsSavedData`
+- `com.mega.map.common.data.fps.FpsSavedData`
 
 当前核心字段：
 
@@ -204,7 +204,7 @@
 
 类：
 
-- `com.mega.xty.common.data.fps.ClientFpsData`
+- `com.mega.map.common.data.fps.ClientFpsData`
 
 当前核心字段：
 
@@ -243,7 +243,7 @@
 
 原始 map2 倒计时主驱动仍在：
 
-- `com.mega.xty.common.event.map2.GameCommonEvents#onServerTick`
+- `com.mega.map.common.event.map2.GameCommonEvents#onServerTick`
 
 它本来负责：
 
@@ -292,7 +292,7 @@
 
 类：
 
-- `com.mega.xty.client.overlay.map2.C4Overlay`
+- `com.mega.map.client.overlay.map2.C4Overlay`
 
 当前 `renderBombCountdown(...)` 的职责：
 
@@ -312,7 +312,7 @@
 
 类：
 
-- `com.mega.xty.client.overlay.map2.KillCountOverlay`
+- `com.mega.map.client.overlay.map2.KillCountOverlay`
 
 当前约定：
 
@@ -440,7 +440,7 @@
 
 ### 14.5 game2 死亡相机与死亡流程
 
-- 死亡效果相关类已移动到 `com.mega.xty.common.event.map2`：
+- 死亡效果相关类已移动到 `com.mega.map.common.event.map2`：
   - `DeathCameraEffectHandler`
   - `C4SpectateCameraHandler`
 - 玩家死亡时的相机动画不再直接使用 EndingLibrary 动画 API，而使用 EndingLibrary 的相机坐标事件一类的方式处理。
@@ -555,7 +555,7 @@
 ### 14.10 RoundStartOverlay
 
 - 新增 `RoundStartOverlay`，用于渲染回合启动广播倒计时提示框。
-- 暂定不只用于 map2 game2，因此数据字段/方法写入 `com.mega.xty.common.data.fps.RoundStartData`。
+- 暂定不只用于 map2 game2，因此数据字段/方法写入 `com.mega.map.common.data.fps.RoundStartData`。
 - 提示框仿照 C4Overlay 写法。
 - 文本：
   - 第一行：`回合即将开始`
@@ -650,7 +650,7 @@
 - 已运行 `git diff --check -- src/main/java/com/mega/xty/common/data/map2/Map2SavedData.java`，无空白错误，仅有 Git LF/CRLF 提示。
 ## WinOverlay Prompt Baseline
 
-- `com.mega.xty.client.overlay.map2.WinOverlay#renderTitleBox` 鏄綋鍓嶆ā浠?C4Overlay 妯＄硦鎻愮ず妗嗙殑鏂板熀鍑嗐€?
+- `com.mega.map.client.overlay.map2.WinOverlay#renderTitleBox` 鏄綋鍓嶆ā浠?C4Overlay 妯＄硦鎻愮ず妗嗙殑鏂板熀鍑嗐€?
 - 鑳屾櫙缁撴瀯锛?`graphics.flush()` -> `BlurRectRenderer.render(...)` -> 宸﹀彸 2px 杈规锛岃儗鏅鑹蹭负涓€х伆 `0x00303030`锛屾ā绯婂崐寰勪负 `alpha * 8.0F`銆?
 - 瀹藉害灞曞紑锛氭彁绀烘浣跨敤 `realWidth = alpha * width`锛屼粠灞忓箷涓績鍚戜袱渚у睍寮€銆?
 - 鏂囨湰瑁佸壀锛氭枃鏈粯鍒跺墠瑕佷娇鐢?`enableScissor(...)`锛岃鍓寖鍥村拰 `realWidth` 淇濇寔鍚屾銆?
@@ -666,7 +666,7 @@
 
 - game2 新回合开始阶段禁止枪械开火，确认使用的事件为 `com.tacz.guns.api.event.common.GunFireEvent`。
 - 用户明确要求不要复用 `map1` 区域现成类来承接这段逻辑，因此应在 `map2` 下单独处理。
-- 当前做法是新增 `com.mega.xty.common.event.map2.Game2TaczEvents`：
+- 当前做法是新增 `com.mega.map.common.event.map2.Game2TaczEvents`：
   - 服务端在 game2 正在进行且玩家仍处于回合开始锁定期时取消开火。
   - 服务端对 `xaero dead` 玩家同样取消开火。
   - 客户端只拦截本地玩家自己的开火事件，避免误伤其他实体的事件流。
@@ -691,7 +691,7 @@
 
 ### 15.4 BlurRectRenderer 说明结论
 
-- `com.mega.xty.client.renderer.BlurRectRenderer` 的核心职责可以固定理解为：
+- `com.mega.map.client.renderer.BlurRectRenderer` 的核心职责可以固定理解为：
   - 先复制主 `framebuffer` 到临时 `TextureTarget`
   - 再让 shader 采样这份屏幕副本
   - 最后把模糊矩形绘回主画面
@@ -704,9 +704,9 @@
 
 ### 16.1 物品注册：改名卡
 
-- 物品类 `com.mega.xty.common.item.fps.RenameCardItem` 与 `com.mega.xty.common.item.fps.AdminRenameCardItem` 已补充正式物品注册。
+- 物品类 `com.mega.map.common.item.fps.RenameCardItem` 与 `com.mega.map.common.item.fps.AdminRenameCardItem` 已补充正式物品注册。
 - 注册位置：
-  - `com.mega.xty.common.init.ItemInit`
+  - `com.mega.map.common.init.ItemInit`
 - 当前注册名：
   - `rename_card`
   - `admin_rename_card`
@@ -727,7 +727,7 @@
 
 ### 16.2 BlurRectRenderer：矩阵感知模糊矩形
 
-- `com.mega.xty.client.renderer.BlurRectRenderer#render(MegaGuiGraphics, float, float, float, float, int, float)` 在这一阶段被继续修正，目标是让模糊采样区域真正跟随 `graphics.pose().last().pose()` 的矩阵变换。
+- `com.mega.map.client.renderer.BlurRectRenderer#render(MegaGuiGraphics, float, float, float, float, int, float)` 在这一阶段被继续修正，目标是让模糊采样区域真正跟随 `graphics.pose().last().pose()` 的矩阵变换。
 - 当前稳定理解：
   - 顶点位置仍使用局部 GUI 坐标 `x / y / x + width / y + height`，并在 `bufferBuilder.vertex(matrix4f, ...)` 时统一乘 `PoseStack` 顶矩阵。
   - 但四个角的 UV 不再偷懒共用一套矩形包围盒 UV，而是：
@@ -762,17 +762,17 @@
 ### 16.4 4:3 效果类与注册链路
 
 - 已新增客户端后处理类：
-  - `com.mega.xty.client.shader.post.fps.Aspect43PostEffect`
+  - `com.mega.map.client.shader.post.fps.Aspect43PostEffect`
 - 该类实现 `CustomScreenEffect`，当前行为约定：
   - `getName()` 返回 `aspect_4_3`
   - `getShaderLocation()` 指向 `shaders/post/aspect_4_3.json`
   - `onRenderTick()` 为空
   - `canUse()` 不再依赖本地静态布尔值，而是读取本地玩家 `FpsCapability` 的同步字段
 - 在客户端注册位置：
-  - `com.mega.xty.proxy.ClientProxy#clientSetup`
+  - `com.mega.map.proxy.ClientProxy#clientSetup`
   - 通过 `PostEffectHandler.registerEffect(Aspect43PostEffect::new)` 注册
 - 客户端断线时：
-  - `com.mega.xty.common.event.map2.GameClientEvents#onDisconnected`
+  - `com.mega.map.common.event.map2.GameClientEvents#onDisconnected`
   - 会调用 `Aspect43PostEffect.stop()`
   - 目前这个 `stop()` 方法本身为空实现，因为真正的开关已迁移到玩家能力字段；它保留下来主要是为了接口一致性和后续扩展。
 
@@ -780,7 +780,7 @@
 
 - 用户后来要求将 4:3 效果的启用判断写入玩家能力，而不是继续单独依赖一个包驱动的本地静态状态。
 - 当前做法：
-  - 在 `com.mega.xty.common.capability.FpsCapability` 中新增同步数据字段
+  - 在 `com.mega.map.common.capability.FpsCapability` 中新增同步数据字段
     - `CapabilityEntityData<Boolean> ASPECT_43`
     - 数据名为 `"aspect43"`
     - 默认值为 `false`
@@ -807,7 +807,7 @@
   - 省略 `<enabled>` 时默认按 `true` 处理
   - 显式传 `false` 时关闭目标玩家的 4:3 效果
 - 服务端命令实现位于：
-  - `com.mega.xty.common.command.FpsCommand`
+  - `com.mega.map.common.command.FpsCommand`
 - 当前不是发送专门的效果包，而是直接：
   - `CommonProxy.getFPSCap(player).ifPresent(cap -> cap.setAspect43(enabled));`
 - 对应语言键已补齐：
@@ -825,7 +825,7 @@
     - `volume = 0.0F`
     - `pitch = 0.0F`
 - 当前实现类：
-  - `com.mega.xty.mixin.tacz.MinecartSoundInstanceMixin`
+  - `com.mega.map.mixin.tacz.MinecartSoundInstanceMixin`
 - Mixin 注册位置：
   - `xtymegamod.mixins.json` 的 `client` 列表
 - 为什么选这个方案：
@@ -896,7 +896,7 @@
 本轮已因此修复过一次真实崩溃；崩溃栈位于：
 
 - `de.maxhenkel.voicechat.plugins.impl.VoicechatConnectionImpl.setGroup(...)`
-- `com.mega.xty.common.voicechat.Game2VoicechatGroups.syncGame2Groups(...)`
+- `com.mega.map.common.voicechat.Game2VoicechatGroups.syncGame2Groups(...)`
 
 ### 17.4 BlurRectRenderer 相关客户端崩溃与兜底
 
