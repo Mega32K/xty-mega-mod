@@ -1,0 +1,61 @@
+#version 150
+
+#moj_import <fog.glsl>
+
+uniform sampler2D Sampler0;
+
+uniform vec4 ColorModulator;
+uniform float FogStart;
+uniform float FogEnd;
+uniform vec4 FogColor;
+uniform float _ProgramTime;
+uniform float GlitchStrength;
+
+in float vertexDistance;
+in vec4 vertexColor;
+in vec2 texCoord0;
+
+out vec4 fragColor;
+
+float hash(float value) {
+    return fract(sin(value * 127.1) * 43758.5453);
+}
+
+float bandNoise(float y, float time) {
+    return hash(floor(y * 32.0) + floor(time * 10.0) * 7.0);
+}
+
+void main() {
+    float strength = max(GlitchStrength, 0.0);
+    float time = _ProgramTime;
+    float effectSlot = floor(time * 0.75);
+    float effectProgress = fract(time * 0.75);
+    float effectStart = hash(effectSlot + 41.0) * 0.18;
+    float effectEnd = min(effectStart + 0.72 + hash(effectSlot + 43.0) * 0.22, 0.98);
+    float effectActive = step(effectStart, effectProgress) * (1.0 - step(effectEnd, effectProgress));
+    float band = bandNoise(texCoord0.y, time);
+    float pulse = effectActive * step(0.78, band) * sin(time * 16.0 + texCoord0.y * 80.0);
+    float jitter = pulse * 0.008 * strength;
+    float scan = effectActive * step(0.985, fract(texCoord0.y * 48.0 + time * 5.0)) * 0.35 * strength;
+
+    vec2 baseUv = clamp(texCoord0 + vec2(jitter, 0.0), vec2(0.0), vec2(1.0));
+    vec4 base = texture(Sampler0, baseUv).rrrr;
+    float chromaSlot = floor(time * 1.25);
+    float chromaProgress = fract(time * 1.25);
+    float chromaActive = effectActive * step(0.58, hash(chromaSlot + 3.0)) * (1.0 - step(0.18 + hash(chromaSlot + 5.0) * 0.18, chromaProgress));
+    float chromaCenter = hash(chromaSlot + 11.0);
+    float chromaHalfHeight = 0.10 + hash(chromaSlot + 17.0) * 0.16;
+    float chromaMask = chromaActive * (1.0 - smoothstep(chromaHalfHeight, chromaHalfHeight + 0.06, abs(texCoord0.y - chromaCenter)));
+    float chromaDirection = mix(-1.0, 1.0, step(0.5, hash(chromaSlot + 23.0)));
+    float chromaOffset = 0.012 * strength * chromaMask * chromaDirection;
+    vec4 redShift = texture(Sampler0, clamp(baseUv + vec2(chromaOffset, 0.0), vec2(0.0), vec2(1.0))).rrrr;
+    vec4 blueShift = texture(Sampler0, clamp(baseUv - vec2(chromaOffset, 0.0), vec2(0.0), vec2(1.0))).rrrr;
+    vec3 color = vec3(redShift.r, base.g, blueShift.b);
+
+    color += scan * base.a;
+    vec4 finalColor = vec4(color, base.a) * vertexColor * ColorModulator;
+    if (finalColor.a < 0.1) {
+        discard;
+    }
+    fragColor = linear_fog(finalColor, vertexDistance, FogStart, FogEnd, FogColor);
+}

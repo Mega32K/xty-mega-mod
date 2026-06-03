@@ -278,20 +278,15 @@ public class FpsSavedData extends SavedData {
         CommonProxy.getMap2Cap(player).ifPresent(cap -> dead.setValue(cap.isXaeroDead()));
         String teamName = getTeamName(player);
         Component displayName = getPlayerTabDisplayName(player);
-        if (nameData == null || !Objects.equals(nameData.component, displayName) || nameData.isDead != dead.getValue()) {
+        if (nameData == null || !Objects.equals(nameData.component, displayName) || nameData.isDead != dead.getValue() || !Objects.equals(nameData.teamName, teamName)) {
             nameData = new TabData(dead.getValue(), displayName);
-            nameData.teamName = teamName;
+            nameData.setTeamName(teamName);
             this.playerTabData.put(player.getUUID(), nameData);
             this.removedPlayerTabData.remove(player.getUUID());
             nameData.setDirty(true);
             this.setPlayerNamesDirty(true);
             this.setDirty();
             return nameData;
-        }
-        if (!Objects.equals(nameData.teamName, teamName)) {
-            nameData.setTeamName(teamName);
-            this.setPlayerNamesDirty(true);
-            this.setDirty();
         }
         return nameData;
     }

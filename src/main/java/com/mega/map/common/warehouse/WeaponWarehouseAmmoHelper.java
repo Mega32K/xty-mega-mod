@@ -63,7 +63,7 @@ public final class WeaponWarehouseAmmoHelper {
                     boolean shotgun = isShotgun(index.getType()) || isShotgun(index.getPojo().getType());
                     int ammoCount = shotgun ? Math.max(MIN_SHOTGUN_AMMO_COUNT, magazineAmmo * SHOTGUN_AMMO_MULTIPLIER) : magazineAmmo * DEFAULT_AMMO_MULTIPLIER;
                     if (gun.getGunId(stack).equals(GHOST_GUN_ID)) {
-                        ammoCount = 3;
+                        ammoCount = 4;
                     }
                     ammoCounts.merge(ammoId, ammoCount, Integer::sum);
                 });
