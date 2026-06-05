@@ -12,6 +12,7 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -90,7 +91,7 @@ public class HotbarOverlay implements IGuiOverlay {
             }
             int slotX = rightSlotX - (slot - 3) * step;
             renderSlotNumber(graphics, font, slot + 1, slotX, bottomRowY, true);
-            renderSlotItem(graphics, font, player, player.getInventory().items.get(slot), slotX + ITEM_OFFSET, bottomRowY + ITEM_OFFSET, partialTick, slot + 1, true);
+            renderSlotItem(graphics, font, player, player.getInventory().items.get(slot), slotX + ITEM_OFFSET, bottomRowY + ITEM_OFFSET, partialTick, slot + 1, selected);
         }
     }
 
@@ -102,8 +103,11 @@ public class HotbarOverlay implements IGuiOverlay {
 
     private static void renderPrimarySlotItem(MegaGuiGraphics graphics, Font font, Player player, ItemStack stack, int slotX, int slotY, float partialTick, int seed, boolean selected) {
         if (stack.isEmpty()) return;
+        Component itemName = stack.getHoverName();
         if (stack.getItem() instanceof IGun) {
             renderSlotItem(graphics, font, player, stack, slotX + ITEM_OFFSET, slotY + ITEM_OFFSET, partialTick, seed, selected);
+            if (selected)
+                graphics.drawString(font, itemName, slotX - font.width(itemName) - 39, slotY - font.lineHeight / 2, 0xFFFFFFFF);
             return;
         }
 
@@ -113,6 +117,8 @@ public class HotbarOverlay implements IGuiOverlay {
         int itemX = numberX - SLOT_SPACING - 16;
         int itemY = numberY - (16 - font.lineHeight) / 2;
         renderItemStack(graphics, font, player, stack, itemX, itemY, partialTick, seed);
+        if (selected)
+            graphics.drawString(font, itemName, itemX - font.width(itemName), numberY, 0xFFFFFFFF);
     }
 
     private static void renderSlotItem(MegaGuiGraphics graphics, Font font, Player player, ItemStack stack, int x, int y, float partialTick, int seed, boolean selected) {

@@ -43,7 +43,7 @@ import java.util.Optional;
 public class SelectPlayerOverlay implements IGuiOverlay {
     public static final int FPS_UI_RX = 512;
     public static final int FPS_UI_RY = 384;
-    public static final float HEAD_LAYER_SCALE = 1.0625F;
+    public static final float HEAD_LAYER_SCALE = 1.125F;
     public static final BlitInfo ARMOR = new BlitInfo(
             ClientProxy.FPS_UI_ICONS_LOCATION,
             0, 0,
@@ -468,12 +468,12 @@ public class SelectPlayerOverlay implements IGuiOverlay {
 
         PlayerInfo playerInfo = Minecraft.getInstance().getConnection().getPlayerInfo(player.getUUID());
         ResourceLocation skin = playerInfo == null ? DefaultPlayerSkin.getDefaultSkin(player.getUUID()) : playerInfo.getSkinLocation();
-        if (gray) {
+        float layer2Multiplier = ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F);if (gray) {
             graphics.blit(skin, -size, -size, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
-            graphics.blit(skin, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F), -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F), size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
+            graphics.blit(skin, -size * layer2Multiplier, -size * layer2Multiplier, size * 2F * ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), size * 2F * ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), 40F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
         } else {
             graphics.blit(skin, -size, -size, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F);
-            graphics.blit(skin, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F), -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F), size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F);
+            graphics.blit(skin, -size * layer2Multiplier, -size * layer2Multiplier, size * 2F * ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), size * 2F * ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), 40F, 8F, 8F, 8F, 64F, 64F);
         }
     }
     public static void renderProfileIcon(ResourceLocation texture, MegaGuiGraphics graphics, float x, float y, float size, boolean gray) {
@@ -481,12 +481,13 @@ public class SelectPlayerOverlay implements IGuiOverlay {
         size /= 2F;
         if (Minecraft.getInstance().getConnection() == null) return;
 
+        float layer2Multiplier = ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F);
         if (gray) {
             graphics.blit(texture, -size + x, -size + y, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
-            graphics.blit(texture, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + x, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + y, size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
+            graphics.blit(texture, -size * layer2Multiplier + x, -size * layer2Multiplier + y, size * 2F * ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F, ModShaders::getGray);
         } else {
             graphics.blit(texture, -size + x, -size + y, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F);
-            graphics.blit(texture, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + x, -size*(HEAD_LAYER_SCALE * 0.5F + 0.5F) + y, size * 2F * HEAD_LAYER_SCALE, size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F);
+            graphics.blit(texture, -size * layer2Multiplier + x, -size * layer2Multiplier + y, size * 2F * ((HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), size * 2F * HEAD_LAYER_SCALE, 40F, 8F, 8F, 8F, 64F, 64F);
         }
     }
     private float getPlayerInfoHeight(int screenWidth) {

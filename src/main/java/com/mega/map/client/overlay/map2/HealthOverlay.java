@@ -109,8 +109,7 @@ public class HealthOverlay implements IGuiOverlay {
         ResourceLocation skin = player.getSkinTextureLocation();
         //渲染第一层
         graphics.blit(skin, -size, -11F, size * 2F, size * 2F, 8F, 8F, 8F, 8F, 64F, 64F);
-        poseStack.scale(1.0625F, 1.0625F, 0F);
-        graphics.blit(skin, -size, -11F, size * 2F, size * 2F, 40F, 8F, 8F, 8F, 64F, 64F);
+        graphics.blit(skin, -size*((SelectPlayerOverlay.HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), -11F*((SelectPlayerOverlay.HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), size * 2F * ((SelectPlayerOverlay.HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), size * 2F * ((SelectPlayerOverlay.HEAD_LAYER_SCALE - 1F) * 0.5F + 1F), 40F, 8F, 8F, 8F, 64F, 64F);
         poseStack.popPose();
     }
     public static void renderACHP(MegaGuiGraphics graphics, Font font, AbstractClientPlayer clientPlayer, PoseStack poseStack) {

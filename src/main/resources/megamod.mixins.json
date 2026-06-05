@@ -15,6 +15,7 @@
     "gd656killicon.Gd656killiconMixin",
     "limbs.LivingEntityMixin",
     "lrtactical.ConsumableDataMixin",
+    "lrtactical.SmokeGrenadeEntityMixin",
     "map1.game_2.EntityMixin",
     "map1.game_2.Spider1Mixin",
     "map2.game2.EntityMixin",
@@ -55,8 +56,8 @@
     "map2.game2.ItemInHandRendererMixin",
     "map2.game2.LivingEntityRendererMixin",
     "map2.game2.PlayerItemInHandLayerMixin",
-    "tacz.MinecartSoundInstanceMixin",
     "tacz.GunHudOverlayMixin",
+    "tacz.MinecartSoundInstanceMixin",
     "tacz.RenderCrosshairEventMixin"
   ],
   "injectors": {
