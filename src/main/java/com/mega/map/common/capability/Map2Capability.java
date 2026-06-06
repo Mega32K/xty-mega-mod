@@ -82,6 +82,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     public Vec3 lastPos = new Vec3(0F, 0F, 0F);
     public int lastSoulInvisible;
     private long roundKeyboardUnlockGameTime = -1L;
+    public int smokeAround;
     public NonNullList<ItemStack> clientEvolutionWeapons = Util.make(() -> {
         NonNullList<ItemStack> list = NonNullList.withSize(3, ItemStack.EMPTY);
         for (int i=0;i<3;i++)
@@ -186,6 +187,8 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 player.setDeltaMovement(Vec3.ZERO);
             }
             if (!player.level().isClientSide) {
+                if (this.smokeAround > 0)
+                    smokeAround--;
                 if (player.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
                     boolean onGround = player.onGround();
                     if (player.position().add(lastPos.scale(-1F)).horizontalDistance() > 0.1F) {
@@ -577,5 +580,8 @@ public class Map2Capability extends EntitySyncCapabilityBase {
             savedData.removeDisabledPermission(player, InputOperations.MOUSE_USE);
             this.clearRoundKeyboardUnlockGameTime();
         }
+    }
+    public boolean isSmokingAround() {
+        return smokeAround > 0;
     }
 }

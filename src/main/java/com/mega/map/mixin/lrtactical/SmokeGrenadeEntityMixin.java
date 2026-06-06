@@ -33,11 +33,7 @@ public abstract class SmokeGrenadeEntityMixin extends ThrowableItemEntity {
                 if (checkBox.contains(player.getX(), player.getY(), player.getZ()) && (EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(player))) {
                     if (player.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
                         CommonProxy.getMap2Cap(player).ifPresent(cap -> {
-                            if (player.position().add(cap.lastPos.scale(-1F)).horizontalDistance() > 0.001F) {
-                                cap.setSoulInvisible(cap.getSoulInvisible() - 1);
-                                cap.setSoulInvisible(Mth.clamp(cap.getSoulInvisible(), 0, 15));
-                            }
-
+                              cap.smokeAround = 2;
                         });
                     }
                 }
