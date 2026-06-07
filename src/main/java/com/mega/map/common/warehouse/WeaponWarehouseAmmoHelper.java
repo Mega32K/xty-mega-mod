@@ -20,6 +20,7 @@ public final class WeaponWarehouseAmmoHelper {
     private static final int BACKPACK_SLOT_START = 9;
     private static final int SHOTGUN_AMMO_MULTIPLIER = 3;
     private static final int MIN_SHOTGUN_AMMO_COUNT = 16;
+    private static final int MIN_SNIPER_AMMO_COUNT = 30;
     private static final int DEFAULT_AMMO_MULTIPLIER = 5;
     private static final ResourceLocation GHOST_GUN_ID = ResourceLocation.parse("cataclysm_guns:ghost");
 
@@ -60,8 +61,12 @@ public final class WeaponWarehouseAmmoHelper {
                     if (magazineAmmo <= 0) {
                         return;
                     }
-                    boolean shotgun = isShotgun(index.getType()) || isShotgun(index.getPojo().getType());
-                    int ammoCount = shotgun ? Math.max(MIN_SHOTGUN_AMMO_COUNT, magazineAmmo * SHOTGUN_AMMO_MULTIPLIER) : magazineAmmo * DEFAULT_AMMO_MULTIPLIER;
+                    int ammoCount = magazineAmmo * DEFAULT_AMMO_MULTIPLIER;
+                    if (isShotgun(index.getType()) || isShotgun(index.getPojo().getType())) {
+                        ammoCount = Math.max(MIN_SHOTGUN_AMMO_COUNT, magazineAmmo * SHOTGUN_AMMO_MULTIPLIER);
+                    } else if (isSniper(index.getType()) || isSniper(index.getPojo().getType())) {
+                        ammoCount = Math.max(MIN_SNIPER_AMMO_COUNT, magazineAmmo * SHOTGUN_AMMO_MULTIPLIER);
+                    }
                     if (gun.getGunId(stack).equals(GHOST_GUN_ID)) {
                         ammoCount = 4;
                     }
@@ -74,7 +79,9 @@ public final class WeaponWarehouseAmmoHelper {
     private static boolean isShotgun(@Nullable String type) {
         return type != null && GunTabType.SHOTGUN.toString().equalsIgnoreCase(type);
     }
-
+    private static boolean isSniper(@Nullable String type) {
+        return type != null && GunTabType.SNIPER.toString().equalsIgnoreCase(type);
+    }
     private static void giveAmmoToBackpack(ServerPlayer player, ResourceLocation ammoId, int count) {
         int remaining = count;
         while (remaining > 0) {

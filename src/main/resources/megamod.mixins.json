@@ -23,6 +23,7 @@
     "map2.game2.LivingEntityMixin",
     "map2.game2.PlayerMixin",
     "tacz.AmmoItemMixin",
+    "tacz.EntityKineticBulletMixin",
     "tacz.LivingEntityShootMixin",
     "tacz.LocalPlayerShootMixin",
     "xaero.HudRendererMixin",

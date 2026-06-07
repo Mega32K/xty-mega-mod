@@ -2,6 +2,7 @@ package com.mega.map.mixin.tacz;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mega.endinglib.util.annotation.DeprecatedMixin;
 import com.mega.endinglib.util.annotation.ModDependsMixin;
 import com.mega.map.common.data.map1.ClientGame2Data;
 import com.tacz.guns.api.entity.IGunOperator;
@@ -11,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @ModDependsMixin("tacz")
 @Mixin(value = LocalPlayerShoot.class,remap = false)
+@DeprecatedMixin
 public abstract class LocalPlayerShootMixin {
     @WrapOperation(method = "shoot", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;getSynSprintTime()F"))
     private float game2CanSprintingShoot(IGunOperator instance, Operation<Float> original) {

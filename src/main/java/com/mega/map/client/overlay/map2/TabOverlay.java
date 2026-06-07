@@ -2,6 +2,7 @@ package com.mega.map.client.overlay.map2;
 
 import com.mega.endinglib.util.mc.client.MegaGuiGraphics;
 import com.mega.map.common.data.fps.ClientFpsData;
+import com.mega.map.common.data.fps.TabData;
 import com.mega.map.common.data.fps.kad.KAD;
 import com.mega.map.common.data.map2.ClientGame1Data;
 import com.mega.map.common.data.map2.ClientGame2Data;
@@ -110,12 +111,13 @@ public class TabOverlay implements IGuiOverlay {
             int yRightOffset = 0;
             ChatFormatting localPColor = player.getTeam() == null ? ChatFormatting.WHITE : player.getTeam().getColor();
             for (PlayerInfo playerInfo : playerInfos) {
+                TabData tabData = ClientFpsData.getPlayerTab(playerInfo);
                 if (playerInfo.getProfile().getName().equals(player.getGameProfile().getName())
-                                || (playerInfo.getTeam() != null && playerInfo.getTeam().getColor() == localPColor)) {
-                    renderSinglePlayerInfo(graphics, font, left, top + yLeftOffset, halfLongestWidth, playerInfo);
+                                || (tabData.teamColor == localPColor)) {
+                    renderSinglePlayerInfo(graphics, font, left, top + yLeftOffset, halfLongestWidth, playerInfo, tabData);
                     yLeftOffset += lineHeight + periodOfLine;
                 } else {
-                    renderSinglePlayerInfo(graphics, font, left + halfLongestWidth, top + yRightOffset, halfLongestWidth, playerInfo);
+                    renderSinglePlayerInfo(graphics, font, left + halfLongestWidth, top + yRightOffset, halfLongestWidth, playerInfo, tabData);
                     yRightOffset += lineHeight + periodOfLine;
                 }
             }
@@ -124,8 +126,9 @@ public class TabOverlay implements IGuiOverlay {
             int yOffset = 0;
             for (int index = 0;index<playerInfos.size();index++) {
                 PlayerInfo playerInfo = playerInfos.get(index);
+                TabData tabData = ClientFpsData.getPlayerTab(playerInfo);
                 float offset = (index + 1) % 2 == 0 ? halfLongestWidth : 0;
-                renderSinglePlayerInfo(graphics, font, left + offset, top + yOffset, halfLongestWidth, playerInfo);
+                renderSinglePlayerInfo(graphics, font, left + offset, top + yOffset, halfLongestWidth, playerInfo, tabData);
                 if (offset > 0)
                     yOffset += lineHeight + periodOfLine;
             }
@@ -150,7 +153,7 @@ public class TabOverlay implements IGuiOverlay {
     private List<PlayerInfo> getPlayerInfosSortKAD(LocalPlayer player) {
         return player.connection.getListedOnlinePlayers().stream().sorted(ClientFpsData.PLAYER_COMPARATOR).limit(80L).toList();
     }
-    private void renderSinglePlayerInfo(MegaGuiGraphics graphics, Font font, float x, float y, float width, PlayerInfo playerInfo) {
+    private void renderSinglePlayerInfo(MegaGuiGraphics graphics, Font font, float x, float y, float width, PlayerInfo playerInfo, TabData tabData) {
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
         poseStack.translate(0, 2, 0);
@@ -171,12 +174,12 @@ public class TabOverlay implements IGuiOverlay {
             graphics.drawCenteredString(font, Component.literal(latencyS).withStyle(ChatFormatting.DARK_RED), (int) (x), (int) y, 0xFFFFFFFF);
         }
         //渲染名字
-        boolean isDead = ClientFpsData.getPlayerTabDead(playerInfo);
+        boolean isDead = tabData.isDead;
         float headScale = font.lineHeight * 1.1F;
         SelectPlayerOverlay.renderProfileIcon(playerInfo.getSkinLocation(), graphics, x + 19 + headScale/2F, y - 1 + headScale/2F, headScale, isDead);
         drawPlayerInfoName(
                 graphics, font,
-                isDead ? Component.literal("").append(ClientFpsData.getPlayerName(playerInfo)).withStyle(ChatFormatting.STRIKETHROUGH) : ClientFpsData.getPlayerName(playerInfo),
+                isDead ? Component.literal("").append(tabData.component).withStyle(ChatFormatting.STRIKETHROUGH) : tabData.component,
                 (int) (x + 20 + font.lineHeight + 1), (int) y, (int) (width - textUnitWidth * 5 - 20 - 24 - font.width(latencyS) - font.lineHeight), 0xFFFFFFFF
         );
         //渲染KAD

@@ -59,7 +59,7 @@ public class S2CPlayerNamePacket {
             for (UUID removedId : packet.removedIds)
                 ClientFpsData.playerDisplayNames.remove(removedId);
             for (var entry : packet.dataMap.entrySet())
-                ClientFpsData.playerDisplayNames.put(entry.getKey(), new TabData(entry.getValue().isDead, entry.getValue().component.copy()));
+                ClientFpsData.playerDisplayNames.put(entry.getKey(), new TabData(entry.getValue().isDead, entry.getValue().component.copy(), entry.getValue().teamColor));
         }
     }
 }

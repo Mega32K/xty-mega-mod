@@ -15,6 +15,8 @@ import com.mega.map.common.init.SoundsInit;
 import com.mega.map.common.network.NetworkHandler;
 import com.mega.map.common.options.map2game2.Game2ServerOptionsCache;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -164,17 +166,20 @@ public class C4BombItem extends Item implements IInvulnerableItem {
 
     private static void playPlantingKeySound(ServerPlayer player, int usedTicks) {
         switch (usedTicks) {
-            case 8 -> playC4Sound(player, SoundsInit.KEY_PRESS1.get(), 0.75F, 1.0F);
-            case 16 -> playC4Sound(player, SoundsInit.KEY_PRESS2.get(), 0.75F, 1.0F);
-            case 25 -> playC4Sound(player, SoundsInit.KEY_PRESS3.get(), 0.75F, 1.0F);
-            case 34 -> playC4Sound(player, SoundsInit.KEY_PRESS4.get(), 0.75F, 1.0F);
-            case 44 -> playC4Sound(player, SoundsInit.KEY_PRESS5.get(), 0.75F, 1.0F);
-            case 55 -> playC4Sound(player, SoundsInit.KEY_PRESS6.get(), 0.75F, 1.0F);
-            case 66 -> playC4Sound(player, SoundsInit.KEY_PRESS7.get(), 0.75F, 1.0F);
+            case 8 -> playC4PressSound(player, SoundsInit.KEY_PRESS1.get(), 0.75F, 1.0F);
+            case 16 -> playC4PressSound(player, SoundsInit.KEY_PRESS2.get(), 0.75F, 1.0F);
+            case 25 -> playC4PressSound(player, SoundsInit.KEY_PRESS3.get(), 0.75F, 1.0F);
+            case 34 -> playC4PressSound(player, SoundsInit.KEY_PRESS4.get(), 0.75F, 1.0F);
+            case 44 -> playC4PressSound(player, SoundsInit.KEY_PRESS5.get(), 0.75F, 1.0F);
+            case 55 -> playC4PressSound(player, SoundsInit.KEY_PRESS6.get(), 0.75F, 1.0F);
+            case 66 -> playC4PressSound(player, SoundsInit.KEY_PRESS7.get(), 0.75F, 1.0F);
         }
     }
     private static void playC4Sound(LivingEntity entity, SoundEvent soundEvent, float volume, float pitch) {
         entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), soundEvent, SoundSource.PLAYERS, volume, pitch);
+    }
+    private static void playC4PressSound(ServerPlayer player, SoundEvent soundEvent, float volume, float pitch) {
+        player.connection.send(new ClientboundSoundEntityPacket(Holder.direct(soundEvent), SoundSource.PLAYERS, player, volume, pitch, player.getRandom().nextLong()));
     }
     @Override
     public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {

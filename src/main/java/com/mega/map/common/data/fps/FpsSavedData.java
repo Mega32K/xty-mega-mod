@@ -17,6 +17,7 @@ import com.mega.map.proxy.CommonProxy;
 import com.mega.map.util.data_expand.SavedDataGetter;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -276,11 +277,11 @@ public class FpsSavedData extends SavedData {
         TabData nameData = this.playerTabData.get(player.getUUID());
         MutableBoolean dead = new MutableBoolean(false);
         CommonProxy.getMap2Cap(player).ifPresent(cap -> dead.setValue(cap.isXaeroDead()));
-        String teamName = getTeamName(player);
+        ChatFormatting teamColor = getTeamColor(player);
         Component displayName = getPlayerTabDisplayName(player);
-        if (nameData == null || !Objects.equals(nameData.component, displayName) || nameData.isDead != dead.getValue() || !Objects.equals(nameData.teamName, teamName)) {
-            nameData = new TabData(dead.getValue(), displayName);
-            nameData.setTeamName(teamName);
+        if (nameData == null || !Objects.equals(nameData.component, displayName) || nameData.isDead != dead.getValue() || !Objects.equals(nameData.teamColor, teamColor)) {
+            nameData = new TabData(dead.getValue(), displayName, teamColor);
+            nameData.setTeamColor(teamColor);
             this.playerTabData.put(player.getUUID(), nameData);
             this.removedPlayerTabData.remove(player.getUUID());
             nameData.setDirty(true);
@@ -395,23 +396,10 @@ public class FpsSavedData extends SavedData {
         }
     }
 
-    private static String getTeamName(Player player) {
-        return player.getTeam() == null ? null : player.getTeam().getName();
+    private static ChatFormatting getTeamColor(Player player) {
+        return player.getTeam() == null ? null : player.getTeam().getColor();
     }
     public void tick() {
         tickCount++;
-        if (tickCount % 10 == 0) {
-            PlayerList playerList = server.getPlayerList();
-            for (var entry : playerTabData.entrySet()) {
-                ServerPlayer player = playerList.getPlayer(entry.getKey());
-                if (player != null) {
-                    String currentTeam = getTeamName(player);
-                    if (!Objects.equals(currentTeam, entry.getValue().teamName)) {
-                        updatePlayerTab(player);
-                    }
-
-                }
-            }
-        }
     }
 }

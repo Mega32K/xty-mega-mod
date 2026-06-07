@@ -2,6 +2,7 @@ package com.mega.map.mixin.tacz;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mega.endinglib.util.annotation.DeprecatedMixin;
 import com.mega.endinglib.util.annotation.ModDependsMixin;
 import com.mega.map.common.data.map2.ClientGameData;
 import com.mega.map.common.data.map2.ServerGameData;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @ModDependsMixin("tacz")
 @Mixin(value = LivingEntityShoot.class,remap = false)
+@DeprecatedMixin
 public abstract class LivingEntityShootMixin {
     @Shadow @Final private LivingEntity shooter;
 

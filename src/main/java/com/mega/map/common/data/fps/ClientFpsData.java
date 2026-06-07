@@ -55,7 +55,7 @@ public class ClientFpsData {
         return kadData.getOrDefault(playerInfo.getProfile().getId(), SynchedKADData.EMPTY_KAD);
     }
     public static Component getPlayerName(PlayerInfo playerInfo) {
-        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, getNameForDisplay(playerInfo))).component;
+        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, getNameForDisplay(playerInfo), playerInfo.getTeam() != null ? playerInfo.getTeam().getColor() : ChatFormatting.WHITE)).component;
     }
     public static boolean isGame2MvpCandidate(PlayerInfo playerInfo) {
         PlayerTeam team = playerInfo.getTeam();
@@ -63,6 +63,9 @@ public class ClientFpsData {
         return team != null
                 && (team.getColor() == ChatFormatting.RED || team.getColor() == ChatFormatting.BLUE)
                 && (gameMode == GameType.SURVIVAL || gameMode == GameType.ADVENTURE);
+    }
+    public static TabData getPlayerTab(PlayerInfo playerInfo) {
+        return playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, Component.literal(""), playerInfo.getTeam() != null ? playerInfo.getTeam().getColor() : ChatFormatting.WHITE));
     }
     public static boolean getPlayerTabDead(PlayerInfo playerInfo) {
         boolean[] b = new boolean[]{false};
@@ -72,7 +75,7 @@ public class ClientFpsData {
                 CommonProxy.getMap2Cap(player).ifPresent(cap -> b[0] = cap.isXaeroDead());
         }
         if (!b[0])
-            b[0] = playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, Component.literal(""))).isDead;
+            b[0] = playerDisplayNames.getOrDefault(playerInfo.getProfile().getId(), new TabData(false, Component.literal(""), playerInfo.getTeam() != null ? playerInfo.getTeam().getColor() : ChatFormatting.WHITE)).isDead;
         return b[0];
     }
     public static boolean isWarehouseGunBlacklisted(ResourceLocation id) {

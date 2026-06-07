@@ -27,13 +27,14 @@ public abstract class SmokeGrenadeEntityMixin extends ThrowableItemEntity {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void weakenOpticalNanoSuitAbility(CallbackInfo ci) {
-        if (!level().isClientSide) {
-            AABB checkBox = this.getBoundingBox().inflate(10.0);
-            for(Player player : level().players()) {
-                if (checkBox.contains(player.getX(), player.getY(), player.getZ()) && (EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(player))) {
+        AABB checkBox = this.getBoundingBox().inflate(10.0);
+        for(Player player : level().players()) {
+            if (checkBox.contains(player.getX(), player.getY(), player.getZ()) && (EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(player))) {
+                if (player.distanceTo(this) < 8.8F) {
                     if (player.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
                         CommonProxy.getMap2Cap(player).ifPresent(cap -> {
-                              cap.smokeAround = 2;
+                            cap.smokeAround = 2;
+                            cap.setMaxInvisiblePercent(0.8F);
                         });
                     }
                 }

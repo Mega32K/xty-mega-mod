@@ -106,7 +106,7 @@ public class GhostCircleOverlay implements IGuiOverlay {
                     clientPlayer,
                     new AABB(clientPlayer.position(), clientPlayer.position())
                             .inflate(8),
-                    (entity -> entity.distanceToSqr(clientPlayer) < 16 && EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(entity) && !entity.isAlliedTo(clientPlayer))
+                    (entity -> entity.distanceToSqr(clientPlayer) < 19.5F && EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(entity) && !entity.isAlliedTo(clientPlayer))
             );
             Matrix4f matrix4f = new Matrix4f(ClientUtils.LEVEL_MODEL_VIEW_MAT);
             for (Entity entity : entitiesAround) {

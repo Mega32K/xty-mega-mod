@@ -83,6 +83,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     public int lastSoulInvisible;
     private long roundKeyboardUnlockGameTime = -1L;
     public int smokeAround;
+    public float maxInvisiblePercent = 0.5F;
     public NonNullList<ItemStack> clientEvolutionWeapons = Util.make(() -> {
         NonNullList<ItemStack> list = NonNullList.withSize(3, ItemStack.EMPTY);
         for (int i=0;i<3;i++)
@@ -180,6 +181,10 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     protected void tick(Entity entity) {
         if (entity instanceof Player player) {
             lastSoulInvisible = getSoulInvisible();
+            if (this.smokeAround > 0)
+                smokeAround--;
+            if (this.maxInvisiblePercent > 0.5F)
+                this.maxInvisiblePercent = Math.max(0.5F, this.maxInvisiblePercent - 0.05F);
             if (this.isXaeroDead()) {
                 player.noPhysics = true;
                 player.setNoGravity(true);
@@ -187,8 +192,6 @@ public class Map2Capability extends EntitySyncCapabilityBase {
                 player.setDeltaMovement(Vec3.ZERO);
             }
             if (!player.level().isClientSide) {
-                if (this.smokeAround > 0)
-                    smokeAround--;
                 if (player.getItemBySlot(EquipmentSlot.CHEST).is(ItemInit.OPTICAL_NANOSUIT.get())) {
                     boolean onGround = player.onGround();
                     if (player.position().add(lastPos.scale(-1F)).horizontalDistance() > 0.1F) {
@@ -230,7 +233,7 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     }
     public float getInvisibleValue(float partialTicks) {
         int soulValue = this.getSoulInvisible();
-        return Mth.clamp(1F - Mth.lerp(partialTicks, this.lastSoulInvisible, soulValue) / 15F, 0F, 0.5F);
+        return Mth.clamp(1F - Mth.lerp(partialTicks, this.lastSoulInvisible, soulValue) / 15F, 0F, this.maxInvisiblePercent);
     }
     public void set1KillCount(int time) {
         this.dataManager.setValue(KILLCOUNT1, time);
@@ -583,5 +586,9 @@ public class Map2Capability extends EntitySyncCapabilityBase {
     }
     public boolean isSmokingAround() {
         return smokeAround > 0;
+    }
+
+    public void setMaxInvisiblePercent(float maxInvisiblePercent) {
+        this.maxInvisiblePercent = maxInvisiblePercent;
     }
 }

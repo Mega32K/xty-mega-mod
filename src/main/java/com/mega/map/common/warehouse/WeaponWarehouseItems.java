@@ -119,7 +119,7 @@ public final class WeaponWarehouseItems {
         ItemStack copy = stack.copy();
         copy.setCount(Math.max(1, copy.getCount()));
         return switch (slotType) {
-            case MAIN_WEAPON -> isMainWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? putScope(forceSingleCount(copy)) : ItemStack.EMPTY;
+            case MAIN_WEAPON -> isMainWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? putAttachment(forceSingleCount(copy)) : ItemStack.EMPTY;
             case SECONDARY_WEAPON -> isSecondaryWeapon(copy) && !isBlacklistedGun(copy, gunBlacklist) ? forceSingleCount(copy) : ItemStack.EMPTY;
             case MELEE_WEAPON -> forceSingleCount(copy);
             case M67_GRENADE -> sanitizeFixedThrowable(copy, M67_ID);
@@ -260,9 +260,20 @@ public final class WeaponWarehouseItems {
         copy.setCount(1);
         return copy;
     }
-    private static ItemStack putScope(ItemStack stack) {
+    private static ItemStack putAttachment(ItemStack stack) {
         if (stack.getItem() instanceof AbstractGunItem gun) {
             ItemStack gunItem = stack.copy();
+            TimelessAPI.getCommonGunIndex(gun.getGunId(gunItem)).ifPresent(index -> {
+                if (index.getType().equals("shotgun")) {
+                    ItemStack attachment = new ItemStack(ModItems.ATTACHMENT.get());
+                    if (attachment.getItem() instanceof IAttachment iAttachment) {
+                        iAttachment.setAttachmentId(attachment, ResourceLocation.parse("tacz:ammo_mod_i"));
+                    }
+                    if (gun.allowAttachment(gunItem, attachment)) {
+                        gun.installAttachment(gunItem, attachment);
+                    }
+                }
+            });
             if (TimelessAPI.getCommonGunIndex(gun.getGunId(gunItem)).map(index -> index.getType().equals(GunTabType.SNIPER.toString().toLowerCase(Locale.US))).orElse(false)
                     && gun.allowAttachmentType(gunItem, AttachmentType.SCOPE)) {
                 ItemStack attachment = new ItemStack(ModItems.ATTACHMENT.get());
@@ -272,9 +283,9 @@ public final class WeaponWarehouseItems {
                 }
                 if (gun.allowAttachment(gunItem, attachment)) {
                     gun.installAttachment(gunItem, attachment);
-                    return gunItem;
                 }
             }
+            return gunItem;
         }
         return stack;
     }
