@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @ModDependsMixin("tacz")
-@Mixin(value = EntityKineticBullet.class, remap = false)
+@Mixin(value = EntityKineticBullet.class)
 public abstract class EntityKineticBulletMixin {
     @WrapWithCondition(method = "onHitEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setSecondsOnFire(I)V"))
     private boolean igniteEntity(Entity e, int seconds) {

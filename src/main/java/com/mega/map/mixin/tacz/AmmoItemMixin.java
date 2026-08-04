@@ -9,9 +9,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @ModDependsMixin("tacz")
-@Mixin(value = AmmoItem.class, remap = false)
+@Mixin(value = AmmoItem.class)
 public abstract class AmmoItemMixin {
-    @Inject(method = "getMaxStackSize", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getMaxStackSize", at = @At("HEAD"), cancellable = true, remap = false)
     private void xty$setAmmoMaxStackSize(ItemStack stack, CallbackInfoReturnable<Integer> cir) {
         cir.setReturnValue(99);
     }

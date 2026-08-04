@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerExpandedContext.class)
 public abstract class ServerExpandedContextMixin implements SavedDataGetter {
-    @Shadow @Final public MinecraftServer server;
+    @Shadow(remap = false) @Final public MinecraftServer server;
     @Unique
     private Game2SavedData map1game2SavedData = null;
     @Unique

@@ -26,6 +26,7 @@
     "tacz.EntityKineticBulletMixin",
     "tacz.LivingEntityShootMixin",
     "tacz.LocalPlayerShootMixin",
+    "tacz.TargetMinecartMixin",
     "xaero.HudRendererMixin",
     "xaero.PlayerTrackerIconRendererMixin",
     "xaero.PlayerTrackerMinimapElementRendererMixin"

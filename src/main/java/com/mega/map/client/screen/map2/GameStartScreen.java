@@ -26,10 +26,10 @@ import org.joml.Math;
 import org.joml.Matrix4f;
 
 public class GameStartScreen extends Screen {
-    public static final ResourceLocation TITLE = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/ui/gun_mini_game.png");
+    public static final ResourceLocation TITLE = ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/ui/shadow_plot.png");
     public static final BlitInfo TITLE_BLIT = new BlitInfo(
             TITLE,
-            0, 0, 2388, 256
+            0, 0, 2087, 256
     );
     public static final BlitInfo CREATOR_0 = new BlitInfo(
             ResourceLocation.fromNamespaceAndPath(MegaMod.MODID, "textures/ui/mega.png"),
@@ -123,7 +123,7 @@ public class GameStartScreen extends Screen {
             float dissolve = 2f - seconds / 2F;
             graphics.setColor(1F, 1F, 1F, backgroundAlpha);
             graphics.fill(-1, -1, guiWidth + 1, guiHeight + 1, 0xFF1b2238);
-            float width = guiWidth / 4F;
+            float width = guiWidth / 3F;
             float ratio = TITLE_BLIT.height() / (float) TITLE_BLIT.width();
             ModShaders.dissolve2d(dissolve);
             guiGraphics.blit(TITLE,
